@@ -5,12 +5,12 @@ class AppConfig {
 
   static const String supabaseUrl = String.fromEnvironment(
     'SUPABASE_URL',
-    defaultValue: '',
+    defaultValue: 'https://luafdcyodyxyqufphpsf.supabase.co',
   );
 
   static const String supabaseAnonKey = String.fromEnvironment(
     'SUPABASE_ANON_KEY',
-    defaultValue: '',
+    defaultValue: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1YWZkY3lvZHl4eXF1ZnBocHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MjAxMjksImV4cCI6MjA5NTk5NjEyOX0.9r4s2OoTWWwPe_eii4QUSg09vzm0c9IOOQbsyY6ZNec',
   );
 
   static const String defaultCurrency = 'ZAR';
