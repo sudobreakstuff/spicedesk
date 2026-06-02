@@ -11,9 +11,11 @@ import 'providers/product_provider.dart';
 import 'providers/pos_provider.dart';
 import 'providers/customer_provider.dart';
 import 'providers/order_provider.dart';
+import 'providers/invoice_provider.dart';
 import 'services/product_service.dart';
 import 'services/customer_service.dart';
 import 'services/order_service.dart';
+import 'services/invoice_service.dart';
 import 'screens/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
 
@@ -92,6 +94,13 @@ class SpiceDeskApp extends StatelessWidget {
               supabase: Supabase.instance.client,
               productService: productService,
             ));
+          },
+        ),
+        ChangeNotifierProvider(
+          create: (_) {
+            return InvoiceProvider(
+              InvoiceService(supabase: Supabase.instance.client),
+            );
           },
         ),
       ],
