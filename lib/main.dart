@@ -9,7 +9,11 @@ import 'providers/auth_provider.dart';
 import 'providers/business_provider.dart';
 import 'providers/product_provider.dart';
 import 'providers/pos_provider.dart';
+import 'providers/customer_provider.dart';
+import 'providers/order_provider.dart';
 import 'services/product_service.dart';
+import 'services/customer_service.dart';
+import 'services/order_service.dart';
 import 'screens/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
 
@@ -68,13 +72,27 @@ class SpiceDeskApp extends StatelessWidget {
           create: (_) => BusinessProvider(businessService!, authService!),
         ),
         ChangeNotifierProvider(
-          create: (_) => ProductProvider(
-            ProductService(supabase: Supabase.instance.client),
-            businessService!,
-          ),
+          create: (_) {
+            final productService = ProductService(supabase: Supabase.instance.client);
+            return ProductProvider(productService, businessService!);
+          },
         ),
         ChangeNotifierProvider(
           create: (_) => PosProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => CustomerProvider(
+            CustomerService(supabase: Supabase.instance.client),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (_) {
+            final productService = ProductService(supabase: Supabase.instance.client);
+            return OrderProvider(OrderService(
+              supabase: Supabase.instance.client,
+              productService: productService,
+            ));
+          },
         ),
       ],
       child: MaterialApp(

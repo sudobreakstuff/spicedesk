@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../providers/pos_provider.dart';
 import '../../providers/product_provider.dart';
 import '../../providers/business_provider.dart';
+import '../../providers/order_provider.dart';
 import '../../core/theme.dart';
 import '../../core/constants.dart';
 
@@ -342,9 +343,37 @@ class _PosScreenState extends State<PosScreen> {
     );
   }
 
-  void _handleCheckout() {
+  Future<void> _handleCheckout() async {
     final provider = context.read<PosProvider>();
     if (provider.isEmpty) return;
+
+    final business = context.read<BusinessProvider>().business;
+    if (business == null) return;
+
+    final orderItems = provider.toOrderItemsData();
+
+    final createdOrder = await context.read<OrderProvider>().createOrder(
+      businessId: business.id,
+      customerId: provider.customerId,
+      orderType: provider.orderType,
+      status: 'Completed',
+      subtotal: provider.subtotal,
+      taxAmount: provider.taxAmount,
+      discount: provider.discount,
+      total: provider.total,
+      paymentMethod: provider.paymentMethod,
+      notes: provider.notes,
+      items: orderItems,
+    );
+
+    if (!mounted) return;
+
+    if (createdOrder == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to save order'), backgroundColor: AppTheme.dangerRed),
+      );
+      return;
+    }
 
     showModalBottomSheet(
       context: context,
@@ -376,6 +405,9 @@ class _PosScreenState extends State<PosScreen> {
                           style: GoogleFonts.poppins(fontSize: 28, fontWeight: FontWeight.bold, color: AppTheme.spiceOrange)),
                       const SizedBox(height: 4),
                       Text('Paid via ${p.paymentMethod}', style: GoogleFonts.poppins(color: Colors.grey[600])),
+                      const SizedBox(height: 2),
+                      Text('Order #${createdOrder.id.substring(0, 8).toUpperCase()}',
+                          style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[400])),
                     ],
                   ),
                 ),
@@ -389,7 +421,7 @@ class _PosScreenState extends State<PosScreen> {
                           _printReceipt();
                         },
                         icon: const Icon(Icons.print),
-                        label: const Text('Print Receipt'),
+                        label: const Text('Print'),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -413,7 +445,7 @@ class _PosScreenState extends State<PosScreen> {
                       Navigator.pop(ctx);
                       provider.clear();
                     },
-                    child: const Text('Done'),
+                    child: const Text('New Sale'),
                   ),
                 ),
               ],

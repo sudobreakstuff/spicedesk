@@ -5,8 +5,13 @@ import '../../providers/auth_provider.dart';
 import '../../providers/business_provider.dart';
 import '../../core/theme.dart';
 import '../../core/config.dart';
+import '../../core/constants.dart';
+import '../../providers/product_provider.dart';
+import '../../providers/order_provider.dart';
 import '../pos/pos_screen.dart';
 import '../inventory/product_list_screen.dart';
+import '../customers/customer_list_screen.dart';
+import '../orders/order_list_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -286,17 +291,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       case 2:
         return const ProductListScreen();
       case 3:
-        return _PlaceholderTab(
-          icon: Icons.people,
-          title: 'Customers',
-          subtitle: 'Coming in Phase 3',
-        );
+        return const CustomerListScreen();
       case 4:
-        return _PlaceholderTab(
-          icon: Icons.receipt_long,
-          title: 'Orders',
-          subtitle: 'Coming in Phase 3',
-        );
+        return const OrderListScreen();
       default:
         return _DashboardHome();
     }
@@ -308,6 +305,8 @@ class _DashboardHome extends StatelessWidget {
   Widget build(BuildContext context) {
     final businessProvider = context.watch<BusinessProvider>();
     final business = businessProvider.business;
+    final orderProvider = context.watch<OrderProvider>();
+    final productProvider = context.watch<ProductProvider>();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -336,7 +335,7 @@ class _DashboardHome extends StatelessWidget {
               Expanded(
                 child: _StatCard(
                   title: 'Today\'s Sales',
-                  value: 'R 0.00',
+                  value: AppConstants.formatCurrency(orderProvider.totalSalesToday),
                   icon: Icons.trending_up,
                   color: AppTheme.successGreen,
                 ),
@@ -344,9 +343,9 @@ class _DashboardHome extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _StatCard(
-                  title: 'Expenses',
-                  value: 'R 0.00',
-                  icon: Icons.trending_down,
+                  title: 'Total Orders',
+                  value: '${orderProvider.totalOrders}',
+                  icon: Icons.receipt_long,
                   color: AppTheme.dangerRed,
                 ),
               ),
@@ -358,7 +357,7 @@ class _DashboardHome extends StatelessWidget {
               Expanded(
                 child: _StatCard(
                   title: 'Products',
-                  value: '0',
+                  value: '${productProvider.totalProducts}',
                   icon: Icons.inventory_2,
                   color: AppTheme.spiceOrange,
                 ),
@@ -366,9 +365,9 @@ class _DashboardHome extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _StatCard(
-                  title: 'Orders',
-                  value: '0',
-                  icon: Icons.receipt_long,
+                  title: 'Low Stock',
+                  value: '${productProvider.lowStockCount}',
+                  icon: Icons.warning_amber,
                   color: AppTheme.spiceBrown,
                 ),
               ),
@@ -591,55 +590,6 @@ class _QuickAction extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _PlaceholderTab extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-
-  const _PlaceholderTab({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: AppTheme.spiceOrange.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Icon(icon, size: 40, color: AppTheme.spiceOrange),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            title,
-            style: GoogleFonts.playfairDisplay(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.darkSpice,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            subtitle,
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              color: Colors.grey[500],
-            ),
-          ),
-        ],
       ),
     );
   }
