@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/config.dart';
-import 'core/theme.dart';
+import 'core/app_theme.dart';
 import 'services/auth_service.dart';
 import 'services/business_service.dart';
+import 'services/product_service.dart';
+import 'services/customer_service.dart';
+import 'services/order_service.dart';
+import 'services/invoice_service.dart';
+import 'providers/theme_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/business_provider.dart';
 import 'providers/product_provider.dart';
@@ -12,10 +17,6 @@ import 'providers/pos_provider.dart';
 import 'providers/customer_provider.dart';
 import 'providers/order_provider.dart';
 import 'providers/invoice_provider.dart';
-import 'services/product_service.dart';
-import 'services/customer_service.dart';
-import 'services/order_service.dart';
-import 'services/invoice_service.dart';
 import 'screens/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
 
@@ -38,20 +39,26 @@ void main() async {
     businessService = BusinessService(supabase: null);
   }
 
+  final themeProvider = ThemeProvider();
+  await themeProvider.load();
+
   runApp(SpiceDeskApp(
     authService: authService,
     businessService: businessService,
+    themeProvider: themeProvider,
   ));
 }
 
 class SpiceDeskApp extends StatelessWidget {
   final AuthService? authService;
   final BusinessService? businessService;
+  final ThemeProvider themeProvider;
 
   const SpiceDeskApp({
     super.key,
     this.authService,
     this.businessService,
+    required this.themeProvider,
   });
 
   @override
@@ -59,58 +66,44 @@ class SpiceDeskApp extends StatelessWidget {
     if (authService == null || businessService == null) {
       return MaterialApp(
         title: AppConfig.appName,
-        theme: AppTheme.lightTheme,
+        theme: AppTheme.build(AppThemeMode.light),
         debugShowCheckedModeBanner: false,
         home: _NoSupabaseScreen(),
       );
     }
 
+    final supabase = Supabase.instance.client;
+
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider.value(value: themeProvider),
+        ChangeNotifierProvider(create: (_) => AuthProvider(authService!)),
+        ChangeNotifierProvider(create: (_) => BusinessProvider(businessService!, authService!)),
         ChangeNotifierProvider(
-          create: (_) => AuthProvider(authService!),
+          create: (_) => ProductProvider(ProductService(supabase: supabase), businessService!),
         ),
-        ChangeNotifierProvider(
-          create: (_) => BusinessProvider(businessService!, authService!),
-        ),
+        ChangeNotifierProvider(create: (_) => PosProvider()),
+        ChangeNotifierProvider(create: (_) => CustomerProvider(CustomerService(supabase: supabase))),
         ChangeNotifierProvider(
           create: (_) {
-            final productService = ProductService(supabase: Supabase.instance.client);
-            return ProductProvider(productService, businessService!);
+            final ps = ProductService(supabase: supabase);
+            return OrderProvider(OrderService(supabase: supabase, productService: ps));
           },
         ),
         ChangeNotifierProvider(
-          create: (_) => PosProvider(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => CustomerProvider(
-            CustomerService(supabase: Supabase.instance.client),
-          ),
-        ),
-        ChangeNotifierProvider(
-          create: (_) {
-            final productService = ProductService(supabase: Supabase.instance.client);
-            return OrderProvider(OrderService(
-              supabase: Supabase.instance.client,
-              productService: productService,
-            ));
-          },
-        ),
-        ChangeNotifierProvider(
-          create: (_) {
-            return InvoiceProvider(
-              InvoiceService(supabase: Supabase.instance.client),
-            );
-          },
+          create: (_) => InvoiceProvider(InvoiceService(supabase: supabase)),
         ),
       ],
-      child: MaterialApp(
-        title: AppConfig.appName,
-        theme: AppTheme.lightTheme,
-        debugShowCheckedModeBanner: false,
-        home: const SplashScreen(),
-        routes: {
-          '/login': (_) => const LoginScreen(),
+      child: Consumer<ThemeProvider>(
+        builder: (context, theme, _) {
+          return MaterialApp(
+            title: AppConfig.appName,
+            theme: theme.themeData,
+            darkTheme: AppTheme.build(AppThemeMode.dark),
+            debugShowCheckedModeBanner: false,
+            home: const SplashScreen(),
+            routes: {'/login': (_) => const LoginScreen()},
+          );
         },
       ),
     );
@@ -128,40 +121,13 @@ class _NoSupabaseScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(
-                Icons.cloud_off,
-                size: 64,
-                color: AppTheme.spiceOrange,
-              ),
+              const Icon(Icons.cloud_off, size: 64, color: AppColors.orange),
               const SizedBox(height: 24),
-              const Text(
-                'Supabase Not Configured',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              Text('Supabase Not Configured', textAlign: TextAlign.center, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.brownDark)),
               const SizedBox(height: 12),
-              const Text(
-                'To run SpiceDesk, you need to set up Supabase.\n\n'
-                '1. Create a free project at supabase.com\n'
-                '2. Copy your project URL and anon key\n'
-                '3. Run the SQL migration from the /sql folder\n'
-                '4. Run the app with:\n'
-                '   flutter run --dart-define=SUPABASE_URL=your_url \\\n'
-                '               --dart-define=SUPABASE_ANON_KEY=your_key',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
-                ),
-              ),
+              const Text('1. Create a free project at supabase.com\n2. Copy your URL and anon key\n3. Run the SQL migration\n4. Launch with --dart-define flags', textAlign: TextAlign.center, style: TextStyle(fontSize: 14, color: Colors.grey)),
               const SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: () {},
-                child: const Text('I\'ll set it up later (offline mode)'),
-              ),
+              ElevatedButton(onPressed: () {}, child: const Text('Continue Offline')),
             ],
           ),
         ),

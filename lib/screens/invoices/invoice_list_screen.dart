@@ -8,7 +8,7 @@ import '../../providers/customer_provider.dart';
 import '../../models/invoice.dart';
 import '../../models/order.dart';
 import '../../models/customer.dart';
-import '../../core/theme.dart';
+import '../../core/app_theme.dart';
 import '../../core/constants.dart';
 
 class InvoiceListScreen extends StatefulWidget {
@@ -113,9 +113,9 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
                 ),
               ...orders.take(10).map((order) => ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: AppTheme.successGreen.withOpacity(0.1),
+                  backgroundColor: const Color(0xFF27AE60).withOpacity(0.1),
                   child: Text('${AppConstants.formatCurrency(order.total)}',
-                      style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.successGreen)),
+                      style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF27AE60))),
                 ),
                 title: Text('Order #${order.id.substring(0, 8).toUpperCase()}',
                     style: GoogleFonts.poppins(fontWeight: FontWeight.w500, fontSize: 14)),
@@ -246,7 +246,7 @@ class _InvoiceCardState extends State<_InvoiceCard> {
               ),
               ListTile(
                 leading: const CircleAvatar(
-                  backgroundColor: AppTheme.spiceOrange,
+                  backgroundColor: AppColors.orange,
                   child: Icon(Icons.share, color: Colors.white),
                 ),
                 title: Text('Share / Open', style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
@@ -259,7 +259,7 @@ class _InvoiceCardState extends State<_InvoiceCard> {
               ),
               ListTile(
                 leading: const CircleAvatar(
-                  backgroundColor: AppTheme.spiceBrown,
+                  backgroundColor: AppColors.brown,
                   child: Icon(Icons.print, color: Colors.white),
                 ),
                 title: Text('Print', style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
@@ -280,10 +280,10 @@ class _InvoiceCardState extends State<_InvoiceCard> {
 
   Color _statusColor(String status) {
     switch (status) {
-      case 'Paid': return AppTheme.successGreen;
+      case 'Paid': return const Color(0xFF27AE60);
       case 'Sent': return Colors.blue;
       case 'Draft': return Colors.grey;
-      case 'Cancelled': return AppTheme.dangerRed;
+      case 'Cancelled': return AppColors.red;
       default: return Colors.grey;
     }
   }
@@ -376,7 +376,7 @@ class _InvoiceCardState extends State<_InvoiceCard> {
                       label: Text(_generating ? 'Generating...' : 'Generate PDF', style: const TextStyle(fontSize: 12)),
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(0, 34),
-                        backgroundColor: AppTheme.spiceOrange,
+                        backgroundColor: AppColors.orange,
                       ),
                     ),
                   ),
@@ -384,14 +384,14 @@ class _InvoiceCardState extends State<_InvoiceCard> {
                 const SizedBox(width: 8),
                 if (invoice.status == 'Sent')
                   Material(
-                    color: AppTheme.successGreen.withOpacity(0.1),
+                    color: const Color(0xFF27AE60).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                     child: InkWell(
                       onTap: () => context.read<InvoiceProvider>().updateStatus(invoice.id, 'Paid'),
                       borderRadius: BorderRadius.circular(8),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        child: Text('Mark Paid', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.successGreen)),
+                        child: Text('Mark Paid', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: const Color(0xFF27AE60))),
                       ),
                     ),
                   ),

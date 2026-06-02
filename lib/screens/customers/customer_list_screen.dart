@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../providers/customer_provider.dart';
 import '../../providers/business_provider.dart';
 import '../../models/customer.dart';
-import '../../core/theme.dart';
+import '../../core/app_theme.dart';
 
 class CustomerListScreen extends StatefulWidget {
   const CustomerListScreen({super.key});
@@ -106,12 +106,12 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
               margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               child: ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: AppTheme.spiceOrange.withOpacity(0.1),
+                  backgroundColor: AppColors.orange.withOpacity(0.1),
                   child: Text(
                     customer.name.isNotEmpty ? customer.name[0].toUpperCase() : '?',
                     style: GoogleFonts.poppins(
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.spiceOrange,
+                      color: AppColors.orange,
                     ),
                   ),
                 ),
@@ -310,7 +310,7 @@ class _CustomerFormSheetState extends State<_CustomerFormSheet> {
                   context.read<CustomerProvider>().deleteCustomer(widget.customer!.id);
                   Navigator.pop(context);
                 },
-                style: OutlinedButton.styleFrom(foregroundColor: AppTheme.dangerRed),
+                style: OutlinedButton.styleFrom(foregroundColor: AppColors.red),
                 child: const Text('Delete'),
               ),
             ],

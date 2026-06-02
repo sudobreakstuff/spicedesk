@@ -5,7 +5,7 @@ import '../../providers/pos_provider.dart';
 import '../../providers/product_provider.dart';
 import '../../providers/business_provider.dart';
 import '../../providers/order_provider.dart';
-import '../../core/theme.dart';
+import '../../core/app_theme.dart';
 import '../../core/constants.dart';
 
 class PosScreen extends StatefulWidget {
@@ -211,7 +211,7 @@ class _PosScreenState extends State<PosScreen> {
                     const SizedBox(width: 8),
                     Text(
                       AppConstants.formatCurrency(item.lineTotal),
-                      style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.spiceOrange),
+                      style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.orange),
                     ),
                     const SizedBox(width: 4),
                     IconButton(
@@ -260,7 +260,7 @@ class _PosScreenState extends State<PosScreen> {
               if (provider.discount > 0)
                 _summaryRow('Discount', '-${AppConstants.formatCurrency(provider.discount)}'),
               const Divider(height: 16),
-              _summaryRow('Total', AppConstants.formatCurrency(provider.total), bold: true, color: AppTheme.spiceOrange),
+              _summaryRow('Total', AppConstants.formatCurrency(provider.total), bold: true, color: AppColors.orange),
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -336,7 +336,7 @@ class _PosScreenState extends State<PosScreen> {
           builder: (_, provider, __) => Text('Checkout — ${AppConstants.formatCurrency(provider.total)}'),
         ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppTheme.successGreen,
+          backgroundColor: const Color(0xFF27AE60),
           minimumSize: const Size(double.infinity, 56),
         ),
       ),
@@ -370,7 +370,7 @@ class _PosScreenState extends State<PosScreen> {
 
     if (createdOrder == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to save order'), backgroundColor: AppTheme.dangerRed),
+        const SnackBar(content: Text('Failed to save order'), backgroundColor: AppColors.red),
       );
       return;
     }
@@ -387,7 +387,7 @@ class _PosScreenState extends State<PosScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.check_circle, size: 56, color: AppTheme.successGreen),
+                const Icon(Icons.check_circle, size: 56, color: const Color(0xFF27AE60)),
                 const SizedBox(height: 12),
                 Text('Sale Complete!', style: GoogleFonts.playfairDisplay(fontSize: 24, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 4),
@@ -396,13 +396,13 @@ class _PosScreenState extends State<PosScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppTheme.spiceOrange.withOpacity(0.05),
+                    color: AppColors.orange.withOpacity(0.05),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
                     children: [
                       Text('Total: ${AppConstants.formatCurrency(p.total)}',
-                          style: GoogleFonts.poppins(fontSize: 28, fontWeight: FontWeight.bold, color: AppTheme.spiceOrange)),
+                          style: GoogleFonts.poppins(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.orange)),
                       const SizedBox(height: 4),
                       Text('Paid via ${p.paymentMethod}', style: GoogleFonts.poppins(color: Colors.grey[600])),
                       const SizedBox(height: 2),
@@ -488,7 +488,7 @@ class _PosScreenState extends State<PosScreen> {
               context.read<PosProvider>().clear();
               Navigator.pop(ctx);
             },
-            style: TextButton.styleFrom(foregroundColor: AppTheme.dangerRed),
+            style: TextButton.styleFrom(foregroundColor: AppColors.red),
             child: const Text('Clear'),
           ),
         ],
@@ -521,10 +521,10 @@ class _ProductGridTile extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: AppTheme.spiceOrange.withOpacity(0.1),
+                  color: AppColors.orange.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.spa_rounded, size: 20, color: AppTheme.spiceOrange),
+                child: const Icon(Icons.spa_rounded, size: 20, color: AppColors.orange),
               ),
               const SizedBox(height: 6),
               Text(
@@ -537,10 +537,10 @@ class _ProductGridTile extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 AppConstants.formatCurrency(product.price is double ? product.price as double : 0),
-                style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.spiceOrange),
+                style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.orange),
               ),
               if (product.stockQty is int && (product.stockQty as int) <= 5)
-                Text('${product.stockQty} left', style: GoogleFonts.poppins(fontSize: 9, color: AppTheme.dangerRed)),
+                Text('${product.stockQty} left', style: GoogleFonts.poppins(fontSize: 9, color: AppColors.red)),
             ],
           ),
         ),

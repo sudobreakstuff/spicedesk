@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../providers/order_provider.dart';
 import '../../providers/business_provider.dart';
 import '../../models/order.dart';
-import '../../core/theme.dart';
+import '../../core/app_theme.dart';
 import '../../core/constants.dart';
 
 class OrderListScreen extends StatefulWidget {
@@ -70,13 +70,13 @@ class _OrderListScreenState extends State<OrderListScreen> {
                     label: const Text('All'),
                     selected: provider.orders.isEmpty || true,
                     onSelected: (_) { provider.setStatusFilter(null); Navigator.pop(ctx); },
-                    selectedColor: AppTheme.spiceOrange.withOpacity(0.2),
+                    selectedColor: AppColors.orange.withOpacity(0.2),
                   ),
                   ...AppConstants.orderStatuses.map((s) => ChoiceChip(
                     label: Text(s),
                     selected: provider.orders.any((o) => o.status == s),
                     onSelected: (_) { provider.setStatusFilter(s); Navigator.pop(ctx); },
-                    selectedColor: AppTheme.spiceOrange.withOpacity(0.2),
+                    selectedColor: AppColors.orange.withOpacity(0.2),
                   )),
                 ],
               ),
@@ -89,7 +89,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
                   label: Text(t),
                   selected: false,
                   onSelected: (_) { provider.setTypeFilter(t); Navigator.pop(ctx); },
-                  selectedColor: AppTheme.spiceOrange.withOpacity(0.2),
+                  selectedColor: AppColors.orange.withOpacity(0.2),
                 )).toList(),
               ),
               const SizedBox(height: 16),
@@ -165,12 +165,12 @@ class _OrderCardState extends State<_OrderCard> {
 
   Color _statusColor(String status) {
     switch (status) {
-      case 'Completed': return AppTheme.successGreen;
-      case 'Cancelled': return AppTheme.dangerRed;
-      case 'Pending': return AppTheme.spiceYellow;
-      case 'Preparing': return AppTheme.spiceOrange;
+      case 'Completed': return const Color(0xFF27AE60);
+      case 'Cancelled': return AppColors.red;
+      case 'Pending': return AppColors.yellow;
+      case 'Preparing': return AppColors.orange;
       case 'Ready': return Colors.blue;
-      case 'Delivered': return AppTheme.spiceBrown;
+      case 'Delivered': return AppColors.brown;
       default: return Colors.grey;
     }
   }
@@ -228,7 +228,7 @@ class _OrderCardState extends State<_OrderCard> {
                     style: GoogleFonts.poppins(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
-                      color: AppTheme.spiceOrange,
+                      color: AppColors.orange,
                     ),
                   ),
                 ],
@@ -272,7 +272,7 @@ class _OrderCardState extends State<_OrderCard> {
                       child: _StatusActionButton(
                         order: order,
                         label: 'Complete',
-                        color: AppTheme.successGreen,
+                        color: const Color(0xFF27AE60),
                         onTap: () => context.read<OrderProvider>().updateStatus(order.id, 'Completed'),
                       ),
                     ),
@@ -281,7 +281,7 @@ class _OrderCardState extends State<_OrderCard> {
                       child: _StatusActionButton(
                         order: order,
                         label: 'Cancel',
-                        color: AppTheme.dangerRed,
+                        color: AppColors.red,
                         onTap: () => context.read<OrderProvider>().updateStatus(order.id, 'Cancelled'),
                       ),
                     ),

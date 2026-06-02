@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/product_provider.dart';
 import '../../providers/business_provider.dart';
 import '../../models/product.dart';
-import '../../core/theme.dart';
+import '../../core/app_theme.dart';
 
 class ProductFormScreen extends StatefulWidget {
   final Product? product;
@@ -102,7 +102,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       if (result == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(provider.error ?? 'Failed to save'), backgroundColor: AppTheme.dangerRed),
+            SnackBar(content: Text(provider.error ?? 'Failed to save'), backgroundColor: AppColors.red),
           );
         }
         return;
@@ -264,8 +264,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                 OutlinedButton(
                   onPressed: () => _confirmDelete(),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppTheme.dangerRed,
-                    side: const BorderSide(color: AppTheme.dangerRed),
+                    foregroundColor: AppColors.red,
+                    side: const BorderSide(color: AppColors.red),
                   ),
                   child: const Text('Delete Product'),
                 ),
@@ -291,7 +291,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
               Navigator.pop(ctx);
               Navigator.pop(context);
             },
-            style: TextButton.styleFrom(foregroundColor: AppTheme.dangerRed),
+            style: TextButton.styleFrom(foregroundColor: AppColors.red),
             child: const Text('Delete'),
           ),
         ],

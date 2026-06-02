@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../providers/product_provider.dart';
 import '../../providers/business_provider.dart';
 import '../../models/product.dart';
-import '../../core/theme.dart';
+import '../../core/app_theme.dart';
 import '../../core/constants.dart';
 import 'product_form_screen.dart';
 
@@ -115,11 +115,11 @@ class _ProductListScreenState extends State<ProductListScreen> {
           ),
           child: Row(
             children: [
-              _statChip('All', '${provider.totalProducts}', AppTheme.spiceOrange),
+              _statChip('All', '${provider.totalProducts}', AppColors.orange),
               const SizedBox(width: 8),
-              _statChip('Low', '${provider.lowStockCount}', AppTheme.spiceYellow),
+              _statChip('Low', '${provider.lowStockCount}', AppColors.yellow),
               const SizedBox(width: 8),
-              _statChip('Out', '${provider.outOfStockCount}', AppTheme.dangerRed),
+              _statChip('Out', '${provider.outOfStockCount}', AppColors.red),
               if (provider.showLowStockOnly)
                 Padding(
                   padding: const EdgeInsets.only(left: 4),
@@ -215,7 +215,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                 SwitchListTile(
                   title: Text('Low Stock Only', style: GoogleFonts.poppins()),
                   value: provider.showLowStockOnly,
-                  activeColor: AppTheme.spiceOrange,
+                  activeColor: AppColors.orange,
                   onChanged: (_) => provider.toggleLowStockOnly(),
                   contentPadding: EdgeInsets.zero,
                 ),
@@ -229,14 +229,14 @@ class _ProductListScreenState extends State<ProductListScreen> {
                       label: const Text('All'),
                       selected: provider.categoryFilter == null,
                       onSelected: (_) => provider.setCategoryFilter(null),
-                      selectedColor: AppTheme.spiceOrange.withOpacity(0.2),
+                      selectedColor: AppColors.orange.withOpacity(0.2),
                     ),
                     ...provider.categories.map(
                       (cat) => ChoiceChip(
                         label: Text(cat.name),
                         selected: provider.categoryFilter == cat.id,
                         onSelected: (_) => provider.setCategoryFilter(cat.id),
-                        selectedColor: AppTheme.spiceOrange.withOpacity(0.2),
+                        selectedColor: AppColors.orange.withOpacity(0.2),
                       ),
                     ),
                   ],
@@ -294,10 +294,10 @@ class _ProductCard extends StatelessWidget {
                 height: 48,
                 decoration: BoxDecoration(
                   color: product.isOutOfStock
-                      ? AppTheme.dangerRed.withOpacity(0.1)
+                      ? AppColors.red.withOpacity(0.1)
                       : product.isLowStock
-                          ? AppTheme.spiceYellow.withOpacity(0.1)
-                          : AppTheme.spiceOrange.withOpacity(0.1),
+                          ? AppColors.yellow.withOpacity(0.1)
+                          : AppColors.orange.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                     child: Icon(
@@ -305,8 +305,8 @@ class _ProductCard extends StatelessWidget {
                           ? Icons.inventory_2_outlined
                           : Icons.inventory_2,
                   color: product.isOutOfStock
-                      ? AppTheme.dangerRed
-                      : AppTheme.spiceOrange,
+                      ? AppColors.red
+                      : AppColors.orange,
                   size: 24,
                 ),
               ),
@@ -329,7 +329,7 @@ class _ProductCard extends StatelessWidget {
                           AppConstants.formatCurrency(product.price),
                           style: GoogleFonts.poppins(
                             fontWeight: FontWeight.bold,
-                            color: AppTheme.spiceOrange,
+                            color: AppColors.orange,
                             fontSize: 14,
                           ),
                         ),
@@ -355,10 +355,10 @@ class _ProductCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: product.isOutOfStock
-                          ? AppTheme.dangerRed.withOpacity(0.1)
+                          ? AppColors.red.withOpacity(0.1)
                           : product.isLowStock
-                              ? AppTheme.spiceYellow.withOpacity(0.1)
-                              : Colors.green.withOpacity(0.1),
+                              ? AppColors.yellow.withOpacity(0.1)
+                              : const Color(0xFF27AE60).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -367,10 +367,10 @@ class _ProductCard extends StatelessWidget {
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: product.isOutOfStock
-                            ? AppTheme.dangerRed
+                            ? AppColors.red
                             : product.isLowStock
-                                ? AppTheme.spiceBrown
-                                : AppTheme.successGreen,
+                                ? AppColors.brown
+                                : const Color(0xFF27AE60),
                       ),
                     ),
                   ),
@@ -403,7 +403,7 @@ class _ProductCard extends StatelessWidget {
           width: 28,
           height: 28,
           alignment: Alignment.center,
-          child: Icon(icon, size: 16, color: AppTheme.spiceBrown),
+          child: Icon(icon, size: 16, color: AppColors.brown),
         ),
       ),
     );

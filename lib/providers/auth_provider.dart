@@ -71,10 +71,6 @@ class AuthProvider extends ChangeNotifier {
       );
 
       if (response.user != null) {
-        await _authService.saveCredentialsForBiometrics(
-          email: email,
-          password: password,
-        );
         _status = AuthStatus.needsSetup;
         _loading = false;
         notifyListeners();
@@ -103,11 +99,6 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       await _authService.signInWithEmail(
-        email: email,
-        password: password,
-      );
-
-      await _authService.saveCredentialsForBiometrics(
         email: email,
         password: password,
       );

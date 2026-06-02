@@ -1,95 +1,80 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../providers/theme_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/business_provider.dart';
-import '../../core/theme.dart';
-import '../../core/config.dart';
-import '../../core/constants.dart';
 import '../../providers/product_provider.dart';
+import '../../providers/customer_provider.dart';
 import '../../providers/order_provider.dart';
+import '../../core/app_theme.dart';
 import '../pos/pos_screen.dart';
 import '../inventory/product_list_screen.dart';
 import '../customers/customer_list_screen.dart';
 import '../orders/order_list_screen.dart';
 import '../invoices/invoice_list_screen.dart';
+import '../settings/settings_screen.dart';
+import 'product_form_screen_redirect.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
-
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  int _currentIndex = 0;
+  int _tab = 0;
+
+  void switchToTab(int tab) {
+    setState(() => _tab = tab);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final businessProvider = context.watch<BusinessProvider>();
-    final business = businessProvider.business;
+    final tm = context.watch<ThemeProvider>();
+    final bp = context.watch<BusinessProvider>();
+    final business = bp.business;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(business?.name ?? 'SpiceDesk'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () {},
-          ),
-        ],
       ),
-      drawer: _buildDrawer(context),
-      body: _buildBody(_currentIndex),
+      drawer: _Drawer(onNavigate: (index) { Navigator.pop(context); setState(() => _tab = index); }),
+      body: _body(),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (index) {
-          setState(() => _currentIndex = index);
-        },
-        backgroundColor: Colors.white,
-        indicatorColor: AppTheme.spiceOrange.withOpacity(0.15),
+        selectedIndex: _tab,
+        onDestinationSelected: (i) => setState(() => _tab = i),
+        backgroundColor: tm.isDark ? AppColors.surfaceDark : Colors.white,
+        indicatorColor: AppColors.orange.withValues(alpha: 0.12),
         destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.dashboard_outlined),
-            selectedIcon: Icon(Icons.dashboard, color: AppTheme.spiceOrange),
-            label: 'Home',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.point_of_sale_outlined),
-            selectedIcon:
-                Icon(Icons.point_of_sale, color: AppTheme.spiceOrange),
-            label: 'POS',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.inventory_2_outlined),
-            selectedIcon:
-                Icon(Icons.inventory_2, color: AppTheme.spiceOrange),
-            label: 'Stock',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.people_outline),
-            selectedIcon: Icon(Icons.people, color: AppTheme.spiceOrange),
-            label: 'Customers',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.receipt_long_outlined),
-            selectedIcon:
-                Icon(Icons.receipt_long, color: AppTheme.spiceOrange),
-            label: 'Orders',
-          ),
+          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home, color: AppColors.orange), label: 'Home'),
+          NavigationDestination(icon: Icon(Icons.point_of_sale_outlined), selectedIcon: Icon(Icons.point_of_sale, color: AppColors.orange), label: 'POS'),
+          NavigationDestination(icon: Icon(Icons.inventory_2_outlined), selectedIcon: Icon(Icons.inventory_2, color: AppColors.orange), label: 'Stock'),
+          NavigationDestination(icon: Icon(Icons.people_outline), selectedIcon: Icon(Icons.people, color: AppColors.orange), label: 'Customers'),
+          NavigationDestination(icon: Icon(Icons.receipt_long_outlined), selectedIcon: Icon(Icons.receipt_long, color: AppColors.orange), label: 'Orders'),
         ],
       ),
     );
   }
 
-  Widget _buildDrawer(BuildContext context) {
-    final authProvider = context.watch<AuthProvider>();
-    final businessProvider = context.watch<BusinessProvider>();
-    final business = businessProvider.business;
+  Widget _body() => switch (_tab) {
+    0 => const _HomeTab(),
+    1 => const PosScreen(),
+    2 => const ProductListScreen(),
+    3 => const CustomerListScreen(),
+    4 => const OrderListScreen(),
+    _ => const _HomeTab(),
+  };
+}
+
+class _Drawer extends StatelessWidget {
+  final Function(int) onNavigate;
+  const _Drawer({required this.onNavigate});
+
+  @override
+  Widget build(BuildContext context) {
+    final bp = context.watch<BusinessProvider>();
+    final ap = context.watch<AuthProvider>();
 
     return Drawer(
       child: SafeArea(
@@ -97,167 +82,47 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppTheme.spiceOrange, AppTheme.spiceBrown],
-                ),
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [AppColors.orange, AppColors.brown]),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Icon(
-                      Icons.spa_rounded,
-                      size: 32,
-                      color: AppTheme.spiceOrange,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    business?.name ?? 'SpiceDesk',
-                    style: GoogleFonts.playfairDisplay(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    authProvider.userEmail ?? '',
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: Colors.white.withOpacity(0.8),
-                    ),
-                  ),
-                ],
-              ),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Container(width: 48, height: 48, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+                    child: const Icon(Icons.spa_rounded, size: 28, color: AppColors.orange)),
+                const SizedBox(height: 14),
+                Text(bp.business?.name ?? 'SpiceDesk', style: GoogleFonts.playfairDisplay(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                const SizedBox(height: 2),
+                Text(ap.userEmail ?? '', style: GoogleFonts.poppins(fontSize: 12, color: Colors.white.withValues(alpha: 0.8))),
+              ]),
             ),
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                children: [
-                  _drawerItem(
-                    icon: Icons.dashboard_outlined,
-                    title: 'Dashboard',
-                    onTap: () {
-                      Navigator.pop(context);
-                      setState(() => _currentIndex = 0);
-                    },
-                  ),
-                  _drawerItem(
-                    icon: Icons.point_of_sale_outlined,
-                    title: 'Point of Sale',
-                    onTap: () {
-                      Navigator.pop(context);
-                      setState(() => _currentIndex = 1);
-                    },
-                  ),
-                  _drawerItem(
-                    icon: Icons.inventory_2_outlined,
-                    title: 'Inventory',
-                    onTap: () {
-                      Navigator.pop(context);
-                      setState(() => _currentIndex = 2);
-                    },
-                  ),
-                  _drawerItem(
-                    icon: Icons.people_outline,
-                    title: 'Customers',
-                    onTap: () {
-                      Navigator.pop(context);
-                      setState(() => _currentIndex = 3);
-                    },
-                  ),
-                  _drawerItem(
-                    icon: Icons.receipt_long_outlined,
-                    title: 'Orders',
-                    onTap: () {
-                      Navigator.pop(context);
-                      setState(() => _currentIndex = 4);
-                    },
-                  ),
-                  const Divider(),
-                  _drawerItem(
-                    icon: Icons.description_outlined,
-                    title: 'Invoices',
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const InvoiceListScreen()));
-                    },
-                  ),
-                  _drawerItem(
-                    icon: Icons.money_off_outlined,
-                    title: 'Expenses',
-                    onTap: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                  _drawerItem(
-                    icon: Icons.account_balance_outlined,
-                    title: 'Bank Accounts',
-                    onTap: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                  _drawerItem(
-                    icon: Icons.bar_chart_outlined,
-                    title: 'Reports',
-                    onTap: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                  const Divider(),
-                  _drawerItem(
-                    icon: Icons.print_outlined,
-                    title: 'Printers',
-                    onTap: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                  _drawerItem(
-                    icon: Icons.settings_outlined,
-                    title: 'Settings',
-                    onTap: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                ],
-              ),
+              child: ListView(padding: const EdgeInsets.symmetric(vertical: 8), children: [
+                _item(Icons.dashboard_outlined, 'Dashboard', () => onNavigate(0)),
+                _item(Icons.point_of_sale_outlined, 'Point of Sale', () => onNavigate(1)),
+                _item(Icons.inventory_2_outlined, 'Inventory', () => onNavigate(2)),
+                _item(Icons.people_outline, 'Customers', () => onNavigate(3)),
+                _item(Icons.receipt_long_outlined, 'Orders', () => onNavigate(4)),
+                const Divider(),
+                _item(Icons.description_outlined, 'Invoices', () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const InvoiceListScreen())); }),
+                _item(Icons.money_off_outlined, 'Expenses', () { Navigator.pop(context); _showComingSoon(context, 'Expenses'); }),
+                _item(Icons.account_balance_outlined, 'Bank Accounts', () { Navigator.pop(context); _showComingSoon(context, 'Bank'); }),
+                _item(Icons.bar_chart_outlined, 'Reports', () { Navigator.pop(context); _showComingSoon(context, 'Reports'); }),
+                const Divider(),
+                _item(Icons.settings_outlined, 'Settings', () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen())); }),
+              ]),
             ),
             const Divider(),
             ListTile(
-              leading: const Icon(Icons.logout, color: AppTheme.dangerRed),
-              title: Text(
-                'Sign Out',
-                style: GoogleFonts.poppins(color: AppTheme.dangerRed),
-              ),
+              leading: const Icon(Icons.logout, color: AppColors.red),
+              title: Text('Sign Out', style: GoogleFonts.poppins(color: AppColors.red)),
               onTap: () async {
-                await authProvider.signOut();
-                if (context.mounted) {
-                  Navigator.of(context).pushNamedAndRemoveUntil(
-                    '/login',
-                    (route) => false,
-                  );
-                }
+                await ap.signOut();
+                if (context.mounted) Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
               },
             ),
             Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                'SpiceDesk v${AppConfig.appVersion}\n${AppConfig.appTagline}',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  fontSize: 11,
-                  color: Colors.grey[500],
-                ),
-              ),
+              padding: const EdgeInsets.all(14),
+              child: Text('Built by Shahid Singh', textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey.shade500, fontStyle: FontStyle.italic)),
             ),
           ],
         ),
@@ -265,334 +130,149 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _drawerItem({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
+  Widget _item(IconData icon, String title, VoidCallback onTap) {
     return ListTile(
-      leading: Icon(icon, color: AppTheme.spiceBrown),
-      title: Text(
-        title,
-        style: GoogleFonts.poppins(
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-      onTap: onTap,
-      dense: true,
+      leading: Icon(icon),
+      title: Text(title, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500)),
+      onTap: onTap, dense: true,
     );
   }
 
-  Widget _buildBody(int index) {
-    switch (index) {
-      case 0:
-        return _DashboardHome();
-      case 1:
-        return const PosScreen();
-      case 2:
-        return const ProductListScreen();
-      case 3:
-        return const CustomerListScreen();
-      case 4:
-        return const OrderListScreen();
-      default:
-        return _DashboardHome();
-    }
+  void _showComingSoon(BuildContext context, String feature) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$feature — coming soon'), behavior: SnackBarBehavior.floating));
   }
 }
 
-class _DashboardHome extends StatelessWidget {
+class _HomeTab extends StatelessWidget {
+  const _HomeTab();
+
   @override
   Widget build(BuildContext context) {
-    final businessProvider = context.watch<BusinessProvider>();
-    final business = businessProvider.business;
+    final tm = context.watch<ThemeProvider>();
+    final bp = context.watch<BusinessProvider>();
     final orderProvider = context.watch<OrderProvider>();
     final productProvider = context.watch<ProductProvider>();
+    final customerProvider = context.watch<CustomerProvider>();
+    final business = bp.business;
+    final isDark = tm.isDark;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Good ${_getGreeting()},',
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
-          ),
-          Text(
-            business?.name ?? 'Welcome',
-            style: GoogleFonts.playfairDisplay(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.darkSpice,
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          Row(
-            children: [
-              Expanded(
-                child: _StatCard(
-                  title: 'Today\'s Sales',
-                  value: AppConstants.formatCurrency(orderProvider.totalSalesToday),
-                  icon: Icons.trending_up,
-                  color: AppTheme.successGreen,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _StatCard(
-                  title: 'Total Orders',
-                  value: '${orderProvider.totalOrders}',
-                  icon: Icons.receipt_long,
-                  color: AppTheme.dangerRed,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _StatCard(
-                  title: 'Products',
-                  value: '${productProvider.totalProducts}',
-                  icon: Icons.inventory_2,
-                  color: AppTheme.spiceOrange,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _StatCard(
-                  title: 'Low Stock',
-                  value: '${productProvider.lowStockCount}',
-                  icon: Icons.warning_amber,
-                  color: AppTheme.spiceBrown,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          Text(
-            'Quick Actions',
-            style: GoogleFonts.poppins(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.darkSpice,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _QuickAction(
-                icon: Icons.point_of_sale,
-                label: 'New Sale',
-                color: AppTheme.successGreen,
-                onTap: () {},
-              ),
-              _QuickAction(
-                icon: Icons.add_shopping_cart,
-                label: 'Add Product',
-                color: AppTheme.spiceOrange,
-                onTap: () {},
-              ),
-              _QuickAction(
-                icon: Icons.person_add,
-                label: 'Add Customer',
-                color: AppTheme.spiceBrown,
-                onTap: () {},
-              ),
-              _QuickAction(
-                icon: Icons.money_off,
-                label: 'Add Expense',
-                color: AppTheme.dangerRed,
-                onTap: () {},
-              ),
-              _QuickAction(
-                icon: Icons.description,
-                label: 'New Invoice',
-                color: AppTheme.spiceYellow,
-                onTap: () {},
-              ),
-              _QuickAction(
-                icon: Icons.qr_code_scanner,
-                label: 'Scan Barcode',
-                color: AppTheme.darkSpice,
-                onTap: () {},
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          Text(
-            'Recent Orders',
-            style: GoogleFonts.poppins(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.darkSpice,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          Container(
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey.shade200),
-            ),
-            child: Column(
-              children: [
-                Icon(Icons.receipt_long, size: 48, color: Colors.grey[400]),
-                const SizedBox(height: 12),
-                Text(
-                  'No orders yet',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: Colors.grey[500],
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Sales will appear here',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: Colors.grey[400],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          Center(
-            child: Text(
-              'Built by Shahid Singh',
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: Colors.grey[400],
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-        ],
-      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(_greeting(), style: GoogleFonts.poppins(fontSize: 14, color: isDark ? Colors.grey.shade400 : Colors.grey.shade600)),
+        Text(business?.name ?? 'Welcome', style: GoogleFonts.playfairDisplay(fontSize: 26, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppColors.brownDark)),
+        const SizedBox(height: 20),
+        Row(children: [
+          Expanded(child: _statCard(context, 'Today\'s Sales', 'R ${orderProvider.totalSalesToday.toStringAsFixed(2)}', Icons.trending_up, AppColors.orange)),
+          const SizedBox(width: 10),
+          Expanded(child: _statCard(context, 'Orders', '${orderProvider.totalOrders}', Icons.receipt_long, Colors.teal)),
+        ]),
+        const SizedBox(height: 10),
+        Row(children: [
+          Expanded(child: _statCard(context, 'Products', '${productProvider.totalProducts}', Icons.inventory_2, Colors.blue)),
+          const SizedBox(width: 10),
+          Expanded(child: _statCard(context, 'Customers', '${customerProvider.totalCustomers}', Icons.people, Colors.purple)),
+        ]),
+        const SizedBox(height: 20),
+        Text('Quick Actions', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: isDark ? Colors.white : AppColors.brownDark)),
+        const SizedBox(height: 10),
+        Wrap(spacing: 8, runSpacing: 8, children: [
+          _quickAction(Icons.point_of_sale, 'New Sale', AppColors.orange, () {
+            _switchTab(context, 1);
+          }),
+          _quickAction(Icons.add_shopping_cart, 'Add Product', Colors.blue, () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const ProductFormScreenRedirect()));
+          }),
+          _quickAction(Icons.person_add, 'Add Customer', Colors.purple, () {
+            _switchTab(context, 3);
+          }),
+          _quickAction(Icons.money_off, 'Add Expense', AppColors.red, () {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Expenses — coming soon'), behavior: SnackBarBehavior.floating));
+          }),
+          _quickAction(Icons.description, 'New Invoice', Colors.teal, () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const InvoiceListScreen()));
+          }),
+          _quickAction(Icons.bar_chart, 'Reports', AppColors.brown, () {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Reports — coming soon'), behavior: SnackBarBehavior.floating));
+          }),
+        ]),
+        const SizedBox(height: 24),
+        Text('Quick Settings', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: isDark ? Colors.white : AppColors.brownDark)),
+        const SizedBox(height: 10),
+        Card(
+          child: Column(children: [
+            _settingsTile(Icons.palette, 'Theme', AppThemeModeExt.label(tm.mode), () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
+            }),
+            const Divider(height: 1, indent: 56),
+            _settingsTile(Icons.store, 'Shop', business?.name ?? 'Not set', () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
+            }),
+            const Divider(height: 1, indent: 56),
+            _settingsTile(Icons.policy, 'VAT Rate', '${((business?.vatRate ?? 0.15) * 100).toStringAsFixed(0)}%', () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
+            }),
+          ]),
+        ),
+        const SizedBox(height: 32),
+      ]),
     );
   }
 
-  String _getGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) return 'Morning';
-    if (hour < 17) return 'Afternoon';
-    return 'Evening';
-  }
-}
+  String _greeting() => switch (DateTime.now().hour) { < 12 => 'Good Morning', < 17 => 'Good Afternoon', _ => 'Good Evening' };
 
-class _StatCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final IconData icon;
-  final Color color;
-
-  const _StatCard({
-    required this.title,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _statCard(BuildContext context, String label, String value, IconData icon, Color color) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? AppColors.cardDark : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: isDark ? AppColors.surfaceDark : Colors.grey.shade200),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
-              ),
-              Icon(icon, size: 20, color: color),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: GoogleFonts.poppins(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.darkSpice,
-            ),
-          ),
-        ],
-      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Text(label, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500)),
+          Icon(icon, size: 18, color: color),
+        ]),
+        const SizedBox(height: 8),
+        Text(value, style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppColors.brownDark)),
+      ]),
     );
   }
-}
 
-class _QuickAction extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _QuickAction({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _quickAction(IconData icon, String label, Color color, VoidCallback onTap) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         child: Container(
           width: 100,
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            children: [
-              Icon(icon, color: color, size: 28),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: color,
-                ),
-              ),
-            ],
-          ),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
+          decoration: BoxDecoration(color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(14)),
+          child: Column(children: [
+            Icon(icon, color: color, size: 24),
+            const SizedBox(height: 6),
+            Text(label, textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w500, color: color)),
+          ]),
         ),
       ),
     );
   }
+
+  Widget _settingsTile(IconData icon, String title, String subtitle, VoidCallback onTap) {
+    return ListTile(
+      leading: CircleAvatar(radius: 18, backgroundColor: AppColors.orange.withValues(alpha: 0.1), child: Icon(icon, size: 18, color: AppColors.orange)),
+      title: Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.w500, fontSize: 14)),
+      subtitle: Text(subtitle, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey)),
+      trailing: const Icon(Icons.chevron_right, size: 18),
+      onTap: onTap,
+    );
+  }
+}
+
+void _switchTab(BuildContext context, int tab) {
+  final state = context.findAncestorStateOfType<_DashboardScreenState>();
+  state?.switchToTab(tab);
 }
