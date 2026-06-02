@@ -5,6 +5,8 @@ import '../../providers/auth_provider.dart';
 import '../../providers/business_provider.dart';
 import '../../core/theme.dart';
 import '../../core/config.dart';
+import '../pos/pos_screen.dart';
+import '../inventory/product_list_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -280,17 +282,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       case 0:
         return _DashboardHome();
       case 1:
-        return _PlaceholderTab(
-          icon: Icons.point_of_sale,
-          title: 'Point of Sale',
-          subtitle: 'Coming in Phase 2',
-        );
+        return const PosScreen();
       case 2:
-        return _PlaceholderTab(
-          icon: Icons.inventory_2,
-          title: 'Inventory',
-          subtitle: 'Coming in Phase 2',
-        );
+        return const ProductListScreen();
       case 3:
         return _PlaceholderTab(
           icon: Icons.people,
@@ -301,7 +295,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         return _PlaceholderTab(
           icon: Icons.receipt_long,
           title: 'Orders',
-          subtitle: 'Coming in Phase 4',
+          subtitle: 'Coming in Phase 3',
         );
       default:
         return _DashboardHome();
