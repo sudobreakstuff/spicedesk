@@ -15,72 +15,43 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-  late final Animation<double> _fade;
+  late final _ctrl = AnimationController(duration: const Duration(milliseconds: 1000), vsync: this);
+  late final _fade = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeIn));
 
   @override
   void initState() {
-    super.initState();
-    _ctrl = AnimationController(duration: const Duration(milliseconds: 1200), vsync: this);
-    _fade = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeIn));
-    _ctrl.forward();
-    _init();
+    super.initState(); _ctrl.forward(); _init();
   }
+
+  @override
+  void dispose() { _ctrl.dispose(); super.dispose(); }
 
   Future<void> _init() async {
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
     final ap = context.read<AuthProvider>();
     final bp = context.read<BusinessProvider>();
-
-    if (!ap.isLoggedIn) {
-      _go(const LoginScreen());
-      return;
-    }
+    if (!ap.isLoggedIn) { _go(const LoginScreen()); return; }
     await bp.loadBusiness();
     if (!mounted) return;
-    if (bp.hasBusiness) {
-      _go(const DashboardScreen());
-    } else {
-      _go(const BusinessSetupScreen());
-    }
+    _go(bp.business != null ? const DashboardScreen() : const BusinessSetupScreen());
   }
 
-  void _go(Widget screen) {
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(pageBuilder: (_, __, ___) => screen, transitionDuration: const Duration(milliseconds: 400), transitionsBuilder: (_, a, __, child) => FadeTransition(opacity: a, child: child)),
-    );
-  }
+  void _go(Widget s) => Navigator.of(context).pushReplacement(PageRouteBuilder(pageBuilder: (_, __, ___) => s, transitionDuration: const Duration(milliseconds: 300), transitionsBuilder: (_, a, __, c) => FadeTransition(opacity: a, child: c)));
 
   @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [AppColors.orange, AppColors.brown, AppColors.brownDark])),
-        child: Center(
-          child: FadeTransition(
-            opacity: _fade,
-            child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-              Container(
-                width: 90, height: 90,
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(22), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 20, offset: const Offset(0, 8))]),
-                child: const Icon(Icons.spa_rounded, size: 48, color: AppColors.orange),
-              ),
-              const SizedBox(height: 20),
-              Text('SpiceDesk', style: GoogleFonts.playfairDisplay(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.white)),
-              const SizedBox(height: 6),
-              Text('Business Suite', style: GoogleFonts.poppins(fontSize: 13, color: Colors.white.withValues(alpha: 0.8))),
-              const SizedBox(height: 4),
-              Text('Built by Shahid Singh', style: GoogleFonts.poppins(fontSize: 11, color: Colors.white.withValues(alpha: 0.6), fontStyle: FontStyle.italic)),
-              const SizedBox(height: 40),
-              SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white.withValues(alpha: 0.8)))),
-            ]),
-          ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Scaffold(
+    body: Container(
+      decoration: const BoxDecoration(color: SpiceColors.primary),
+      child: Center(child: FadeTransition(opacity: _fade, child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Container(width: 72, height: 72, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18)), child: const Center(child: Text('SD', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: SpiceColors.primary, letterSpacing: -1)))),
+        const SizedBox(height: 16),
+        Text('SpiceDesk', style: GoogleFonts.inter(fontSize: 26, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: -0.5)),
+        const SizedBox(height: 4),
+        Text('Business Suite', style: GoogleFonts.inter(fontSize: 13, color: Colors.white70)),
+        const SizedBox(height: 28),
+        SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white.withValues(alpha: 0.7))),
+      ]))),
+    ),
+  );
 }
