@@ -3,12 +3,27 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthService extends ChangeNotifier {
   final SupabaseClient _client;
-  AuthService(this._client);
+  AuthService(this._client) {
+    _client.auth.onAuthStateChange.listen((event) {
+      notifyListeners();
+    });
+  }
 
   User? get currentUser => _client.auth.currentUser;
   bool get isLoggedIn => currentUser != null;
   String? get userId => currentUser?.id;
   String? get userEmail => currentUser?.email;
+
+  Future<String?> tryGetUserId() async {
+    if (currentUser != null) return currentUser!.id;
+    try {
+      await _client.auth.refreshSession();
+      return currentUser?.id;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Stream<AuthState> get authStateChanges => _client.auth.onAuthStateChange;
 
   Future<AuthResponse> signUpWithEmail({required String email, required String password, required String name}) async {
@@ -24,9 +39,12 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<bool> signInWithGoogle() async {
-    await _client.auth.signInWithOAuth(OAuthProvider.google);
-    notifyListeners();
-    return true;
+    final result = await _client.auth.signInWithOAuth(
+      OAuthProvider.google,
+      redirectTo: 'com.shahidsingh.spicedesk://login-callback',
+    );
+    if (result) notifyListeners();
+    return result;
   }
 
   Future<void> signOut() async {

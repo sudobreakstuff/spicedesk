@@ -22,7 +22,9 @@ class BusinessProvider extends ChangeNotifier {
   bool get hasBusiness => _business != null;
 
   Future<void> loadBusiness() async {
-    final uid = _auth.userId; if (uid == null) return;
+    String? uid = _auth.userId;
+    if (uid == null) uid = await _auth.tryGetUserId();
+    if (uid == null) return;
     _loading = true; notifyListeners();
     _business = await _svc.getBusiness(uid);
     if (_business != null) { _pCats = await _svc.getCategories(_business!.id, 'product'); _eCats = await _svc.getCategories(_business!.id, 'expense'); }
@@ -30,7 +32,9 @@ class BusinessProvider extends ChangeNotifier {
   }
 
   Future<void> createBusiness({required String name, String? address, String? phone, String? email, String? vatNumber, double? vatRate}) async {
-    final uid = _auth.userId; if (uid == null) return;
+    String? uid = _auth.userId;
+    if (uid == null) uid = await _auth.tryGetUserId();
+    if (uid == null) { _error = 'Not signed in. Please log in again.'; notifyListeners(); return; }
     _loading = true; _error = null; notifyListeners();
     try {
       _business = await _svc.createBusiness(ownerId: uid, name: name, address: address, phone: phone, email: email, vatNumber: vatNumber, vatRate: vatRate ?? 0.15);
