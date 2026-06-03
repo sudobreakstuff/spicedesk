@@ -41,35 +41,22 @@ class SpiceDeskApp extends StatelessWidget {
     }
     final s = Supabase.instance.client;
     final themeProvider = ThemeProvider();
-    return CupertinoApp(
-      debugShowCheckedModeBanner: false,
-      theme: GlassTheme.lightTheme,
-      home: _Providers(
-        authService: authService!, businessService: businessService!, supabase: s, themeProvider: themeProvider,
-        child: const SplashScreen(),
-      ),
-    );
-  }
-}
-
-class _Providers extends StatelessWidget {
-  final AuthService authService; final BusinessService businessService; final SupabaseClient supabase; final ThemeProvider themeProvider; final Widget child;
-  const _Providers({required this.authService, required this.businessService, required this.supabase, required this.themeProvider, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: themeProvider),
-        ChangeNotifierProvider(create: (_) => AuthProvider(authService)),
-        ChangeNotifierProvider(create: (_) => BusinessProvider(businessService, authService)),
-        ChangeNotifierProvider(create: (_) => ProductProvider(ProductService(supabase: supabase), businessService)),
+        ChangeNotifierProvider(create: (_) => AuthProvider(authService!)),
+        ChangeNotifierProvider(create: (_) => BusinessProvider(businessService!, authService!)),
+        ChangeNotifierProvider(create: (_) => ProductProvider(ProductService(supabase: s), businessService!)),
         ChangeNotifierProvider(create: (_) => PosProvider()),
-        ChangeNotifierProvider(create: (_) => CustomerProvider(CustomerService(supabase: supabase))),
-        ChangeNotifierProvider(create: (_) => OrderProvider(OrderService(supabase: supabase, productService: ProductService(supabase: supabase)))),
-        ChangeNotifierProvider(create: (_) => InvoiceProvider(InvoiceService(supabase: supabase))),
+        ChangeNotifierProvider(create: (_) => CustomerProvider(CustomerService(supabase: s))),
+        ChangeNotifierProvider(create: (_) => OrderProvider(OrderService(supabase: s, productService: ProductService(supabase: s)))),
+        ChangeNotifierProvider(create: (_) => InvoiceProvider(InvoiceService(supabase: s))),
       ],
-      child: child,
+      child: CupertinoApp(
+        debugShowCheckedModeBanner: false,
+        theme: GlassTheme.lightTheme,
+        home: const SplashScreen(),
+      ),
     );
   }
 }
