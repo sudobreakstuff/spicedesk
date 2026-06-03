@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/widgets/glass_widgets.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../auth/domain/auth_state.dart';
 import '../../../workspace/domain/workspace_state.dart';
 
@@ -24,10 +25,157 @@ class DashboardShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authStateProvider).user;
     final workspace = ref.watch(workspaceStateProvider);
+    final displayName =
+        user?.userMetadata?['name'] as String? ?? user?.email ?? 'User';
+    final initials = _initials(displayName);
 
     return GlassScaffold(
       appBar: GlassAppBar(
-        title: Text(workspace.selectedName ?? 'SpiceDesk'),
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 12),
+          child: PopupMenuButton<String>(
+            offset: const Offset(0, 48),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            color: SpiceColors.surfaceAlt,
+            itemBuilder: (ctx) => [
+              PopupMenuItem(
+                enabled: false,
+                height: 56,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [SpiceColors.primary, Color(0xFFA78BFA)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        initials,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            displayName,
+                            style: const TextStyle(
+                              color: SpiceColors.textPrimary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            user?.email ?? '',
+                            style: const TextStyle(
+                              color: SpiceColors.textSecondary,
+                              fontSize: 12,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const PopupMenuDivider(height: 1),
+              const PopupMenuItem(
+                enabled: false,
+                height: 32,
+                child: Text(
+                  'Made by Shahid Singh',
+                  style: TextStyle(
+                    color: SpiceColors.textSecondary,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+              const PopupMenuDivider(height: 1),
+              PopupMenuItem(
+                value: 'signout',
+                child: const Row(
+                  children: [
+                    Icon(Icons.logout_rounded,
+                        color: SpiceColors.danger, size: 18),
+                    SizedBox(width: 10),
+                    Text('Sign Out',
+                        style: TextStyle(color: SpiceColors.danger)),
+                  ],
+                ),
+                onTap: () => ref.read(authStateProvider.notifier).logout(),
+              ),
+            ],
+            child: Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [SpiceColors.primary, Color(0xFFA78BFA)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                initials,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+        ),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(workspace.selectedName ?? 'SpiceDesk'),
+            if (workspace.selectedId != null) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: SpiceColors.accent.withAlpha(25),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: SpiceColors.accent.withAlpha(60),
+                    width: 0.5,
+                  ),
+                ),
+                child: const Text(
+                  'ACTIVE',
+                  style: TextStyle(
+                    color: SpiceColors.accent,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
         actions: [
           if (workspace.selectedId != null)
             IconButton(
@@ -35,24 +183,6 @@ class DashboardShell extends ConsumerWidget {
               tooltip: 'Switch workspace',
               onPressed: () => context.go('/workspace'),
             ),
-          PopupMenuButton(
-            itemBuilder: (context) => <PopupMenuEntry<void>>[
-              PopupMenuItem(
-                child: Text(user?.email ?? 'User'),
-                enabled: false,
-              ),
-              const PopupMenuDivider(),
-              const PopupMenuItem(
-                child: Text('Made by Shahid Singh'),
-                enabled: false,
-              ),
-              const PopupMenuDivider(),
-              PopupMenuItem(
-                child: const Text('Sign Out'),
-                onTap: () => ref.read(authStateProvider.notifier).logout(),
-              ),
-            ],
-          ),
         ],
       ),
       body: child,
@@ -83,5 +213,13 @@ class DashboardShell extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  String _initials(String name) {
+    final parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return name.isNotEmpty ? name[0].toUpperCase() : '?';
   }
 }

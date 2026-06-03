@@ -2,19 +2,19 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
-/// A frosted glass container with backdrop blur — the core glassmorphism widget.
+/// Frosted glass card with inner highlight and gradient border.
 class GlassCard extends StatelessWidget {
   final Widget? child;
   final EdgeInsetsGeometry? padding;
   final EdgeInsetsGeometry? margin;
   final BorderRadiusGeometry? borderRadius;
   final Color? backgroundColor;
-  final Border? border;
   final double blur;
   final VoidCallback? onTap;
   final double? width;
   final double? height;
   final BoxConstraints? constraints;
+  final List<BoxShadow>? shadows;
 
   const GlassCard({
     super.key,
@@ -23,44 +23,71 @@ class GlassCard extends StatelessWidget {
     this.margin,
     this.borderRadius,
     this.backgroundColor,
-    this.border,
-    this.blur = 10,
+    this.blur = 12,
     this.onTap,
     this.width,
     this.height,
     this.constraints,
+    this.shadows,
   });
 
   @override
   Widget build(BuildContext context) {
-    final card = ClipRRect(
-      borderRadius: borderRadius ?? BorderRadius.circular(16),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-        child: Container(
-          width: width,
-          height: height,
-          constraints: constraints,
-          padding: padding ?? const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: backgroundColor ?? SpiceColors.glassSurface,
-            borderRadius: borderRadius ?? BorderRadius.circular(16),
-            border: border ??
-                Border.all(color: SpiceColors.glassBorder, width: 0.5),
+    final radius = borderRadius ?? BorderRadius.circular(18);
+    final card = Container(
+      width: width,
+      height: height,
+      constraints: constraints,
+      margin: margin,
+      decoration: BoxDecoration(
+        borderRadius: radius,
+        boxShadow: shadows ??
+            [
+              BoxShadow(
+                color: Colors.black.withAlpha(40),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+      ),
+      child: ClipRRect(
+        borderRadius: radius,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+          child: Container(
+            padding: padding,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white.withAlpha(14),
+                  Colors.white.withAlpha(4),
+                ],
+              ),
+              borderRadius: radius,
+              border: Border.all(
+                color: Colors.white.withAlpha(20),
+                width: 0.5,
+              ),
+            ),
+            child: child,
           ),
-          child: child,
         ),
       ),
     );
 
     if (onTap != null) {
-      return GestureDetector(onTap: onTap, child: card);
+      return GestureDetector(
+        onTap: onTap,
+        child: card,
+      );
     }
     return card;
   }
 }
 
-/// A glass-styled bottom navigation bar.
+/// Pill-styled selected indicator bottom navigation bar.
 class GlassBottomBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
@@ -76,53 +103,86 @@ class GlassBottomBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
         child: Container(
           decoration: BoxDecoration(
-            color: SpiceColors.glassSurface,
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.white.withAlpha(10),
+                SpiceColors.surfaceAlt.withAlpha(240),
+              ],
+            ),
             border: Border(
-              top: BorderSide(color: SpiceColors.glassBorder, width: 0.5),
+              top: BorderSide(
+                color: Colors.white.withAlpha(15),
+                width: 0.5,
+              ),
             ),
           ),
           child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+            child: SizedBox(
+              height: 64,
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: List.generate(items.length, (i) {
                   final item = items[i];
                   final selected = i == currentIndex;
                   return Expanded(
-                    child: InkWell(
+                    child: GestureDetector(
                       onTap: () => onTap(i),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              selected ? item.activeIcon : item.icon,
-                              size: 22,
+                      behavior: HitTestBehavior.opaque,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 250),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: selected ? 16 : 0,
+                              vertical: selected ? 6 : 0,
+                            ),
+                            decoration: BoxDecoration(
                               color: selected
-                                  ? SpiceColors.primary
-                                  : SpiceColors.textSecondary,
+                                  ? SpiceColors.primary.withAlpha(30)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(20),
+                              border: selected
+                                  ? Border.all(
+                                      color: SpiceColors.primary
+                                          .withAlpha(80),
+                                      width: 0.5,
+                                    )
+                                  : null,
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              item.label,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight:
-                                    selected ? FontWeight.w600 : FontWeight.w400,
-                                color: selected
-                                    ? SpiceColors.primary
-                                    : SpiceColors.textSecondary,
-                              ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  selected
+                                      ? item.activeIcon
+                                      : item.icon,
+                                  size: selected ? 18 : 22,
+                                  color: selected
+                                      ? SpiceColors.primary
+                                      : SpiceColors.textSecondary,
+                                ),
+                                if (selected) ...[
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    item.label,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: SpiceColors.primary,
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                   );
@@ -148,13 +208,11 @@ class GlassBottomBarItem {
   }) : activeIcon = activeIcon ?? icon;
 }
 
-/// A glass-styled app bar.
 class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Widget? title;
   final List<Widget>? actions;
   final Widget? leading;
   final bool centerTitle;
-  final double elevation;
 
   const GlassAppBar({
     super.key,
@@ -162,7 +220,6 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.actions,
     this.leading,
     this.centerTitle = false,
-    this.elevation = 0,
   });
 
   @override
@@ -176,13 +233,25 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
           leading: leading,
           centerTitle: false,
           elevation: 0,
-          backgroundColor: SpiceColors.surface.withAlpha(180),
+          scrolledUnderElevation: 0,
+          backgroundColor: SpiceColors.surface.withAlpha(170),
           foregroundColor: SpiceColors.textPrimary,
           surfaceTintColor: Colors.transparent,
-          titleTextStyle: TextStyle(
+          titleTextStyle: const TextStyle(
             color: SpiceColors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.w600,
+            letterSpacing: -0.3,
+          ),
+          flexibleSpace: Container(
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: Colors.white.withAlpha(10),
+                  width: 0.5,
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -193,7 +262,6 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }
 
-/// A glass-styled scaffold that applies backdrop blur to the app bar area.
 class GlassScaffold extends StatelessWidget {
   final PreferredSizeWidget? appBar;
   final Widget? body;
@@ -218,11 +286,11 @@ class GlassScaffold extends StatelessWidget {
       body: body,
       bottomNavigationBar: bottomNavigationBar,
       floatingActionButton: floatingActionButton,
+      extendBody: true,
     );
   }
 }
 
-/// A glass-styled dialog.
 class GlassDialog extends StatelessWidget {
   final Widget? title;
   final Widget? content;
@@ -238,14 +306,17 @@ class GlassDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(24),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
         child: AlertDialog(
-          backgroundColor: SpiceColors.surfaceAlt.withAlpha(220),
+          backgroundColor: SpiceColors.surfaceAlt.withAlpha(230),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: BorderSide(color: SpiceColors.glassBorder, width: 0.5),
+            borderRadius: BorderRadius.circular(24),
+            side: BorderSide(
+              color: Colors.white.withAlpha(25),
+              width: 0.5,
+            ),
           ),
           title: title,
           content: content,

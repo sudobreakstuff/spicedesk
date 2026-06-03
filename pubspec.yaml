@@ -29,8 +29,8 @@ dependencies:
 
   # Printing — Niimbot B21 thermal label printer (BLE)
   # Printing — Niimbot B21 label printer (BLE)
-  # ESC/POS receipt printing is handled via a custom lightweight service
   niim_blue_flutter: ^1.0.1
+  flutter_blue_plus: ^1.36.8
 
   # Charts
   fl_chart: ^0.69.2
