@@ -14,6 +14,7 @@ import '../inventory/product_list_screen.dart';
 import '../customers/customer_list_screen.dart';
 import '../orders/order_list_screen.dart';
 import '../invoices/invoice_list_screen.dart';
+import '../stock/raw_material_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -90,6 +91,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             _item(Icons.receipt_long_outlined, 'Orders', () { Navigator.pop(context); setState(() => _tab = 4); }),
             const Divider(),
             _item(Icons.description_outlined, 'Invoices', () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const InvoiceListScreen())); }),
+            _item(Icons.grain, 'Raw Stock', () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const RawMaterialScreen())); }),
             _item(Icons.account_balance_wallet_outlined, 'Expenses', () { Navigator.pop(context); _snack('Coming soon'); }),
             _item(Icons.analytics_outlined, 'Reports', () { Navigator.pop(context); _snack('Coming soon'); }),
             const Divider(),
@@ -153,7 +155,7 @@ class _HomeTab extends StatelessWidget {
       Row(children: [
         Expanded(child: _Act(Icons.person_add, 'Add Customer', Colors.purple, () => _t(context, 3))),
         const SizedBox(width: 8),
-        Expanded(child: _Act(Icons.description_outlined, 'Invoices', Colors.teal, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const InvoiceListScreen())))),
+        Expanded(child: _Act(Icons.grain, 'Raw Stock', Colors.orange, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RawMaterialScreen())))),
       ]),
       const SizedBox(height: 24),
       // Theme toggle

@@ -30,6 +30,7 @@ class DatabaseService {
     await db.execute('CREATE TABLE bank_accounts (id TEXT PRIMARY KEY, business_id TEXT NOT NULL, account_name TEXT NOT NULL, bank_name TEXT NOT NULL, account_number TEXT NOT NULL, account_type TEXT, balance REAL DEFAULT 0, created_at TEXT NOT NULL)');
     await db.execute('CREATE TABLE bank_transactions (id TEXT PRIMARY KEY, account_id TEXT NOT NULL, business_id TEXT NOT NULL, amount REAL NOT NULL, transaction_type TEXT NOT NULL, description TEXT, reference TEXT, transaction_date TEXT NOT NULL, created_at TEXT NOT NULL)');
     await db.execute('CREATE TABLE sync_log (id TEXT PRIMARY KEY, business_id TEXT NOT NULL, table_name TEXT NOT NULL, record_id TEXT NOT NULL, action TEXT NOT NULL, synced INTEGER DEFAULT 0, created_at TEXT NOT NULL)');
+    await db.execute('CREATE TABLE raw_materials (id TEXT PRIMARY KEY, business_id TEXT NOT NULL, name TEXT NOT NULL, quantity REAL DEFAULT 0, unit TEXT DEFAULT \'kg\', cost_per_unit REAL DEFAULT 0, reorder_level REAL DEFAULT 0, supplier TEXT, notes TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)');
   }
 
   static Future<List<Map<String, dynamic>>> query(String sql, [List<Object?>? args]) async {

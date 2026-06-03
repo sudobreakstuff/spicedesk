@@ -27,7 +27,7 @@ class ProductService {
     return Product.fromMap(rows.first);
   }
 
-  Future<Product> createProduct({required String businessId, String? categoryId, required String name, String? description, required double price, required double costPrice, double stockQty = 0, String? unit, double? lowStockThreshold, String? barcode, String? imagePath, bool active = true}) async {
+  Future<Product> createProduct({required String businessId, String? categoryId, required String name, String? description, required double price, required double costPrice, int stockQty = 0, String? unit, double? lowStockThreshold, String? barcode, String? imagePath, bool active = true}) async {
     final id = _uuid.v4();
     final now = DateTime.now();
     final product = Product(id: id, businessId: businessId, categoryId: categoryId, name: name, description: description, price: price, costPrice: costPrice, stockQty: stockQty, unit: unit, lowStockThreshold: lowStockThreshold, barcode: barcode, imagePath: imagePath, active: active, createdAt: now, updatedAt: now);
@@ -47,7 +47,7 @@ class ProductService {
   Future<Product> adjustStock(String id, double newQty) async {
     final product = await getProduct(id);
     if (product == null) throw Exception('Product not found');
-    final updated = product.copyWith(stockQty: newQty, updatedAt: DateTime.now());
+    final updated = product.copyWith(stockQty: newQty.toInt(), updatedAt: DateTime.now());
     await DatabaseService.update('products', updated.toMap(), where: 'id = ?', whereArgs: [id]);
     final supabase = _supabase;
     if (supabase != null) { try { await supabase.from('products').update(updated.toMap()).eq('id', id); } catch (_) {} }

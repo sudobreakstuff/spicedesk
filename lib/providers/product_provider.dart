@@ -40,7 +40,7 @@ class ProductProvider extends ChangeNotifier {
 
   Future<Product?> createProduct({required String businessId, String? categoryId, required String name, String? description, required double price, double costPrice = 0, int stockQty = 0, int lowStockThreshold = 5, String? barcode}) async {
     try {
-      final p = await _svc.createProduct(businessId: businessId, categoryId: categoryId, name: name, description: description, price: price, costPrice: costPrice, stockQty: stockQty.toDouble(), lowStockThreshold: lowStockThreshold.toDouble(), barcode: barcode);
+      final p = await _svc.createProduct(businessId: businessId, categoryId: categoryId, name: name, description: description, price: price, costPrice: costPrice, stockQty: stockQty, lowStockThreshold: lowStockThreshold.toDouble(), barcode: barcode);
       _products.add(p); notifyListeners(); return p;
     } catch (e) { _error = e.toString(); notifyListeners(); return null; }
   }

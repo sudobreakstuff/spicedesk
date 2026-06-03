@@ -6,7 +6,7 @@ class Product {
   final String? description;
   final double price;
   final double costPrice;
-  final double stockQty;
+  final int stockQty;
   final String? unit;
   final double? lowStockThreshold;
   final String? barcode;
@@ -42,7 +42,7 @@ class Product {
       description: map['description'] as String?,
       price: (map['price'] as num).toDouble(),
       costPrice: (map['cost_price'] as num).toDouble(),
-      stockQty: (map['stock_qty'] as num?)?.toDouble() ?? 0,
+      stockQty: (map['stock_qty'] as num?)?.toInt() ?? 0,
       unit: map['unit'] as String?,
       lowStockThreshold: (map['low_stock_threshold'] as num?)?.toDouble(),
       barcode: map['barcode'] as String?,
@@ -81,7 +81,7 @@ class Product {
     String? description,
     double? price,
     double? costPrice,
-    double? stockQty,
+    int? stockQty,
     String? unit,
     double? lowStockThreshold,
     String? barcode,
