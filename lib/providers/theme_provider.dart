@@ -1,32 +1,20 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../core/app_theme.dart';
 
 class ThemeProvider extends ChangeNotifier {
-  AppThemeMode _mode = AppThemeMode.light;
-
-  AppThemeMode get mode => _mode;
-  bool get isDark => _mode == AppThemeMode.dark;
+  bool _isDark = false;
+  bool get isDark => _isDark;
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
-    _mode = prefs.getString('theme') == 'dark' ? AppThemeMode.dark : AppThemeMode.light;
+    _isDark = prefs.getString('theme') == 'dark';
     notifyListeners();
   }
 
   Future<void> toggle() async {
-    _mode = _mode == AppThemeMode.dark ? AppThemeMode.light : AppThemeMode.dark;
+    _isDark = !_isDark;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('theme', _mode == AppThemeMode.dark ? 'dark' : 'light');
+    await prefs.setString('theme', _isDark ? 'dark' : 'light');
     notifyListeners();
   }
-
-  Future<void> setMode(AppThemeMode mode) async {
-    _mode = mode;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('theme', mode == AppThemeMode.dark ? 'dark' : 'light');
-    notifyListeners();
-  }
-
-  ThemeData theme() => AppTheme.build(_mode);
 }

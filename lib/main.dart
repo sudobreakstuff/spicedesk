@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/config.dart';
-import 'core/app_theme.dart';
+import 'core/glass_theme.dart';
 import 'services/auth_service.dart';
 import 'services/business_service.dart';
 import 'services/product_service.dart';
@@ -21,57 +21,55 @@ import 'screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  AuthService? authService;
-  BusinessService? businessService;
+  AuthService? authService; BusinessService? businessService;
   if (AppConfig.isSupabaseConfigured) {
     await Supabase.initialize(url: AppConfig.supabaseUrl, anonKey: AppConfig.supabaseAnonKey);
-    final supabase = Supabase.instance.client;
-    authService = AuthService(supabase);
-    businessService = BusinessService(supabase: supabase);
+    final s = Supabase.instance.client;
+    authService = AuthService(s); businessService = BusinessService(supabase: s);
   }
-  final themeProvider = ThemeProvider();
-  await themeProvider.load();
-  runApp(SpiceDeskApp(authService: authService, businessService: businessService, themeProvider: themeProvider));
+  runApp(SpiceDeskApp(authService: authService, businessService: businessService));
 }
 
 class SpiceDeskApp extends StatelessWidget {
-  final AuthService? authService;
-  final BusinessService? businessService;
-  final ThemeProvider themeProvider;
-  const SpiceDeskApp({super.key, this.authService, this.businessService, required this.themeProvider});
+  final AuthService? authService; final BusinessService? businessService;
+  const SpiceDeskApp({super.key, this.authService, this.businessService});
 
   @override
   Widget build(BuildContext context) {
     if (authService == null || businessService == null) {
-      return MaterialApp(title: AppConfig.appName, theme: AppTheme.build(AppThemeMode.light), debugShowCheckedModeBanner: false, home: const _MissingConfig());
+      return CupertinoApp(home: CupertinoPageScaffold(child: Center(child: Text('Not configured'))), debugShowCheckedModeBanner: false);
     }
     final s = Supabase.instance.client;
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider.value(value: themeProvider),
-        ChangeNotifierProvider(create: (_) => AuthProvider(authService!)),
-        ChangeNotifierProvider(create: (_) => BusinessProvider(businessService!, authService!)),
-        ChangeNotifierProvider(create: (_) => ProductProvider(ProductService(supabase: s), businessService!)),
-        ChangeNotifierProvider(create: (_) => PosProvider()),
-        ChangeNotifierProvider(create: (_) => CustomerProvider(CustomerService(supabase: s))),
-        ChangeNotifierProvider(create: (_) => OrderProvider(OrderService(supabase: s, productService: ProductService(supabase: s)))),
-        ChangeNotifierProvider(create: (_) => InvoiceProvider(InvoiceService(supabase: s))),
-      ],
-      child: Consumer<ThemeProvider>(
-        builder: (_, theme, __) => MaterialApp(
-          title: AppConfig.appName,
-          theme: theme.theme(),
-          darkTheme: AppTheme.build(AppThemeMode.dark),
-          debugShowCheckedModeBanner: false,
-          home: const SplashScreen(),
-        ),
+    final themeProvider = ThemeProvider();
+    return CupertinoApp(
+      debugShowCheckedModeBanner: false,
+      theme: GlassTheme.lightTheme,
+      home: _Providers(
+        authService: authService!, businessService: businessService!, supabase: s, themeProvider: themeProvider,
+        child: const SplashScreen(),
       ),
     );
   }
 }
 
-class _MissingConfig extends StatelessWidget {
-  const _MissingConfig();
+class _Providers extends StatelessWidget {
+  final AuthService authService; final BusinessService businessService; final SupabaseClient supabase; final ThemeProvider themeProvider; final Widget child;
+  const _Providers({required this.authService, required this.businessService, required this.supabase, required this.themeProvider, required this.child});
+
   @override
-  Widget build(BuildContext context) => Scaffold(body: Center(child: Text('Supabase not configured', style: TextStyle(color: SpiceColors.textSecondary))));
+  Widget build(BuildContext context) {
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: themeProvider),
+        ChangeNotifierProvider(create: (_) => AuthProvider(authService)),
+        ChangeNotifierProvider(create: (_) => BusinessProvider(businessService, authService)),
+        ChangeNotifierProvider(create: (_) => ProductProvider(ProductService(supabase: supabase), businessService)),
+        ChangeNotifierProvider(create: (_) => PosProvider()),
+        ChangeNotifierProvider(create: (_) => CustomerProvider(CustomerService(supabase: supabase))),
+        ChangeNotifierProvider(create: (_) => OrderProvider(OrderService(supabase: supabase, productService: ProductService(supabase: supabase)))),
+        ChangeNotifierProvider(create: (_) => InvoiceProvider(InvoiceService(supabase: supabase))),
+      ],
+      child: child,
+    );
+  }
 }

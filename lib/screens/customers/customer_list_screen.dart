@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
+import 'dart:ui';
+import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../providers/customer_provider.dart';
 import '../../providers/business_provider.dart';
-import '../../core/app_theme.dart';
+import '../../core/glass_theme.dart';
 
 class CustomerListScreen extends StatefulWidget {
   const CustomerListScreen({super.key});
@@ -13,186 +13,132 @@ class CustomerListScreen extends StatefulWidget {
 }
 
 class _CustomerListScreenState extends State<CustomerListScreen> {
-  final _search = TextEditingController();
+  void _load() { final b = context.read<BusinessProvider>().business; if (b != null) context.read<CustomerProvider>().loadCustomers(b.id); }
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final b = context.read<BusinessProvider>().business;
-      if (b != null) context.read<CustomerProvider>().loadCustomers(b.id);
-    });
-  }
+  void initState() { super.initState(); WidgetsBinding.instance.addPostFrameCallback((_) => _load()); }
 
   @override
-  void dispose() { _search.dispose(); super.dispose(); }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext c) {
     final cp = context.watch<CustomerProvider>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Scaffold(
-      body: Column(children: [
-        Padding(
-          padding: const EdgeInsets.all(14),
-          child: TextField(
-            controller: _search,
-            style: TextStyle(fontSize: 13, color: isDark ? SpiceColors.darkText : SpiceColors.textPrimary),
-            decoration: InputDecoration(hintText: 'Search customers...', prefixIcon: const Icon(Icons.search, size: 18), contentPadding: const EdgeInsets.symmetric(vertical: 10), isDense: true, suffixIcon: _search.text.isNotEmpty ? IconButton(icon: const Icon(Icons.clear, size: 16), onPressed: () { _search.clear(); cp.setSearchQuery(null); }) : null),
-            onChanged: (v) => cp.setSearchQuery(v.isEmpty ? null : v),
+    return CupertinoPageScaffold(
+      navigationBar: CupertinoNavigationBar(middle: const Text('Customers'), trailing: CupertinoButton(padding: EdgeInsets.zero, child: const Icon(CupertinoIcons.person_add), onPressed: () => _showForm())),
+      child: SafeArea(
+        child: Column(children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 6),
+            child: Container(decoration: GlassTheme.glassCard(c.isGlassDark), child: ClipRRect(borderRadius: BorderRadius.circular(12), child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8), child: CupertinoSearchTextField(placeholder: 'Search customers...', onChanged: (v) => cp.setSearchQuery(v.isEmpty ? null : v))))),
           ),
-        ),
-        // Header
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          color: isDark ? SpiceColors.darkSurface : SpiceColors.surfaceAlt,
-          child: Row(children: [
-            const SizedBox(width: 36),
-            const Expanded(flex: 2, child: Text('Name', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: SpiceColors.textSecondary, letterSpacing: 0.5))),
-            const Expanded(flex: 2, child: Text('Phone', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: SpiceColors.textSecondary, letterSpacing: 0.5))),
-            const SizedBox(width: 44),
-          ]),
-        ),
-        Expanded(
-          child: cp.loading && cp.customers.isEmpty
-            ? const Center(child: CircularProgressIndicator())
-            : cp.customers.isEmpty
-              ? _empty(context)
-              : ListView.builder(
-                  itemCount: cp.customers.length,
-                  itemBuilder: (_, i) => _CustomerRow(customer: cp.customers[i]),
-                ),
-        ),
-      ]),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showForm(),
-        icon: const Icon(Icons.person_add, size: 18),
-        label: const Text('Add Customer', style: TextStyle(fontSize: 12)),
+          Container(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8), color: c.isGlassDark ? const Color(0x33000000) : const Color(0x33C7C7CC), child: Row(children: const [SizedBox(width: 36), Expanded(flex: 2, child: Text('Name', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: GlassColors.lightText2))), Expanded(flex: 2, child: Text('Phone', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: GlassColors.lightText2))), SizedBox(width: 40)])),
+          Expanded(
+            child: cp.loading && cp.customers.isEmpty ? const Center(child: CupertinoActivityIndicator()) :
+              cp.customers.isEmpty ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Icon(CupertinoIcons.person_2, size: 40, color: c.glassText3), const SizedBox(height: 10),
+                const Text('No customers', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 10), CupertinoButton.filled(child: const Text('Add Customer'), onPressed: () => _showForm()),
+              ])) :
+              ListView.builder(itemCount: cp.customers.length, itemBuilder: (_, i) => _Row(customer: cp.customers[i], onTap: () => _showForm(customer: cp.customers[i]), onReload: _load)),
+          ),
+        ]),
       ),
     );
   }
 
-  Widget _empty(BuildContext context) => Center(
-    child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-      Container(width: 56, height: 56, decoration: BoxDecoration(color: SpiceColors.primaryBg, borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.people_outline, color: SpiceColors.primaryLight, size: 28)),
-      const SizedBox(height: 12),
-      Text('No customers', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600)),
-      const SizedBox(height: 12),
-      ElevatedButton(onPressed: () => _showForm(), child: const Text('Add Customer')),
-    ]),
-  );
-
   void _showForm({dynamic customer}) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(14))),
-      builder: (ctx) => _CustomerForm(customer: customer),
-    ).then((_) { final b = context.read<BusinessProvider>().business; if (b != null) context.read<CustomerProvider>().loadCustomers(b.id); });
+    showCupertinoModalPopup(context: context, builder: (_) => _Form(customer: customer)).then((_) => _load());
   }
 }
 
-class _CustomerRow extends StatelessWidget {
-  final dynamic customer;
-  const _CustomerRow({required this.customer});
-
+class _Row extends StatelessWidget {
+  final dynamic customer; final VoidCallback onTap; final VoidCallback onReload;
+  const _Row({required this.customer, required this.onTap, required this.onReload});
   @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+  Widget build(BuildContext c) {
     final phone = customer.phone as String?;
-    return InkWell(
-      onTap: () {
-        final listScreen = context.findAncestorStateOfType<_CustomerListScreenState>();
-        listScreen?._showForm(customer: customer);
-      },
+    return CupertinoButton(
+      padding: EdgeInsets.zero, alignment: Alignment.centerLeft, onPressed: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: isDark ? SpiceColors.darkBorder : SpiceColors.cardBorder))),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: c.glassBorder.withValues(alpha: 0.3), width: 0.5))),
         child: Row(children: [
-          CircleAvatar(radius: 16, backgroundColor: SpiceColors.primaryBg, child: Text('${(customer.name as String)[0]}'.toUpperCase(), style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.primaryLight))),
+          Container(width: 28, height: 28, decoration: BoxDecoration(color: GlassColors.purple.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(14)), child: Center(child: Text((customer.name as String)[0].toUpperCase(), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: GlassColors.purple)))),
           const SizedBox(width: 10),
-          Expanded(flex: 2, child: Text(customer.name as String, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500, color: isDark ? SpiceColors.darkText : SpiceColors.textPrimary))),
-          Expanded(flex: 2, child: Text(phone ?? '—', style: GoogleFonts.inter(fontSize: 12, color: SpiceColors.textSecondary))),
-          if (phone != null)
-            IconButton(icon: Icon(Icons.chat_bubble_outline, size: 18, color: const Color(0xFF25D366)), onPressed: () async {
-              final num = phone.replaceAll(RegExp(r'[^\d]'), '');
-              final uri = Uri.parse('https://wa.me/$num');
-              if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
-            }, padding: EdgeInsets.zero, constraints: const BoxConstraints()),
+          Expanded(flex: 2, child: Text(customer.name ?? '', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: c.glassText))),
+          Expanded(flex: 2, child: Text(phone ?? '—', style: TextStyle(fontSize: 13, color: c.glassText2))),
+          if (phone != null) CupertinoButton(padding: EdgeInsets.zero, child: Icon(CupertinoIcons.chat_bubble, size: 18, color: const Color(0xFF25D366)), onPressed: () async {
+            final num = phone.replaceAll(RegExp(r'[^\d]'), '');
+            final uri = Uri.parse('https://wa.me/$num');
+            if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
+          }),
         ]),
       ),
     );
   }
 }
 
-class _CustomerForm extends StatefulWidget {
+class _Form extends StatefulWidget {
   final dynamic customer;
-  const _CustomerForm({this.customer});
+  const _Form({this.customer});
   @override
-  State<_CustomerForm> createState() => _CustomerFormState();
+  State<_Form> createState() => _FormState();
 }
 
-class _CustomerFormState extends State<_CustomerForm> {
+class _FormState extends State<_Form> {
   final _form = GlobalKey<FormState>();
   final _name = TextEditingController(), _phone = TextEditingController(), _email = TextEditingController(), _address = TextEditingController(), _notes = TextEditingController();
-  bool _saving = false;
+  bool _saving = false; String? _error;
   bool get _edit => widget.customer != null;
 
   @override
-  void initState() {
-    super.initState();
-    if (_edit) { final c = widget.customer!; _name.text = c.name ?? ''; _phone.text = c.phone ?? ''; _email.text = c.email ?? ''; _address.text = c.address ?? ''; _notes.text = c.notes ?? ''; }
-  }
-
+  void initState() { super.initState(); if (_edit) { final c = widget.customer!; _name.text = c.name ?? ''; _phone.text = c.phone ?? ''; _email.text = c.email ?? ''; _address.text = c.address ?? ''; _notes.text = c.notes ?? ''; } }
   @override
   void dispose() { _name.dispose(); _phone.dispose(); _email.dispose(); _address.dispose(); _notes.dispose(); super.dispose(); }
 
   Future<void> _save() async {
     if (!_form.currentState!.validate()) return;
-    setState(() => _saving = true);
+    setState(() { _saving = true; _error = null; });
     final bp = context.read<BusinessProvider>();
-    final cp = context.read<CustomerProvider>();
-    if (bp.business == null) { setState(() => _saving = false); return; }
+    if (bp.business == null) { await bp.loadBusiness(); if (bp.business == null) { setState(() { _saving = false; _error = 'Could not load business. Restart the app.'; }); return; } }
     try {
       if (_edit) {
-        await cp.updateCustomer(widget.customer!.copyWith(name: _name.text.trim(), phone: _phone.text.trim().isEmpty ? null : _phone.text.trim(), email: _email.text.trim().isEmpty ? null : _email.text.trim(), address: _address.text.trim().isEmpty ? null : _address.text.trim(), notes: _notes.text.trim().isEmpty ? null : _notes.text.trim()));
+        await context.read<CustomerProvider>().updateCustomer(widget.customer!.copyWith(name: _name.text.trim(), phone: _phone.text.trim().isEmpty ? null : _phone.text.trim(), email: _email.text.trim().isEmpty ? null : _email.text.trim(), address: _address.text.trim().isEmpty ? null : _address.text.trim(), notes: _notes.text.trim().isEmpty ? null : _notes.text.trim()));
       } else {
-        await cp.createCustomer(businessId: bp.business!.id, name: _name.text.trim(), phone: _phone.text.trim().isEmpty ? null : _phone.text.trim(), email: _email.text.trim().isEmpty ? null : _email.text.trim(), address: _address.text.trim().isEmpty ? null : _address.text.trim(), notes: _notes.text.trim().isEmpty ? null : _notes.text.trim());
+        await context.read<CustomerProvider>().createCustomer(businessId: bp.business!.id, name: _name.text.trim(), phone: _phone.text.trim().isEmpty ? null : _phone.text.trim(), email: _email.text.trim().isEmpty ? null : _email.text.trim(), address: _address.text.trim().isEmpty ? null : _address.text.trim(), notes: _notes.text.trim().isEmpty ? null : _notes.text.trim());
       }
       if (mounted) Navigator.pop(context);
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: SpiceColors.error, behavior: SnackBarBehavior.floating));
-    }
+    } catch (e) { setState(() => _error = e.toString()); }
     setState(() => _saving = false);
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom, left: 20, right: 20, top: 20),
-      child: Form(
-        key: _form,
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Text(_edit ? 'Edit Customer' : 'New Customer', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 16),
-          TextFormField(controller: _name, decoration: const InputDecoration(labelText: 'Full Name'), validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null),
-          const SizedBox(height: 10),
-          TextFormField(controller: _phone, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'Phone (WhatsApp)', hintText: '+27 81 234 5678')),
-          const SizedBox(height: 10),
-          TextFormField(controller: _email, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'Email')),
-          const SizedBox(height: 10),
-          TextFormField(controller: _address, maxLines: 1, decoration: const InputDecoration(labelText: 'Address')),
-          const SizedBox(height: 10),
-          TextFormField(controller: _notes, maxLines: 2, decoration: const InputDecoration(labelText: 'Notes')),
-          const SizedBox(height: 14),
-          ElevatedButton(onPressed: _saving ? null : _save, child: _saving ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : Text(_edit ? 'Update' : 'Save Customer')),
-          if (_edit) ...[
-            const SizedBox(height: 8),
-            OutlinedButton(onPressed: () { context.read<CustomerProvider>().deleteCustomer(widget.customer!.id); Navigator.pop(context); }, style: OutlinedButton.styleFrom(foregroundColor: SpiceColors.error), child: const Text('Delete')),
-          ],
-          const SizedBox(height: 14),
-        ]),
-      ),
-    );
+  Widget build(BuildContext c) => CupertinoPageScaffold(
+    navigationBar: CupertinoNavigationBar(middle: Text(_edit ? 'Edit Customer' : 'New Customer')),
+    child: SafeArea(child: ListView(padding: const EdgeInsets.all(18), children: [
+      if (_error != null) Container(padding: const EdgeInsets.all(12), margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: GlassColors.error.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)), child: Text(_error!, style: const TextStyle(color: GlassColors.error, fontSize: 13))),
+      _field('Full Name', _name, validator: (v) => (v??'').trim().isEmpty ? 'Required' : null),
+      const SizedBox(height: 14),
+      _field('Phone (WhatsApp)', _phone, keyboard: TextInputType.phone, hint: '+27 81 234 5678'),
+      const SizedBox(height: 14),
+      _field('Email', _email, keyboard: TextInputType.emailAddress),
+      const SizedBox(height: 14),
+      _field('Address', _address),
+      const SizedBox(height: 14),
+      _field('Notes', _notes, maxLines: 2),
+      const SizedBox(height: 24),
+      CupertinoButton.filled(onPressed: _saving ? null : _save, child: _saving ? const CupertinoActivityIndicator() : Text(_edit ? 'Update' : 'Save Customer')),
+      if (_edit) ...[const SizedBox(height: 8), CupertinoButton(child: const Text('Delete', style: TextStyle(color: GlassColors.error)), onPressed: () async {
+        final ok = await showCupertinoDialog<bool>(context: c, builder: (_) => CupertinoAlertDialog(title: const Text('Delete?'), actions: [CupertinoDialogAction(child: const Text('Cancel'), onPressed: () => Navigator.pop(_, false)), CupertinoDialogAction(isDestructiveAction: true, child: const Text('Delete'), onPressed: () => Navigator.pop(_, true))]));
+        if (ok == true) { await c.read<CustomerProvider>().deleteCustomer(widget.customer!.id); if (mounted) Navigator.pop(c); }
+      })],
+      const SizedBox(height: 30),
+    ])),
+  );
+
+  Widget _field(String label, TextEditingController ctrl, {TextInputType? keyboard, int maxLines = 1, String? Function(String?)? validator, String? hint}) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(label, style: TextStyle(fontSize: 12, color: context.glassText2)),
+      const SizedBox(height: 4),
+      CupertinoTextFormFieldRow(controller: ctrl, maxLines: maxLines, keyboardType: keyboard, placeholder: hint, style: TextStyle(fontSize: 15, color: context.glassText), validator: validator),
+    ]);
   }
 }
