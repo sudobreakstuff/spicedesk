@@ -51,7 +51,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
             ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [const Icon(Icons.inventory_2_outlined, size: 48, color: Colors.grey), const SizedBox(height: 12), const Text('No products yet', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)), const SizedBox(height: 8), ElevatedButton(onPressed: () => _form(), child: const Text('Add Product'))]))
             : ListView.builder(itemCount: pp.products.length, itemBuilder: (_, i) {
                 final p = pp.products[i];
-                final low = (p.stockQty as int) <= (p.lowStockThreshold as int? ?? 5);
+                final low = (p.stockQty as int) <= ((p.lowStockThreshold as num?)?.toInt() ?? 5);
                 return InkWell(
                   onTap: () => _form(product: p),
                   child: Padding(

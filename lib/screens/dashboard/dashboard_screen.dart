@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
@@ -181,18 +182,31 @@ void _t(BuildContext context, int tab) {
   if (s != null) { s.setState(() { s._tab = tab; }); }
 }
 
+// Glass stat cards
 class _Stat extends StatelessWidget {
   final String label, value; final IconData icon; final Color color;
   const _Stat({required this.label, required this.value, required this.icon, required this.color});
   @override
-  Widget build(BuildContext c) => Card(
-    child: Padding(
-      padding: const EdgeInsets.all(14),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)), Icon(icon, size: 16, color: color)]),
-        const SizedBox(height: 6),
-        Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-      ]),
+  Widget build(BuildContext c) => ClipRRect(
+    borderRadius: BorderRadius.circular(12),
+    child: BackdropFilter(
+      filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+      child: Container(
+        decoration: BoxDecoration(
+          color: (Theme.of(c).brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.7)),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+        ),
+        padding: const EdgeInsets.all(14),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+            Icon(icon, size: 16, color: color),
+          ]),
+          const SizedBox(height: 6),
+          Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+        ]),
+      ),
     ),
   );
 }
@@ -203,10 +217,24 @@ class _Act extends StatelessWidget {
   @override
   Widget build(BuildContext c) => GestureDetector(
     onTap: onTap,
-    child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.grey.shade300)),
-      child: Column(children: [Icon(icon, color: color, size: 22), const SizedBox(height: 6), Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: color), textAlign: TextAlign.center)]),
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+          decoration: BoxDecoration(
+            color: (Theme.of(c).brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.7)),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+          ),
+          child: Column(children: [
+            Icon(icon, color: color, size: 22),
+            const SizedBox(height: 4),
+            Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: color), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
+          ]),
+        ),
+      ),
     ),
   );
 }
