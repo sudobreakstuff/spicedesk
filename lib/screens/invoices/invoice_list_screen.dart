@@ -1,16 +1,14 @@
-import 'dart:ui' show Colors, ImageFilter;
-import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
+import '../../core/theme.dart';
 import '../../providers/invoice_provider.dart';
-import '../../providers/business_provider.dart';
 import '../../providers/order_provider.dart';
+import '../../providers/business_provider.dart';
 import '../../providers/customer_provider.dart';
-import '../../core/glass_theme.dart';
-import '../../core/constants.dart';
+import '../../models/invoice.dart';
+import '../../models/order.dart';
 
 class InvoiceListScreen extends StatefulWidget {
   const InvoiceListScreen({super.key});
@@ -19,86 +17,110 @@ class InvoiceListScreen extends StatefulWidget {
 }
 
 class _InvoiceListScreenState extends State<InvoiceListScreen> {
-  void _load() { final b = context.read<BusinessProvider>().business; if (b != null) context.read<InvoiceProvider>().loadInvoices(b.id); }
+  static final _df = DateFormat('MMM d, HH:mm');
 
   @override
-  void initState() { super.initState(); WidgetsBinding.instance.addPostFrameCallback((_) => _load()); }
-
-  Color _statusColor(String s) => s == 'Paid' ? GlassColors.success : s == 'Sent' ? GlassColors.primary : GlassColors.lightText3;
-
-  @override
-  Widget build(BuildContext c) {
-    final ip = context.watch<InvoiceProvider>();
-    return CupertinoPageScaffold(
-      navigationBar: CupertinoNavigationBar(middle: const Text('Invoices'), trailing: CupertinoButton(padding: EdgeInsets.zero, child: const Icon(CupertinoIcons.add_circled), onPressed: _createFromOrder)),
-      child: SafeArea(
-        child: ip.loading ? const Center(child: CupertinoActivityIndicator()) :
-          ip.invoices.isEmpty ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Icon(CupertinoIcons.doc_richtext, size: 40, color: c.glassText3), const SizedBox(height: 10),
-            const Text('No invoices', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 10), CupertinoButton.filled(child: const Text('Create from Order'), onPressed: _createFromOrder),
-          ])) :
-          ListView.builder(padding: const EdgeInsets.all(12), itemCount: ip.invoices.length, itemBuilder: (_, i) {
-            final inv = ip.invoices[i];
-            return Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              decoration: GlassTheme.glassCard(c.isGlassDark),
-              child: ClipRRect(borderRadius: BorderRadius.circular(14), child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10), child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Row(children: [
-                    Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), decoration: BoxDecoration(color: _statusColor(inv.status).withValues(alpha: 0.15), borderRadius: BorderRadius.circular(6)), child: Text(inv.status, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _statusColor(inv.status)))),
-                    const Spacer(),
-                    Text(inv.invoiceNumber, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: c.glassText)),
-                  ]),
-                  const SizedBox(height: 6),
-                  Text(DateFormat('dd MMM yyyy').format(inv.createdAt as DateTime), style: TextStyle(fontSize: 11, color: c.glassText2)),
-                  const SizedBox(height: 12),
-                  Row(children: [
-                    if (inv.pdfPath == null)
-                      Expanded(child: CupertinoButton.filled(child: const Text('Generate PDF', style: TextStyle(fontSize: 12)), onPressed: () => _generate(inv), sizeStyle: CupertinoButtonSize.small))
-                    else ...[
-                      Expanded(child: CupertinoButton(child: const Text('Share', style: TextStyle(fontSize: 12)), onPressed: () { final path = inv.pdfPath as String; if (path.isNotEmpty) { final f = File(path); if (f.existsSync()) Share.shareXFiles([XFile(f.path)]); }}, sizeStyle: CupertinoButtonSize.small)),
-                      Expanded(child: CupertinoButton(child: const Text('WhatsApp', style: TextStyle(fontSize: 12, color: Color(0xFF25D366))), onPressed: () async { final uri = Uri.parse('https://wa.me/?text=${Uri.encodeComponent('Invoice ${inv.invoiceNumber}')}'); if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication); }, sizeStyle: CupertinoButtonSize.small)),
-                    ],
-                    if (inv.status == 'Sent') Expanded(child: CupertinoButton(child: const Text('Mark Paid', style: TextStyle(fontSize: 12, color: GlassColors.success)), onPressed: () { ip.updateStatus(inv.id, 'Paid'); }, sizeStyle: CupertinoButtonSize.small)),
-                  ]),
-                ]),
-              ))),
-            );
-          }),
-      ),
-    );
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _load());
   }
 
-  Future<void> _generate(dynamic inv) async {
-    final bp = context.read<BusinessProvider>().business; if (bp == null) return;
-    final op = context.read<OrderProvider>();
-    final order = op.orders.where((o) => o.id == inv.orderId).firstOrNull;
-    if (order == null) { showCupertinoAlert(context, 'Order not found'); return; }
-    final items = await op.getOrderItems(order.id);
-    dynamic customer; if (order.customerId != null) customer = context.read<CustomerProvider>().findById(order.customerId!);
-    final path = await context.read<InvoiceProvider>().generatePdf(invoice: inv, business: bp, order: order, items: items, customer: customer);
-    if (path != null && mounted) showCupertinoAlert(context, 'PDF generated');
+  void _load() {
+    final b = context.read<BusinessProvider>().business;
+    if (b != null) {
+      context.read<InvoiceProvider>().loadInvoices(b.id);
+      final op = context.read<OrderProvider>(); op.clearFilters(); op.loadOrders(b.id);
+    }
   }
 
-  void _createFromOrder() {
-    showCupertinoModalPopup(context: context, builder: (ctx) => CupertinoActionSheet(
-      title: const Text('Create from Order'),
-      message: const Text('Select a completed order'),
-      actions: context.read<OrderProvider>().orders.where((o) => o.status == 'Completed').take(10).map((o) => CupertinoActionSheetAction(
-        child: Text('Order #${(o.id).substring(0, 8).toUpperCase()} — R ${o.total.toStringAsFixed(2)}'),
-        onPressed: () async {
-          Navigator.pop(ctx);
-          final b = context.read<BusinessProvider>().business; if (b == null) return;
-          await context.read<InvoiceProvider>().createFromOrder(businessId: b.id, invoicePrefix: b.invoicePrefix ?? 'INV', orderId: o.id, customerId: o.customerId);
-        },
-      )).toList(),
-      cancelButton: CupertinoActionSheetAction(child: const Text('Cancel'), onPressed: () => Navigator.pop(ctx)),
+  Future<void> _createFromOrder(OrderModel order) async {
+    final ip = context.read<InvoiceProvider>(), bp = context.read<BusinessProvider>();
+    if (bp.business == null) return;
+    final inv = await ip.createFromOrder(businessId: bp.business!.id, invoicePrefix: bp.business!.invoicePrefix ?? 'INV', orderId: order.id, customerId: order.customerId);
+    if (inv != null && mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Invoice ${inv.invoiceNumber} created')));
+  }
+
+  Future<void> _generatePdf(Invoice inv) async {
+    final ip = context.read<InvoiceProvider>(), op = context.read<OrderProvider>(), bp = context.read<BusinessProvider>(), cp = context.read<CustomerProvider>();
+    if (bp.business == null || inv.orderId == null) return;
+    final order = op.allOrders.firstWhere((o) => o.id == inv.orderId, orElse: () => throw Exception('Order not found'));
+    final items = await op.getOrderItems(inv.orderId!);
+    final cust = inv.customerId != null ? cp.findById(inv.customerId!) : null;
+    final path = await ip.generatePdf(invoice: inv, business: bp.business!, order: order, items: items, customer: cust);
+    if (path != null && mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PDF generated')));
+  }
+
+  void _showOrderSheet() {
+    final completed = context.read<OrderProvider>().allOrders.where((o) => o.status == 'Completed').toList();
+    showCupertinoModalPopup(context: context, builder: (_) => CupertinoActionSheet(
+      title: const Text('Create Invoice From Order'),
+      actions: completed.isEmpty
+        ? [CupertinoActionSheetAction(onPressed: () {}, child: const Text('No completed orders', style: TextStyle(color: CupertinoColors.systemGrey)))]
+        : completed.map((o) => CupertinoActionSheetAction(
+            onPressed: () { Navigator.pop(context); _createFromOrder(o); },
+            child: Text('#${o.id.substring(0, 8)} — R ${o.total.toStringAsFixed(2)}', style: const TextStyle(fontSize: 14)),
+          )).toList(),
+      cancelButton: CupertinoActionSheetAction(onPressed: () => Navigator.pop(context), isDefaultAction: true, child: const Text('Cancel')),
     ));
   }
 
-  void showCupertinoAlert(BuildContext c, String msg) {
-    showCupertinoDialog(context: c, builder: (_) => CupertinoAlertDialog(content: Text(msg), actions: [CupertinoDialogAction(child: const Text('OK'), onPressed: () => Navigator.pop(_))]));
+  @override
+  Widget build(BuildContext context) {
+    final ip = context.watch<InvoiceProvider>();
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Invoices'), actions: [IconButton(icon: const Icon(Icons.add), onPressed: _showOrderSheet)]),
+      body: ip.loading
+        ? const Center(child: CircularProgressIndicator())
+        : ip.invoices.isEmpty
+          ? Center(child: Text('No invoices yet', style: Theme.of(context).textTheme.bodyMedium))
+          : ListView(padding: const EdgeInsets.all(16), children: [
+              ...ip.invoices.map((inv) => _InvoiceCard(
+                invoice: inv,
+                onGenerate: () => _generatePdf(inv),
+                onShare: () => ip.shareInvoice(inv.pdfPath!),
+                onWa: () => ip.shareViaWhatsApp(inv.pdfPath!),
+                onMarkPaid: () => ip.updateStatus(inv.id, 'Paid'))),
+            ]),
+    );
+  }
+}
+
+class _InvoiceCard extends StatelessWidget {
+  final Invoice invoice;
+  final VoidCallback onGenerate, onShare, onWa, onMarkPaid;
+
+  const _InvoiceCard({required this.invoice, required this.onGenerate, required this.onShare, required this.onWa, required this.onMarkPaid});
+
+  Color _sc(String s) => switch (s) { 'Paid' => T.s, 'Sent' => T.p, _ => T.w };
+
+  @override
+  Widget build(BuildContext context) {
+    final sc = _sc(invoice.status);
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: Padding(padding: const EdgeInsets.all(14), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(color: sc.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(6)),
+            child: Text(invoice.status, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: sc))),
+          const Spacer(),
+          Text(invoice.invoiceNumber, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+        ]),
+        const SizedBox(height: 6),
+        Text(_InvoiceListScreenState._df.format(invoice.createdAt), style: TextStyle(fontSize: 12, color: T.t2)),
+        const SizedBox(height: 10),
+        Row(children: [
+          if (invoice.pdfPath == null)
+            ElevatedButton.icon(onPressed: onGenerate, icon: const Icon(Icons.picture_as_pdf, size: 16), label: const Text('Generate PDF'), style: ElevatedButton.styleFrom(minimumSize: const Size(0, 36), padding: const EdgeInsets.symmetric(horizontal: 12)))
+          else ...[
+            OutlinedButton.icon(onPressed: onShare, icon: const Icon(Icons.share, size: 14), label: const Text('Share'), style: OutlinedButton.styleFrom(minimumSize: const Size(0, 36), padding: const EdgeInsets.symmetric(horizontal: 10))),
+            const SizedBox(width: 6),
+            OutlinedButton.icon(onPressed: onWa, icon: const Icon(Icons.chat, size: 14, color: Color(0xFF25D366)), label: const Text('WhatsApp'), style: OutlinedButton.styleFrom(minimumSize: const Size(0, 36), padding: const EdgeInsets.symmetric(horizontal: 10))),
+          ],
+          if (invoice.status == 'Sent') ...[const Spacer(), TextButton(onPressed: onMarkPaid, child: const Text('Mark Paid', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: T.s)))],
+        ]),
+      ])),
+    );
   }
 }

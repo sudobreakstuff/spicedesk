@@ -1,20 +1,22 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../core/theme.dart';
 
 class ThemeProvider extends ChangeNotifier {
-  bool _isDark = false;
-  bool get isDark => _isDark;
+  bool _dark = false;
+  ThemeMode get mode => _dark ? ThemeMode.dark : ThemeMode.light;
+  bool get isDark => _dark;
+  ThemeData get lightTheme => AppTheme.light;
+  ThemeData get darkTheme => AppTheme.dark;
 
   Future<void> load() async {
-    final prefs = await SharedPreferences.getInstance();
-    _isDark = prefs.getString('theme') == 'dark';
+    _dark = (await SharedPreferences.getInstance()).getBool('dark') ?? false;
     notifyListeners();
   }
 
   Future<void> toggle() async {
-    _isDark = !_isDark;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('theme', _isDark ? 'dark' : 'light');
+    _dark = !_dark;
+    await (await SharedPreferences.getInstance()).setBool('dark', _dark);
     notifyListeners();
   }
 }

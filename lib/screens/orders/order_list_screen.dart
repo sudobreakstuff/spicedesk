@@ -1,12 +1,12 @@
-import 'dart:ui';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../core/theme.dart';
 import '../../providers/order_provider.dart';
 import '../../providers/business_provider.dart';
-import '../../core/glass_theme.dart';
-import '../../core/constants.dart';
+import '../../providers/customer_provider.dart';
+import '../../models/order.dart';
 
 class OrderListScreen extends StatefulWidget {
   const OrderListScreen({super.key});
@@ -15,116 +15,142 @@ class OrderListScreen extends StatefulWidget {
 }
 
 class _OrderListScreenState extends State<OrderListScreen> {
+  static final _df = DateFormat('MMM d, HH:mm');
+  final _expanded = <String>{};
+  final _items = <String, List<OrderItem>>{};
   String? _statusFilter;
-
-  void _load() { final b = context.read<BusinessProvider>().business; if (b != null) context.read<OrderProvider>().loadOrders(b.id); }
-
-  @override
-  void initState() { super.initState(); WidgetsBinding.instance.addPostFrameCallback((_) => _load()); }
+  static const _statuses = [null, 'Pending', 'Confirmed', 'Preparing', 'Ready', 'Completed', 'Cancelled'];
 
   @override
-  Widget build(BuildContext c) {
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final b = context.read<BusinessProvider>().business;
+      if (b != null) { final op = context.read<OrderProvider>(); op.clearFilters(); op.loadOrders(b.id); }
+    });
+  }
+
+  void _onFilter(String? s) {
+    setState(() => _statusFilter = s);
+    final op = context.read<OrderProvider>(); op.setStatusFilter(s);
+    final b = context.read<BusinessProvider>().business;
+    if (b != null) op.loadOrders(b.id);
+  }
+
+  Future<void> _toggle(OrderModel o) async {
+    if (_expanded.contains(o.id)) {
+      setState(() => _expanded.remove(o.id));
+    } else {
+      if (!_items.containsKey(o.id)) _items[o.id] = await context.read<OrderProvider>().getOrderItems(o.id);
+      setState(() => _expanded.add(o.id));
+    }
+  }
+
+  Future<void> _shareWa(OrderModel o) async {
+    final cp = context.read<CustomerProvider>();
+    final c = o.customerId != null ? cp.findById(o.customerId!) : null;
+    final its = _items[o.id];
+    final sb = StringBuffer('*Order #${o.id.substring(0, 8)}*\n\n');
+    if (its != null) {
+      for (final i in its) { sb.writeln('${i.productName} ×${i.qty} — R ${i.total.toStringAsFixed(2)}'); }
+    }
+    sb.writeln('\n*Total: R ${o.total.toStringAsFixed(2)}*');
+    final msg = Uri.encodeComponent(sb.toString());
+    final phone = c?.whatsappNumber?.replaceAll('+', '') ?? '';
+    final uri = Uri.parse('https://wa.me/$phone?text=$msg');
+    if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  Color _sc(String s) => switch (s) { 'Pending' => T.w, 'Confirmed' => T.p, 'Preparing' => T.pL, 'Ready' => T.s, 'Completed' => T.s, _ => T.e };
+
+  @override
+  Widget build(BuildContext context) {
+    final d = Theme.of(context).brightness == Brightness.dark;
     final op = context.watch<OrderProvider>();
-    return CupertinoPageScaffold(
-      navigationBar: CupertinoNavigationBar(middle: const Text('Orders')),
-      child: SafeArea(
-        child: Column(children: [
-          SizedBox(height: 36, child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 14), children: [
-            _chip('All', _statusFilter == null, () { setState(() { _statusFilter = null; op.setStatusFilter(null); _load(); }); }),
-            ...AppConstants.orderStatuses.map((s) => _chip(s, _statusFilter == s, () { setState(() { _statusFilter = s; op.setStatusFilter(s); _load(); }); })),
-          ])),
-          Container(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8), color: c.isGlassDark ? const Color(0x33000000) : const Color(0x33C7C7CC), child: Row(children: const [Expanded(flex: 2, child: Text('Order', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: GlassColors.lightText2))), Expanded(flex: 1, child: Text('Status', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: GlassColors.lightText2))), Expanded(flex: 1, child: Text('Total', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: GlassColors.lightText2), textAlign: TextAlign.right)), SizedBox(width: 44)])),
-          Expanded(
-            child: op.loading && op.orders.isEmpty ? const Center(child: CupertinoActivityIndicator()) :
-            op.orders.isEmpty ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-              Icon(CupertinoIcons.doc_text, size: 40, color: c.glassText3), const SizedBox(height: 8), const Text('No orders', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-            ])) :
-            ListView.builder(itemCount: op.orders.length, itemBuilder: (_, i) => _OrderRow(order: op.orders[i])),
-          ),
-        ]),
-      ),
-    );
-  }
+    final t2 = d ? T.dt2 : T.t2;
 
-  Widget _chip(String label, bool active, VoidCallback onTap) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 6),
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: active ? GlassColors.primary : null,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: active ? GlassColors.primary : context.glassBorder),
-          ),
-          child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: active ? const Color(0xFFFFFFFF) : context.glassText2)),
-        ),
-      ),
-    );
-  }
-}
-
-class _OrderRow extends StatefulWidget {
-  final dynamic order;
-  const _OrderRow({required this.order});
-  @override
-  State<_OrderRow> createState() => _OrderRowState();
-}
-
-class _OrderRowState extends State<_OrderRow> {
-  bool _expanded = false;
-  List<dynamic>? _items;
-
-  Color _sc(String s) => s == 'Completed' ? GlassColors.success : s == 'Cancelled' ? GlassColors.error : s == 'Pending' ? GlassColors.warning : GlassColors.primary;
-
-  @override
-  Widget build(BuildContext c) {
-    final order = widget.order;
-    final status = order.status as String;
-    final date = DateFormat('dd/MM HH:mm').format(order.createdAt as DateTime);
-    return Container(
-      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: c.glassBorder.withValues(alpha: 0.3), width: 0.5))),
-      child: Column(children: [
-        CupertinoButton(
-          padding: EdgeInsets.zero, alignment: Alignment.centerLeft,
-          onPressed: () async {
-            if (!_expanded) _items = await context.read<OrderProvider>().getOrderItems(order.id as String);
-            setState(() => _expanded = !_expanded);
-          },
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            child: Row(children: [
-              Icon(_expanded ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down, size: 14, color: c.glassText3),
-              const SizedBox(width: 8),
-              Expanded(flex: 2, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(order.orderType ?? '', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: c.glassText)), Text(date, style: TextStyle(fontSize: 10, color: c.glassText3))])),
-              Expanded(flex: 1, child: Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: _sc(status).withValues(alpha: 0.15), borderRadius: BorderRadius.circular(4)), child: Text(status, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: _sc(status)), textAlign: TextAlign.center))),
-              Expanded(flex: 1, child: Text(AppConstants.formatCurrency((order.total as num).toDouble()), textAlign: TextAlign.right, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: c.glassText))),
-            ]),
-          ),
-        ),
-        if (_expanded && _items != null) Container(
-          padding: const EdgeInsets.fromLTRB(30, 0, 14, 12),
-          child: Column(children: [
-            ...?_items?.map((item) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 2),
-              child: Row(children: [Expanded(child: Text(item.productName ?? '', style: const TextStyle(fontSize: 12))), Text('×${item.qty}', style: TextStyle(fontSize: 11, color: c.glassText2)), const SizedBox(width: 10), Text(AppConstants.formatCurrency((item.total as num).toDouble()), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500))]),
-            )),
-            const SizedBox(height: 8),
-            Row(children: [
-              if (status != 'Completed' && status != 'Cancelled') ...[
-                Expanded(child: CupertinoButton(padding: EdgeInsets.zero, child: const Text('Complete', style: TextStyle(fontSize: 11, color: GlassColors.success)), onPressed: () { context.read<OrderProvider>().updateStatus(order.id, 'Completed'); setState(() => _expanded = false); })),
-                Expanded(child: CupertinoButton(padding: EdgeInsets.zero, child: const Text('Cancel', style: TextStyle(fontSize: 11, color: GlassColors.error)), onPressed: () { context.read<OrderProvider>().updateStatus(order.id, 'Cancelled'); setState(() => _expanded = false); })),
-              ],
-              if (status == 'Completed') Expanded(child: CupertinoButton(padding: EdgeInsets.zero, child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(CupertinoIcons.share_up, size: 14, color: const Color(0xFF25D366)), const SizedBox(width: 4), const Text('WhatsApp', style: TextStyle(fontSize: 11, color: Color(0xFF25D366)))]), onPressed: () async {
-                final msg = 'Order #${(order.id as String).substring(0, 8).toUpperCase()}\nDate: $date\nTotal: R ${(order.total as num).toDouble().toStringAsFixed(2)}';
-                final uri = Uri.parse('https://wa.me/?text=${Uri.encodeComponent(msg)}');
-                if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
-              })),
-            ]),
-          ]),
-        ),
+    return Scaffold(
+      appBar: AppBar(title: const Text('Orders')),
+      body: Column(children: [
+        SizedBox(height: 40, child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16), children: [
+          for (final s in _statuses) _chip(s ?? 'All', _statusFilter == s, () => _onFilter(s)),
+        ])),
+        const Divider(height: 1),
+        Expanded(child: op.loading
+          ? const Center(child: CircularProgressIndicator())
+          : op.orders.isEmpty
+            ? Center(child: Text('No orders found', style: Theme.of(context).textTheme.bodyMedium))
+            : ListView(padding: const EdgeInsets.symmetric(horizontal: 16), children: [
+                Padding(padding: const EdgeInsets.symmetric(vertical: 10), child: Row(children: [
+                  Expanded(flex: 3, child: Text('Order', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: t2))),
+                  Expanded(flex: 2, child: Text('Status', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: t2))),
+                  SizedBox(width: 80, child: Text('Total', textAlign: TextAlign.right, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: t2))),
+                ])),
+                ...op.orders.map((o) => _OrderTile(
+                  order: o, t2: t2, expanded: _expanded.contains(o.id), items: _items[o.id],
+                  onToggle: () => _toggle(o),
+                  onComplete: () => op.updateStatus(o.id, 'Completed'),
+                  onCancel: () => op.updateStatus(o.id, 'Cancelled'),
+                  onWa: () => _shareWa(o),
+                  sc: _sc(o.status),
+                )),
+              ])),
       ]),
     );
+  }
+
+  Widget _chip(String l, bool s, VoidCallback t) => Padding(padding: const EdgeInsets.only(right: 8), child: ChoiceChip(
+    label: Text(l, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: s ? Colors.white : null)),
+    selected: s, onSelected: (_) => t(), selectedColor: T.p,
+    backgroundColor: T.p.withValues(alpha: 0.08), side: BorderSide(color: s ? T.p : T.bd), visualDensity: VisualDensity.compact));
+}
+
+class _OrderTile extends StatelessWidget {
+  final OrderModel order;
+  final Color t2, sc;
+  final bool expanded;
+  final List<OrderItem>? items;
+  final VoidCallback onToggle, onComplete, onCancel, onWa;
+
+  const _OrderTile({required this.order, required this.t2, required this.sc, required this.expanded,
+    this.items, required this.onToggle, required this.onComplete, required this.onCancel, required this.onWa});
+
+  @override
+  Widget build(BuildContext context) {
+    final isFinal = order.status == 'Completed' || order.status == 'Cancelled';
+
+    return Column(children: [
+      InkWell(onTap: onToggle, child: Padding(padding: const EdgeInsets.symmetric(vertical: 10), child: Row(children: [
+        Expanded(flex: 3, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(order.orderType, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+          Text(_OrderListScreenState._df.format(order.createdAt), style: TextStyle(fontSize: 11, color: T.t3)),
+        ])),
+        Expanded(flex: 2, child: Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(color: sc.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(6)),
+          child: Text(order.status, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: sc)))),
+        SizedBox(width: 80, child: Text('R ${order.total.toStringAsFixed(2)}', textAlign: TextAlign.right, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600))),
+        SizedBox(width: 24, child: Icon(expanded ? Icons.expand_less : Icons.expand_more, color: T.t3, size: 18)),
+      ]))),
+      if (expanded) ...[
+        if (items != null && items!.isNotEmpty)
+          ...items!.map((i) => Padding(padding: const EdgeInsets.only(left: 12, bottom: 6), child: Row(children: [
+            Icon(Icons.circle, size: 5, color: T.t3), const SizedBox(width: 8),
+            Text('${i.productName} × ${i.qty}', style: TextStyle(fontSize: 12, color: T.t2)),
+            const Spacer(), Text('R ${i.total.toStringAsFixed(2)}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+          ]))),
+        const SizedBox(height: 6),
+        Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+          if (isFinal && order.status == 'Completed')
+            OutlinedButton.icon(onPressed: onWa, icon: const Icon(Icons.chat, size: 14, color: Color(0xFF25D366)), style: OutlinedButton.styleFrom(minimumSize: const Size(0, 32), padding: const EdgeInsets.symmetric(horizontal: 10)), label: const Text('WhatsApp', style: TextStyle(fontSize: 11))),
+          if (!isFinal) ...[
+            TextButton(onPressed: onCancel, child: const Text('Cancel', style: TextStyle(color: T.e, fontSize: 12))),
+            const SizedBox(width: 4),
+            ElevatedButton(onPressed: onComplete, style: ElevatedButton.styleFrom(minimumSize: const Size(0, 32), padding: const EdgeInsets.symmetric(horizontal: 14)), child: const Text('Complete', style: TextStyle(fontSize: 12))),
+          ],
+        ]),
+        const SizedBox(height: 4),
+      ],
+      const Divider(height: 1),
+    ]);
   }
 }

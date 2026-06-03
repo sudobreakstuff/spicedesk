@@ -1,109 +1,191 @@
-import 'dart:ui';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/business_provider.dart';
-import '../../core/glass_theme.dart';
-import '../setup/business_setup_screen.dart';
 import '../dashboard/dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _email = TextEditingController(), _password = TextEditingController();
-  bool _bio = false;
+  final _emailCtrl = TextEditingController();
+  final _passCtrl = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  bool _obscure = true;
 
   @override
-  void initState() { super.initState(); context.read<AuthProvider>().isBiometricsAvailable().then((v) { if (mounted) setState(() => _bio = v); }); }
-  @override
-  void dispose() { _email.dispose(); _password.dispose(); super.dispose(); }
+  void dispose() {
+    _emailCtrl.dispose();
+    _passCtrl.dispose();
+    super.dispose();
+  }
 
   Future<void> _signIn() async {
-    final ap = context.read<AuthProvider>();
-    if (await ap.signInWithEmail(email: _email.text.trim(), password: _password.text)) { _after(); }
+    if (!_formKey.currentState!.validate()) return;
+    final auth = context.read<AuthProvider>();
+    final ok = await auth.signInWithEmail(email: _emailCtrl.text.trim(), password: _passCtrl.text);
+    if (!mounted) return;
+    if (ok) {
+      final bp = context.read<BusinessProvider>();
+      await bp.loadBusiness();
+      if (!mounted) return;
+      if (bp.hasBusiness) {
+        Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const DashboardScreen()), (_) => false);
+      } else {
+        Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const _SignUpScreen()), (_) => false);
+      }
+    } else if (auth.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(auth.error!), backgroundColor: T.e));
+      auth.clearError();
+    }
   }
 
-  Future<void> _google() async { if (await context.read<AuthProvider>().signInWithGoogle()) _after(); }
-  Future<void> _biometric() async { if (await context.read<AuthProvider>().signInWithBiometrics()) _after(); }
-
-  Future<void> _after() async {
-    final bp = context.read<BusinessProvider>(); await bp.loadBusiness();
+  Future<void> _signInGoogle() async {
+    final auth = context.read<AuthProvider>();
+    final ok = await auth.signInWithGoogle();
     if (!mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(CupertinoPageRoute(builder: (_) => bp.hasBusiness ? const DashboardScreen() : const BusinessSetupScreen()), (r) => false);
+    if (ok) {
+      final bp = context.read<BusinessProvider>();
+      await bp.loadBusiness();
+      if (!mounted) return;
+      if (bp.hasBusiness) {
+        Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const DashboardScreen()), (_) => false);
+      }
+    }
   }
 
   @override
-  Widget build(BuildContext c) {
-    final ap = context.watch<AuthProvider>();
-    final isDark = c.isGlassDark;
-    return CupertinoPageScaffold(
-      child: SafeArea(
-        child: Center(child: SingleChildScrollView(padding: const EdgeInsets.symmetric(horizontal: 30), child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          const SizedBox(height: 40),
-          Container(width: 56, height: 56, decoration: BoxDecoration(color: GlassColors.primary, borderRadius: BorderRadius.circular(14)), child: const Center(child: Text('SD', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: const Color(0xFFFFFFFF))))),
-          const SizedBox(height: 18),
-          Text('Welcome back', textAlign: TextAlign.center, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: c.glassText)),
-          const SizedBox(height: 4),
-          Text('Sign in to SpiceDesk', textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: c.glassText2)),
-          const SizedBox(height: 32),
-          if (ap.error != null) Container(padding: const EdgeInsets.all(12), margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: GlassColors.error.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)), child: Text(ap.error!, style: const TextStyle(color: GlassColors.error, fontSize: 13))),
-          CupertinoTextFormFieldRow(controller: _email, placeholder: 'Email', keyboardType: TextInputType.emailAddress, style: TextStyle(fontSize: 15, color: c.glassText)),
-          const SizedBox(height: 12),
-          CupertinoTextFormFieldRow(controller: _password, placeholder: 'Password', obscureText: true, style: TextStyle(fontSize: 15, color: c.glassText)),
-          const SizedBox(height: 22),
-          CupertinoButton.filled(onPressed: ap.loading ? null : _signIn, child: ap.loading ? const CupertinoActivityIndicator() : const Text('Sign In')),
-          const SizedBox(height: 14),
-          CupertinoButton(child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [Container(width: 18, height: 18, decoration: BoxDecoration(color: const Color(0xFFFFFFFF), shape: BoxShape.circle, border: Border.all(color: GlassColors.lightBorder)), child: const Center(child: Text('G', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: GlassColors.error)))), const SizedBox(width: 8), const Text('Continue with Google')]), onPressed: ap.loading ? null : _google),
-          if (_bio) CupertinoButton(child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(CupertinoIcons.lock_shield, size: 18), SizedBox(width: 8), Text('Biometrics')]), onPressed: ap.loading ? null : _biometric),
-          const SizedBox(height: 16),
-          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Text('No account? ', style: TextStyle(fontSize: 13, color: c.glassText2)),
-            GestureDetector(onTap: () => Navigator.push(c, CupertinoPageRoute(builder: (_) => const _SignUp())), child: const Text('Sign Up', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: GlassColors.primary))),
-          ]),
-          const SizedBox(height: 40),
-          Text('Built by Shahid Singh', textAlign: TextAlign.center, style: TextStyle(fontSize: 10, color: c.glassText3)),
-        ]))),
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 28),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(width: 56, height: 56, decoration: BoxDecoration(color: T.p, borderRadius: BorderRadius.circular(14)), child: const Center(child: Text('SD', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white)))),
+                  const SizedBox(height: 14),
+                  const Text('SpiceDesk', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 4),
+                  Text('Sign in to your account', style: Theme.of(context).textTheme.bodyMedium),
+                  const SizedBox(height: 28),
+                  TextFormField(controller: _emailCtrl, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.email_outlined)), validator: (v) => v == null || v.trim().isEmpty ? 'Enter email' : null),
+                  const SizedBox(height: 14),
+                  TextFormField(controller: _passCtrl, obscureText: _obscure, decoration: InputDecoration(labelText: 'Password', prefixIcon: const Icon(Icons.lock_outlined), suffixIcon: IconButton(icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility), onPressed: () => setState(() => _obscure = !_obscure))), validator: (v) => v == null || v.isEmpty ? 'Enter password' : null),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 46,
+                    child: ElevatedButton(
+                      onPressed: auth.loading ? null : _signIn,
+                      child: auth.loading ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white)) : const Text('Sign In'),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 46,
+                    child: OutlinedButton.icon(
+                      onPressed: auth.loading ? null : _signInGoogle,
+                      icon: const Text('G', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                      label: const Text('Continue with Google'),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  TextButton(
+                    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const _SignUpScreen())),
+                    child: const Text("Don't have an account? Sign Up"),
+                  ),
+                  const SizedBox(height: 24),
+                  Text('Built by Shahid Singh', style: Theme.of(context).textTheme.bodySmall),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
 }
 
-class _SignUp extends StatefulWidget { const _SignUp(); @override
-  State<_SignUp> createState() => _SignUpState(); }
+class _SignUpScreen extends StatefulWidget {
+  const _SignUpScreen();
 
-class _SignUpState extends State<_SignUp> {
-  final _name = TextEditingController(), _email = TextEditingController(), _pw = TextEditingController(), _cpw = TextEditingController();
-  @override void dispose() { _name.dispose(); _email.dispose(); _pw.dispose(); _cpw.dispose(); super.dispose(); }
+  @override
+  State<_SignUpScreen> createState() => __SignUpScreenState();
+}
+
+class __SignUpScreenState extends State<_SignUpScreen> {
+  final _nameCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  final _passCtrl = TextEditingController();
+  final _confirmCtrl = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _emailCtrl.dispose();
+    _passCtrl.dispose();
+    _confirmCtrl.dispose();
+    super.dispose();
+  }
 
   Future<void> _signUp() async {
-    if (await context.read<AuthProvider>().signUpWithEmail(name: _name.text.trim(), email: _email.text.trim(), password: _pw.text)) {
-      if (mounted) Navigator.of(context).pushAndRemoveUntil(CupertinoPageRoute(builder: (_) => const BusinessSetupScreen()), (r) => false);
+    if (!_formKey.currentState!.validate()) return;
+    final auth = context.read<AuthProvider>();
+    final ok = await auth.signUpWithEmail(email: _emailCtrl.text.trim(), password: _passCtrl.text, name: _nameCtrl.text.trim());
+    if (!mounted) return;
+    if (ok) {
+      Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const DashboardScreen()), (_) => false);
+    } else if (auth.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(auth.error!), backgroundColor: T.e));
+      auth.clearError();
     }
   }
 
   @override
-  Widget build(BuildContext c) {
-    final ap = context.watch<AuthProvider>();
-    return CupertinoPageScaffold(
-      navigationBar: CupertinoNavigationBar(middle: const Text('Sign Up'), leading: CupertinoButton(padding: EdgeInsets.zero, child: const Icon(CupertinoIcons.back), onPressed: () => Navigator.pop(c))),
-      child: SafeArea(child: SingleChildScrollView(padding: const EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        const SizedBox(height: 8),
-        if (ap.error != null) Container(padding: const EdgeInsets.all(12), margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: GlassColors.error.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)), child: Text(ap.error!, style: const TextStyle(color: GlassColors.error, fontSize: 13))),
-        CupertinoTextFormFieldRow(controller: _name, placeholder: 'Full Name', style: TextStyle(fontSize: 15, color: c.glassText)),
-        const SizedBox(height: 12),
-        CupertinoTextFormFieldRow(controller: _email, placeholder: 'Email', keyboardType: TextInputType.emailAddress, style: TextStyle(fontSize: 15, color: c.glassText)),
-        const SizedBox(height: 12),
-        CupertinoTextFormFieldRow(controller: _pw, placeholder: 'Password', obscureText: true, style: TextStyle(fontSize: 15, color: c.glassText)),
-        const SizedBox(height: 12),
-        CupertinoTextFormFieldRow(controller: _cpw, placeholder: 'Confirm Password', obscureText: true, style: TextStyle(fontSize: 15, color: c.glassText)),
-        const SizedBox(height: 22),
-        CupertinoButton.filled(onPressed: ap.loading ? null : _signUp, child: ap.loading ? const CupertinoActivityIndicator() : const Text('Create Account')),
-        const SizedBox(height: 30),
-      ]))),
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+    return Scaffold(
+      appBar: AppBar(title: const Text('Create Account')),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                TextFormField(controller: _nameCtrl, decoration: const InputDecoration(labelText: 'Full Name', prefixIcon: Icon(Icons.person_outline)), validator: (v) => v == null || v.trim().isEmpty ? 'Enter name' : null),
+                const SizedBox(height: 14),
+                TextFormField(controller: _emailCtrl, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.email_outlined)), validator: (v) => v == null || !v.contains('@') ? 'Enter valid email' : null),
+                const SizedBox(height: 14),
+                TextFormField(controller: _passCtrl, obscureText: true, decoration: const InputDecoration(labelText: 'Password', prefixIcon: Icon(Icons.lock_outlined)), validator: (v) => v == null || v.length < 6 ? 'Min 6 characters' : null),
+                const SizedBox(height: 14),
+                TextFormField(controller: _confirmCtrl, obscureText: true, decoration: const InputDecoration(labelText: 'Confirm Password', prefixIcon: Icon(Icons.lock_outlined)), validator: (v) => v != _passCtrl.text ? 'Passwords do not match' : null),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 46,
+                  child: ElevatedButton(
+                    onPressed: auth.loading ? null : _signUp,
+                    child: auth.loading ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white)) : const Text('Sign Up'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
