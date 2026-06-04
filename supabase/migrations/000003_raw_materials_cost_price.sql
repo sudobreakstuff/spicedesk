@@ -253,3 +253,25 @@ BEGIN
     );
 END;
 $$;
+
+-- ============================================================
+-- RLS for new tables
+-- ============================================================
+ALTER TABLE recipes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE purchase_orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE purchase_order_items ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "workspace_access" ON recipes
+    FOR ALL TO authenticated
+    USING (workspace_id IN (SELECT get_user_workspace_ids()))
+    WITH CHECK (workspace_id IN (SELECT get_user_workspace_ids()));
+
+CREATE POLICY "workspace_access" ON purchase_orders
+    FOR ALL TO authenticated
+    USING (workspace_id IN (SELECT get_user_workspace_ids()))
+    WITH CHECK (workspace_id IN (SELECT get_user_workspace_ids()));
+
+CREATE POLICY "workspace_access" ON purchase_order_items
+    FOR ALL TO authenticated
+    USING (workspace_id IN (SELECT get_user_workspace_ids()))
+    WITH CHECK (workspace_id IN (SELECT get_user_workspace_ids()));
