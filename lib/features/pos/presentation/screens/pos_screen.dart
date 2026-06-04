@@ -3,6 +3,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../products/data/products_provider.dart';
+import '../../../pos/data/pos_service.dart';
 
 class PosScreen extends ConsumerStatefulWidget {
   const PosScreen({super.key});
@@ -13,50 +15,35 @@ class PosScreen extends ConsumerStatefulWidget {
 
 class _PosScreenState extends ConsumerState<PosScreen> {
   final _searchCtrl = TextEditingController();
-  final List<Map<String, dynamic>> _cart = [];
+  final List<_CartItem> _cart = [];
+  String _searchQuery = '';
 
-  final _products = const [
-    {'name': 'Espresso', 'price': 25.00, 'category': 'Drinks'},
-    {'name': 'Cappuccino', 'price': 30.00, 'category': 'Drinks'},
-    {'name': 'Latte', 'price': 32.00, 'category': 'Drinks'},
-    {'name': 'Americano', 'price': 22.00, 'category': 'Drinks'},
-    {'name': 'Mocha', 'price': 35.00, 'category': 'Drinks'},
-    {'name': 'Hot Chocolate', 'price': 28.00, 'category': 'Drinks'},
-    {'name': 'Muffin', 'price': 18.00, 'category': 'Food'},
-    {'name': 'Croissant', 'price': 22.00, 'category': 'Food'},
-    {'name': 'Cheesecake', 'price': 35.00, 'category': 'Food'},
-    {'name': 'Bagel', 'price': 16.00, 'category': 'Food'},
-    {'name': 'Sandwich', 'price': 42.00, 'category': 'Food'},
-    {'name': 'Salad', 'price': 38.00, 'category': 'Food'},
-  ];
+  double get _total => _cart.fold(0.0, (sum, i) => sum + (i.unitPrice * i.quantity));
 
-  double get _total => _cart.fold(
-      0.0, (sum, i) => sum + (i['price'] as double) * (i['qty'] as int));
-
-  void _addToCart(Map<String, dynamic> p) {
+  void _addToCart(Product product) {
     setState(() {
-      final idx = _cart.indexWhere((c) => c['name'] == p['name']);
+      final idx = _cart.indexWhere((c) => c.product.id == product.id);
       if (idx >= 0) {
-        _cart[idx] = {..._cart[idx], 'qty': (_cart[idx]['qty'] as int) + 1};
+        _cart[idx] = _cart[idx].copyWith(quantity: _cart[idx].quantity + 1);
       } else {
-        _cart.add({...p, 'qty': 1});
+        _cart.add(_CartItem(product: product, quantity: 1));
       }
     });
   }
 
   void _removeFromCart(int idx) {
     setState(() {
-      if (_cart[idx]['qty'] as int > 1) {
-        _cart[idx] = {..._cart[idx], 'qty': (_cart[idx]['qty'] as int) - 1};
+      if (_cart[idx].quantity > 1) {
+        _cart[idx] = _cart[idx].copyWith(quantity: _cart[idx].quantity - 1);
       } else {
         _cart.removeAt(idx);
       }
     });
   }
 
-  void _checkout() {
+  Future<void> _checkout() async {
     if (_cart.isEmpty) return;
-    showDialog(
+    final paymentMethod = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: SpiceColors.surfaceAlt,
@@ -68,39 +55,52 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text('Total: R ${_total.toStringAsFixed(2)}',
-                style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    color: SpiceColors.accent)),
-            const SizedBox(height: 16),
+                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: SpiceColors.accent)),
+            const SizedBox(height: 20),
             ...['Cash', 'Card', 'Mobile'].map((m) => ListTile(
-                  leading: Icon(m == 'Cash'
-                      ? Icons.money
-                      : m == 'Card'
-                          ? Icons.credit_card
-                          : Icons.phone_android),
-                  title: Text(m),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    setState(() => _cart.clear());
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text(
-                          'Sale complete! R ${_total.toStringAsFixed(2)}'),
-                      backgroundColor: SpiceColors.accent,
-                    ));
-                  },
-                )),
+              leading: Icon(m == 'Cash' ? Icons.money : m == 'Card' ? Icons.credit_card : Icons.phone_android,
+                  color: SpiceColors.textSecondary),
+              title: Text(m),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              onTap: () => Navigator.pop(ctx, m),
+            )),
           ],
         ),
         actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
         ],
       ),
     );
+
+    if (paymentMethod == null) return;
+
+    try {
+      final createSale = ref.read(createSaleAction);
+      final txnNumber = await createSale(
+        items: _cart.map((c) => SaleItemInput(
+          productId: c.product.id,
+          productName: c.product.name,
+          quantity: c.quantity,
+          unitPrice: c.unitPrice,
+        )).toList(),
+        paymentMethod: paymentMethod,
+      );
+
+      if (mounted) {
+        setState(() => _cart.clear());
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Sale complete: $txnNumber | R ${_total.toStringAsFixed(2)}'),
+          backgroundColor: SpiceColors.accent,
+        ));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: SpiceColors.danger,
+        ));
+      }
+    }
   }
 
   @override
@@ -111,6 +111,14 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final productsAsync = ref.watch(productsProvider);
+    final products = productsAsync.valueOrNull ?? [];
+
+    final filtered = _searchQuery.isEmpty
+        ? products
+        : products.where((p) =>
+            p.name.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+
     return Scaffold(
       backgroundColor: SpiceColors.surface,
       body: Row(
@@ -126,10 +134,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   child: Row(
                     children: [
                       const Text('Point of Sale',
-                          style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w700,
-                              color: SpiceColors.textPrimary)),
+                          style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
                       const Spacer(),
                       SizedBox(
                         width: 280,
@@ -139,10 +144,9 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                             hintText: 'Search products...',
                             prefixIcon: Icon(Icons.search, size: 20),
                             isDense: true,
-                            contentPadding:
-                                EdgeInsets.symmetric(vertical: 10),
+                            contentPadding: EdgeInsets.symmetric(vertical: 10),
                           ),
-                          onChanged: (_) => setState(() {}),
+                          onChanged: (v) => setState(() => _searchQuery = v),
                         ),
                       ),
                     ],
@@ -150,72 +154,78 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 ),
                 const SizedBox(height: 20),
                 Expanded(
-                  child: GridView.builder(
-                    padding: const EdgeInsets.fromLTRB(32, 0, 32, 32),
-                    gridDelegate:
-                        const SliverGridDelegateWithMaxCrossAxisExtent(
-                      maxCrossAxisExtent: 180,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 0.85,
-                    ),
-                    itemCount: _products.length,
-                    itemBuilder: (context, index) {
-                      final p = _products[index];
-                      final isDrink = p['category'] == 'Drinks';
-                      return GestureDetector(
-                        onTap: () => _addToCart(p),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: SpiceColors.surfaceAlt,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: isDrink
-                                  ? SpiceColors.primary.withAlpha(50)
-                                  : SpiceColors.warning.withAlpha(50),
+                  child: productsAsync.isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : filtered.isEmpty
+                          ? const Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.inventory_2_outlined, size: 48, color: SpiceColors.textSecondary),
+                                  SizedBox(height: 12),
+                                  Text('No products yet', style: TextStyle(color: SpiceColors.textSecondary)),
+                                ],
+                              ),
+                            )
+                          : GridView.builder(
+                              padding: const EdgeInsets.fromLTRB(32, 0, 32, 32),
+                              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                                maxCrossAxisExtent: 180,
+                                mainAxisSpacing: 12,
+                                crossAxisSpacing: 12,
+                                childAspectRatio: 0.85,
+                              ),
+                              itemCount: filtered.length,
+                              itemBuilder: (context, index) {
+                                final p = filtered[index];
+                                final hasCategory = p.category.isNotEmpty;
+                                return GestureDetector(
+                                  onTap: () => _addToCart(p),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: SpiceColors.surfaceAlt,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: hasCategory
+                                            ? SpiceColors.primary.withAlpha(50)
+                                            : SpiceColors.warning.withAlpha(50),
+                                      ),
+                                    ),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.inventory_2_rounded,
+                                          size: 36,
+                                          color: hasCategory ? SpiceColors.primary : SpiceColors.warning,
+                                        ),
+                                        const SizedBox(height: 10),
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                                          child: Text(p.name,
+                                              textAlign: TextAlign.center,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: SpiceColors.textPrimary)),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                                          decoration: BoxDecoration(
+                                            color: SpiceColors.accent.withAlpha(20),
+                                            borderRadius: BorderRadius.circular(6),
+                                          ),
+                                          child: Text(
+                                            'R ${p.unitPrice.toStringAsFixed(2)}',
+                                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.accent),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ).animate().fadeIn(delay: (index * 40).ms);
+                              },
                             ),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                isDrink
-                                    ? Icons.coffee_rounded
-                                    : Icons.bakery_dining_rounded,
-                                size: 36,
-                                color: isDrink
-                                    ? SpiceColors.primary
-                                    : SpiceColors.warning,
-                              ),
-                              const SizedBox(height: 10),
-                              Text(p['name'] as String,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                      color: SpiceColors.textPrimary)),
-                              const SizedBox(height: 4),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: SpiceColors.accent.withAlpha(20),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  'R ${(p['price'] as double).toStringAsFixed(2)}',
-                                  style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: SpiceColors.accent),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ).animate().fadeIn(delay: (index * 40).ms),
-                      );
-                    },
-                  ),
                 ),
               ],
             ),
@@ -226,43 +236,30 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             width: 340,
             decoration: BoxDecoration(
               color: SpiceColors.surfaceAlt,
-              border: Border(
-                left: BorderSide(color: SpiceColors.border),
-              ),
+              border: Border(left: BorderSide(color: SpiceColors.border)),
             ),
             child: Column(
               children: [
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(color: SpiceColors.border),
-                    ),
+                    border: Border(bottom: BorderSide(color: SpiceColors.border)),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.shopping_cart_outlined,
-                          color: SpiceColors.textPrimary, size: 20),
+                      const Icon(Icons.shopping_cart_outlined, color: SpiceColors.textPrimary, size: 20),
                       const SizedBox(width: 10),
-                      const Text('Cart',
-                          style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: SpiceColors.textPrimary)),
+                      const Text('Cart', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
                       const Spacer(),
                       if (_cart.isNotEmpty)
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
                             color: SpiceColors.primary.withAlpha(30),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text('${_cart.length}',
-                              style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: SpiceColors.primary)),
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.primary)),
                         ),
                     ],
                   ),
@@ -271,16 +268,13 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   child: _cart.isEmpty
                       ? const Center(
                           child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.shopping_cart_outlined,
-                                    size: 40, color: SpiceColors.textSecondary),
-                                SizedBox(height: 8),
-                                Text('Cart is empty',
-                                    style: TextStyle(
-                                        color: SpiceColors.textSecondary)),
-                              ],
-                            ),
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.shopping_cart_outlined, size: 40, color: SpiceColors.textSecondary),
+                              SizedBox(height: 8),
+                              Text('Cart is empty', style: TextStyle(color: SpiceColors.textSecondary)),
+                            ],
+                          ),
                         )
                       : ListView.builder(
                           padding: const EdgeInsets.all(16),
@@ -294,53 +288,38 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                 decoration: BoxDecoration(
                                   color: SpiceColors.surface,
                                   borderRadius: BorderRadius.circular(10),
-                                  border:
-                                      Border.all(color: SpiceColors.border),
+                                  border: Border.all(color: SpiceColors.border),
                                 ),
                                 child: Row(
                                   children: [
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Text(item['name'] as String,
-                                              style: const TextStyle(
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.w500,
-                                                  color: SpiceColors
-                                                      .textPrimary)),
+                                          Text(item.product.name,
+                                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: SpiceColors.textPrimary)),
                                           const SizedBox(height: 4),
                                           Text(
-                                              'R ${((item['price'] as double) * (item['qty'] as int)).toStringAsFixed(2)}',
-                                              style: const TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: SpiceColors.accent)),
+                                              'R ${(item.unitPrice * item.quantity).toStringAsFixed(2)}',
+                                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.accent)),
                                         ],
                                       ),
                                     ),
                                     Container(
                                       decoration: BoxDecoration(
                                         color: SpiceColors.surfaceAlt,
-                                        borderRadius:
-                                            BorderRadius.circular(8),
-                                        border: Border.all(
-                                            color: SpiceColors.border),
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(color: SpiceColors.border),
                                       ),
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          _qtyBtn(Icons.remove, () =>
-                                              _removeFromCart(index)),
+                                          _qtyBtn(Icons.remove, () => _removeFromCart(index)),
                                           Padding(
                                             padding: const EdgeInsets.symmetric(horizontal: 12),
-                                            child: Text('${item['qty']}',
-                                                style: const TextStyle(
-                                                    fontWeight: FontWeight.w600)),
+                                            child: Text('${item.quantity}', style: const TextStyle(fontWeight: FontWeight.w600)),
                                           ),
-                                          _qtyBtn(Icons.add,
-                                              () => _addToCart(item)),
+                                          _qtyBtn(Icons.add, () => _addToCart(item.product)),
                                         ],
                                       ),
                                     ),
@@ -355,24 +334,16 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     color: SpiceColors.surface,
-                    border: Border(
-                      top: BorderSide(color: SpiceColors.border),
-                    ),
+                    border: Border(top: BorderSide(color: SpiceColors.border)),
                   ),
                   child: Column(
                     children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Total',
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  color: SpiceColors.textSecondary)),
+                          const Text('Total', style: TextStyle(fontSize: 16, color: SpiceColors.textSecondary)),
                           Text('R ${_total.toStringAsFixed(2)}',
-                              style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w700,
-                                  color: SpiceColors.accent)),
+                              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: SpiceColors.accent)),
                         ],
                       ),
                       const SizedBox(height: 12),
@@ -384,13 +355,9 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: SpiceColors.accent,
                             foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),
-                          child: const Text('Checkout',
-                              style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600)),
+                          child: const Text('Checkout', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                         ),
                       ),
                     ],
@@ -417,4 +384,15 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       ),
     );
   }
+}
+
+class _CartItem {
+  final Product product;
+  final int quantity;
+
+  const _CartItem({required this.product, required this.quantity});
+
+  double get unitPrice => product.unitPrice;
+
+  _CartItem copyWith({int? quantity}) => _CartItem(product: product, quantity: quantity ?? this.quantity);
 }

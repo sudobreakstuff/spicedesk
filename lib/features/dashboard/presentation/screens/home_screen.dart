@@ -19,7 +19,7 @@ class HomeScreen extends ConsumerWidget {
         children: [
           // Header
           Text(
-            '$greeting 👋',
+            '$greeting,',
             style: const TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.w700,

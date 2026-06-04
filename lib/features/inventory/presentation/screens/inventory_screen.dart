@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../inventory/data/inventory_provider.dart';
 
 class InventoryScreen extends ConsumerStatefulWidget {
   const InventoryScreen({super.key});
@@ -13,16 +14,8 @@ class InventoryScreen extends ConsumerStatefulWidget {
 
 class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   final _searchCtrl = TextEditingController();
+  String _searchQuery = '';
   String _filter = 'all';
-
-  final _items = [
-    {'name': 'Espresso Beans 1kg', 'sku': 'COF-001', 'stock': 45, 'reorder': 10, 'price': 120.00, 'category': 'Coffee'},
-    {'name': 'Latte Cups (12pk)', 'sku': 'CUP-002', 'stock': 8, 'reorder': 12, 'price': 85.00, 'category': 'Supplies'},
-    {'name': 'Muffin Mix 5kg', 'sku': 'BAK-001', 'stock': 3, 'reorder': 5, 'price': 65.00, 'category': 'Bakery'},
-    {'name': 'Takeaway Lids 100pk', 'sku': 'SUP-001', 'stock': 120, 'reorder': 50, 'price': 45.00, 'category': 'Supplies'},
-    {'name': 'Cheesecake Base', 'sku': 'BAK-002', 'stock': 12, 'reorder': 8, 'price': 95.00, 'category': 'Bakery'},
-    {'name': 'Milk 2L', 'sku': 'DAI-001', 'stock': 0, 'reorder': 20, 'price': 28.00, 'category': 'Dairy'},
-  ];
 
   @override
   void dispose() {
@@ -32,168 +25,155 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _items.where((item) {
-      final matchesSearch = _searchCtrl.text.isEmpty ||
-          (item['name'] as String)
-              .toLowerCase()
-              .contains(_searchCtrl.text.toLowerCase());
+    final inventoryAsync = ref.watch(inventoryProvider);
+    final items = inventoryAsync.valueOrNull ?? [];
+
+    final filtered = items.where((item) {
+      final matchesSearch = _searchQuery.isEmpty ||
+          item.productName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          item.sku.toLowerCase().contains(_searchQuery.toLowerCase());
       final matchesFilter = _filter == 'all' ||
-          (_filter == 'low' && (item['stock'] as int) <= (item['reorder'] as int)) ||
-          (_filter == 'out' && (item['stock'] as int) == 0) ||
-          (_filter == item['category']);
+          (_filter == 'low' && item.quantityOnHand <= item.reorderPoint) ||
+          (_filter == 'out' && item.quantityOnHand == 0);
       return matchesSearch && matchesFilter;
     }).toList();
 
     return Scaffold(
       backgroundColor: SpiceColors.surface,
       body: Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _searchCtrl,
-                  decoration: const InputDecoration(
-                    hintText: 'Search inventory...',
-                    prefixIcon: Icon(Icons.search),
-                    isDense: true,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(32, 32, 32, 0),
+            child: Row(
+              children: [
+                const Text('Inventory',
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
+                const Spacer(),
+                SizedBox(
+                  width: 280,
+                  child: TextField(
+                    controller: _searchCtrl,
+                    decoration: const InputDecoration(
+                      hintText: 'Search inventory...',
+                      prefixIcon: Icon(Icons.search, size: 20),
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(vertical: 10),
+                    ),
+                    onChanged: (v) => setState(() => _searchQuery = v),
                   ),
-                  onChanged: (_) => setState(() {}),
                 ),
-              ),
-              const SizedBox(width: 12),
-              ElevatedButton.icon(
-                onPressed: () {
-                  // Add product
-                },
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('Add'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // Filter chips
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Row(
-            children: [
-              _filterChip('All', 'all'),
-              _filterChip('Low Stock', 'low'),
-              _filterChip('Out of Stock', 'out'),
-              _filterChip('Coffee', 'Coffee'),
-              _filterChip('Supplies', 'Supplies'),
-              _filterChip('Bakery', 'Bakery'),
-              _filterChip('Dairy', 'Dairy'),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 8),
-
-        Expanded(
-          child: filtered.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.inventory_2_outlined,
-                          size: 64, color: SpiceColors.textSecondary),
-                      const SizedBox(height: 12),
-                      Text('No items found',
-                          style: Theme.of(context).textTheme.titleMedium),
-                    ],
+                const SizedBox(width: 12),
+                ElevatedButton.icon(
+                  onPressed: () {},
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Add Stock'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: filtered.length,
-                  itemBuilder: (context, index) {
-                    final item = filtered[index];
-                    final stock = item['stock'] as int;
-                    final reorder = item['reorder'] as int;
-                    final isLow = stock <= reorder;
-                    final isOut = stock == 0;
-
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      decoration: BoxDecoration(
-                        color: SpiceColors.surfaceAlt,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: SpiceColors.border),
-                      ),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
-                        leading: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: (isOut
-                                    ? SpiceColors.danger
-                                    : isLow
-                                        ? SpiceColors.warning
-                                        : SpiceColors.accent)
-                                .withAlpha(30),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(
-                            isOut
-                                ? Icons.error_outline
-                                : isLow
-                                    ? Icons.warning_amber_rounded
-                                    : Icons.check_circle_outline,
-                            color: isOut
-                                ? SpiceColors.danger
-                                : isLow
-                                    ? SpiceColors.warning
-                                    : SpiceColors.accent,
-                          ),
-                        ),
-                        title: Text(item['name'] as String,
-                            style: Theme.of(context).textTheme.titleMedium),
-                        subtitle: Text(
-                          'SKU: ${item['sku']} • ${item['category']}',
-                          style: Theme.of(context).textTheme.labelMedium,
-                        ),
-                        trailing: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.end,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Row(
+              children: [
+                _filterChip('All', 'all'),
+                _filterChip('Low Stock', 'low'),
+                _filterChip('Out of Stock', 'out'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: inventoryAsync.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : filtered.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(
-                              'R ${(item['price'] as double).toStringAsFixed(2)}',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelLarge
-                                  ?.copyWith(fontWeight: FontWeight.w600),
-                            ),
-                            Text(
-                              '$stock in stock',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isOut
-                                    ? SpiceColors.danger
-                                    : isLow
-                                        ? SpiceColors.warning
-                                        : SpiceColors.textSecondary,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
+                            Icon(Icons.inventory_2_outlined, size: 48, color: SpiceColors.textSecondary),
+                            const SizedBox(height: 12),
+                            Text(items.isEmpty ? 'No inventory tracked' : 'No matching items',
+                                style: const TextStyle(color: SpiceColors.textSecondary)),
+                            const SizedBox(height: 8),
+                            Text('Add products and stock from the POS or settings',
+                                style: const TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
                           ],
                         ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(32, 0, 32, 32),
+                        itemCount: filtered.length,
+                        itemBuilder: (context, index) {
+                          final item = filtered[index];
+                          final isLow = item.quantityOnHand <= item.reorderPoint && item.quantityOnHand > 0;
+                          final isOut = item.quantityOnHand == 0;
+                          final statusColor = isOut ? SpiceColors.danger : isLow ? SpiceColors.warning : SpiceColors.accent;
+                          final statusIcon = isOut ? Icons.error_outline : isLow ? Icons.warning_amber_rounded : Icons.check_circle_outline;
+
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: SpiceColors.surfaceAlt,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: SpiceColors.border),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 40, height: 40,
+                                  decoration: BoxDecoration(
+                                    color: statusColor.withAlpha(25),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Icon(statusIcon, color: statusColor, size: 20),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(item.productName,
+                                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
+                                      const SizedBox(height: 2),
+                                      Text('SKU: ${item.sku}',
+                                          style: const TextStyle(fontSize: 11, color: SpiceColors.textSecondary)),
+                                    ],
+                                  ),
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text('R ${item.unitPrice.toStringAsFixed(2)}',
+                                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
+                                    const SizedBox(height: 2),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: statusColor.withAlpha(20),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        '${item.quantityOnHand.toInt()} in stock',
+                                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: statusColor),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ).animate().fadeIn(delay: (index * 40).ms);
+                        },
                       ),
-                    ).animate().fadeIn(delay: (index * 50).ms);
-                  },
-                ),
-        ),
-      ],
-    ));
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _filterChip(String label, String value) {
