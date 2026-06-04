@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'core/widgets/glass_widgets.dart';
+import 'package:go_router/go_router.dart';
 
-import 'core/router/app_router.dart';
+import 'core/widgets/app_sidebar.dart';
 import 'core/theme/app_theme.dart';
+import 'core/router/app_router.dart';
 
 class SpiceDeskApp extends ConsumerWidget {
   const SpiceDeskApp({super.key});
@@ -20,9 +21,22 @@ class SpiceDeskApp extends ConsumerWidget {
       routerConfig: router,
       title: 'SpiceDesk',
       builder: (context, child) {
-        return Glass(
-          enabled: true,
-          child: child ?? const SizedBox.shrink(),
+        final location = GoRouterState.of(context).matchedLocation;
+        final isAuthRoute = location == '/login' || location == '/register';
+
+        if (isAuthRoute) {
+          return child ?? const SizedBox.shrink();
+        }
+
+        return Row(
+          children: [
+            const AppSidebar(),
+            Expanded(
+              child: ClipRect(
+                child: child ?? const SizedBox.shrink(),
+              ),
+            ),
+          ],
         );
       },
     );

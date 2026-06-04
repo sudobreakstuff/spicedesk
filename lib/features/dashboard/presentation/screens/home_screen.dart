@@ -1,247 +1,125 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import '../../../../core/widgets/glass_widgets.dart';
 
 import '../../../../core/theme/app_theme.dart';
-import '../../../workspace/domain/workspace_state.dart';
-import '../../../auth/domain/auth_state.dart';
 
-class DashboardScreen extends ConsumerWidget {
-  const DashboardScreen({super.key});
+class HomeScreen extends ConsumerWidget {
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final workspace = ref.watch(workspaceStateProvider);
-
-    if (workspace.selectedId == null) {
-      return Center(
-        child: GlassCard(
-          borderRadius: BorderRadius.circular(24),
-          padding: const EdgeInsets.all(48),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [SpiceColors.primary, Color(0xFFA78BFA)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Icon(Icons.business_outlined,
-                    size: 36, color: Colors.white),
-              ),
-              const SizedBox(height: 24),
-              Text('No workspace selected',
-                  style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 8),
-              Text('Create or join a workspace to get started',
-                  style: Theme.of(context).textTheme.bodyMedium),
-              const SizedBox(height: 24),
-              SizedBox(
-                height: 48,
-                width: 200,
-                child: ElevatedButton(
-                  onPressed: () => context.go('/workspace'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: SpiceColors.primary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: const Text('Set Up Workspace'),
-                ),
-              ),
-            ],
-          ),
-        ).animate().fadeIn().scaleXY(begin: 0.95),
-      );
-    }
-
     final hour = DateTime.now().hour;
-    final greeting = hour < 12
-        ? 'Good morning'
-        : hour < 17
-            ? 'Good afternoon'
-            : 'Good evening';
+    final greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
-    final userName = ref.watch(authStateProvider).user?.userMetadata?['name']
-            as String? ??
-        'User';
-
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '$greeting,',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.copyWith(fontSize: 13),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    userName,
-                    style: Theme.of(context)
-                        .textTheme
-                        .headlineMedium
-                        ?.copyWith(fontWeight: FontWeight.w700),
-                  ),
-                ],
-              ),
+    return Scaffold(
+      backgroundColor: SpiceColors.surface,
+      body: ListView(
+        padding: const EdgeInsets.all(32),
+        children: [
+          // Header
+          Text(
+            '$greeting 👋',
+            style: const TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w700,
+              color: SpiceColors.textPrimary,
+              letterSpacing: -0.5,
             ),
-          ],
-        )
-            .animate()
-            .fadeIn(duration: 300.ms)
-            .slideX(begin: -0.04, curve: Curves.easeOut),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Here\'s what\'s happening with your business today.',
+            style: TextStyle(fontSize: 14, color: SpiceColors.textSecondary),
+          ),
 
-        const SizedBox(height: 24),
+          const SizedBox(height: 32),
 
-        Text('Overview',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleLarge
-                    ?.copyWith(fontSize: 15, color: SpiceColors.textSecondary))
-            .animate(delay: 100.ms)
-            .fadeIn(),
-        const SizedBox(height: 12),
-
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 1.6,
-          children: [
-            _StatCard(
-              icon: Icons.point_of_sale_rounded,
-              label: "Today's Sales",
-              value: 'R 0.00',
-              color: SpiceColors.accent,
-            ),
-            _StatCard(
-              icon: Icons.inventory_2_rounded,
-              label: 'Products',
-              value: '0',
-              color: SpiceColors.primary,
-            ),
-            _StatCard(
-              icon: Icons.people_rounded,
-              label: 'Customers',
-              value: '0',
-              color: const Color(0xFF8B5CF6),
-            ),
-            _StatCard(
-              icon: Icons.receipt_long_rounded,
-              label: 'Transactions',
-              value: '0',
-              color: SpiceColors.warning,
-            ),
-          ].animate(interval: 80.ms, delay: 150.ms).fadeIn().slideY(
-              begin: 0.08, curve: Curves.easeOut),
-        ),
-
-        const SizedBox(height: 28),
-
-        Text('Quick Actions',
-                style: Theme.of(context).textTheme.titleLarge)
-            .animate(delay: 400.ms)
-            .fadeIn(),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _QuickAction(
-                icon: Icons.point_of_sale_rounded,
-                label: 'New Sale',
-                color: SpiceColors.accent,
-                onTap: () => context.go('/pos'),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _QuickAction(
-                icon: Icons.add_box_rounded,
-                label: 'Add Product',
-                color: SpiceColors.primary,
-                onTap: () => context.go('/inventory'),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _QuickAction(
-                icon: Icons.analytics_rounded,
-                label: 'Reports',
-                color: const Color(0xFF8B5CF6),
-                onTap: () => context.go('/reports'),
-              ),
-            ),
-          ].animate(interval: 80.ms, delay: 480.ms).fadeIn().slideY(
-              begin: 0.08, curve: Curves.easeOut),
-        ),
-
-        const SizedBox(height: 28),
-
-        Text('Recent Activity',
-                style: Theme.of(context).textTheme.titleLarge)
-            .animate(delay: 600.ms)
-            .fadeIn(),
-        const SizedBox(height: 12),
-        GlassCard(
-          borderRadius: BorderRadius.circular(20),
-          padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 24),
-          child: Column(
+          // Stats grid
+          GridView.count(
+            crossAxisCount: 4,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 16,
+            crossAxisSpacing: 16,
+            childAspectRatio: 1.6,
             children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: SpiceColors.textSecondary.withAlpha(20),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Icon(Icons.hourglass_empty_rounded,
-                    size: 28, color: SpiceColors.textSecondary),
-              ),
-              const SizedBox(height: 12),
-              Text('No recent activity',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(fontSize: 15)),
-              const SizedBox(height: 4),
-              Text('Sales and inventory actions will appear here',
-                  style: Theme.of(context).textTheme.labelMedium),
-            ],
+              _StatCard(icon: Icons.trending_up, label: 'Today\'s Sales', value: 'R 0.00', accent: SpiceColors.accent),
+              _StatCard(icon: Icons.shopping_bag, label: 'Products', value: '0', accent: SpiceColors.primary),
+              _StatCard(icon: Icons.people, label: 'Customers', value: '0', accent: const Color(0xFF8B5CF6)),
+              _StatCard(icon: Icons.receipt_long, label: 'Transactions', value: '0', accent: SpiceColors.warning),
+            ].animate(interval: 80.ms).fadeIn().slideY(begin: 12),
           ),
-        ).animate(delay: 700.ms).fadeIn().scaleXY(begin: 0.98),
 
-        const SizedBox(height: 24),
-        Center(
-          child: Text(
-            'Made by Shahid Singh',
-            style: Theme.of(context)
-                .textTheme
-                .labelMedium
-                ?.copyWith(fontSize: 11),
+          const SizedBox(height: 36),
+
+          const Text('Quick Actions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _ActionCard(
+                  icon: Icons.point_of_sale_rounded,
+                  label: 'New Sale',
+                  subtitle: 'Start a transaction',
+                  onTap: () {},
+                  color: SpiceColors.accent,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _ActionCard(
+                  icon: Icons.add_box_rounded,
+                  label: 'Add Product',
+                  subtitle: 'Add to inventory',
+                  onTap: () {},
+                  color: SpiceColors.primary,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _ActionCard(
+                  icon: Icons.analytics_rounded,
+                  label: 'View Reports',
+                  subtitle: 'See your analytics',
+                  onTap: () {},
+                  color: SpiceColors.warning,
+                ),
+              ),
+            ].animate(interval: 100.ms, delay: 200.ms).fadeIn().slideY(begin: 12),
           ),
-        ).animate(delay: 900.ms).fadeIn(),
-      ],
+
+          const SizedBox(height: 36),
+
+          const Text('Recent Activity', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: SpiceColors.surfaceAlt,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: SpiceColors.border),
+            ),
+            child: const Column(
+              children: [
+                Icon(Icons.hourglass_empty, size: 32, color: SpiceColors.textSecondary),
+                SizedBox(height: 12),
+                Text('No recent activity', style: TextStyle(color: SpiceColors.textSecondary)),
+                SizedBox(height: 4),
+                Text('Sales and inventory actions will appear here',
+                    style: TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
+              ],
+            ),
+          ).animate(delay: 400.ms).fadeIn(),
+
+          const SizedBox(height: 48),
+          const Center(
+            child: Text('Made by Shahid Singh',
+                style: TextStyle(fontSize: 11, color: SpiceColors.textSecondary)),
+          ),
+          const SizedBox(height: 32),
+        ],
+      ),
     );
   }
 }
@@ -250,129 +128,92 @@ class _StatCard extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
-  final Color color;
+  final Color accent;
 
-  const _StatCard({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.color,
-  });
+  const _StatCard({required this.icon, required this.label, required this.value, required this.accent});
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          colors: [color.withAlpha(50), color.withAlpha(10)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        border: Border.all(
-          color: color.withAlpha(60),
-          width: 0.5,
-        ),
+        color: SpiceColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: SpiceColors.border),
       ),
-      child: GlassCard(
-        borderRadius: BorderRadius.circular(20),
-        padding: const EdgeInsets.all(18),
-        backgroundColor: Colors.transparent,
-        blur: 0,
-        shadows: const [],
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: color.withAlpha(30),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(icon, color: color, size: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36, height: 36,
+                decoration: BoxDecoration(
+                  color: accent.withAlpha(25),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                const Spacer(),
-                Icon(Icons.trending_up_rounded,
-                    size: 16, color: color.withAlpha(120)),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Text(
-              value,
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineSmall
-                  ?.copyWith(fontWeight: FontWeight.w800, color: color),
-            ),
-            const SizedBox(height: 2),
-            Text(label,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: SpiceColors.textSecondary, fontSize: 12)),
-          ],
-        ),
+                child: Icon(icon, color: accent, size: 18),
+              ),
+              const Spacer(),
+              Icon(Icons.trending_up, size: 14, color: SpiceColors.accent.withAlpha(100)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(value, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
+          const SizedBox(height: 2),
+          Text(label, style: const TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
+        ],
       ),
     );
   }
 }
 
-class _QuickAction extends StatelessWidget {
+class _ActionCard extends StatelessWidget {
   final IconData icon;
   final String label;
-  final Color color;
+  final String subtitle;
   final VoidCallback onTap;
+  final Color color;
 
-  const _QuickAction({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
+  const _ActionCard({required this.icon, required this.label, required this.subtitle, required this.onTap, required this.color});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          gradient: LinearGradient(
-            colors: [color.withAlpha(30), color.withAlpha(5)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+    return Material(
+      color: SpiceColors.surfaceAlt,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            border: Border.all(color: SpiceColors.border),
+            borderRadius: BorderRadius.circular(12),
           ),
-          border: Border.all(color: color.withAlpha(50), width: 0.5),
-        ),
-        child: GlassCard(
-          borderRadius: BorderRadius.circular(18),
-          padding: const EdgeInsets.symmetric(vertical: 22),
-          backgroundColor: Colors.transparent,
-          blur: 0,
-          shadows: const [],
-          child: Column(
+          child: Row(
             children: [
               Container(
-                width: 44,
-                height: 44,
+                width: 40, height: 40,
                 decoration: BoxDecoration(
-                  color: color.withAlpha(30),
-                  borderRadius: BorderRadius.circular(14),
+                  color: color.withAlpha(25),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(icon, color: color, size: 22),
+                child: Icon(icon, color: color, size: 20),
               ),
-              const SizedBox(height: 10),
-              Text(
-                label,
-                style: TextStyle(
-                  color: color,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
+                    const SizedBox(height: 2),
+                    Text(subtitle, style: const TextStyle(fontSize: 11, color: SpiceColors.textSecondary)),
+                  ],
                 ),
-                textAlign: TextAlign.center,
               ),
+              const Icon(Icons.arrow_forward, size: 16, color: SpiceColors.textSecondary),
             ],
           ),
         ),

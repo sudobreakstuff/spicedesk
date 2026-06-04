@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/widgets/glass_widgets.dart';
 
 import '../../../../core/theme/app_theme.dart';
 
@@ -45,7 +44,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
       return matchesSearch && matchesFilter;
     }).toList();
 
-    return Column(
+    return Scaffold(
+      backgroundColor: SpiceColors.surface,
+      body: Column(
       children: [
         Padding(
           padding: const EdgeInsets.all(12),
@@ -120,9 +121,13 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                     final isLow = stock <= reorder;
                     final isOut = stock == 0;
 
-                    return GlassCard(
-                      borderRadius: BorderRadius.circular(14),
+                    return Container(
                       margin: const EdgeInsets.only(bottom: 10),
+                      decoration: BoxDecoration(
+                        color: SpiceColors.surfaceAlt,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: SpiceColors.border),
+                      ),
                       child: ListTile(
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 8),
@@ -188,7 +193,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                 ),
         ),
       ],
-    );
+    ));
   }
 
   Widget _filterChip(String label, String value) {

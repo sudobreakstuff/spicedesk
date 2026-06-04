@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/widgets/glass_widgets.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/auth_state.dart';
@@ -149,8 +148,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
                     const SizedBox(height: 40),
 
-                    GlassCard(
-                      borderRadius: BorderRadius.circular(24),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: SpiceColors.surfaceAlt,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: SpiceColors.border),
+                      ),
                       padding: const EdgeInsets.all(28),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,

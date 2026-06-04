@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/widgets/glass_widgets.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/workspace_state.dart';
@@ -55,8 +54,12 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                 workspaces.when(
                   data: (list) {
                     if (list.isEmpty) {
-                      return GlassCard(
-                        borderRadius: BorderRadius.circular(16),
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: SpiceColors.surfaceAlt,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: SpiceColors.border),
+                        ),
                         padding: const EdgeInsets.all(32),
                         child: Column(
                           children: [
@@ -80,36 +83,42 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                       separatorBuilder: (_, __) => const SizedBox(height: 8),
                       itemBuilder: (context, index) {
                         final ws = list[index];
-                        return GlassCard(
-                          borderRadius: BorderRadius.circular(16),
+                        return GestureDetector(
                           onTap: () => ref
                               .read(workspaceStateProvider.notifier)
                               .selectWorkspace(ws),
-                          child: ListTile(
-                            leading: Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [
-                                    SpiceColors.primary,
-                                    Color(0xFF818CF8)
-                                  ],
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: SpiceColors.surfaceAlt,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: SpiceColors.border),
+                            ),
+                            child: ListTile(
+                              leading: Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [
+                                      SpiceColors.primary,
+                                      Color(0xFF818CF8)
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                                borderRadius: BorderRadius.circular(12),
+                                child: const Icon(Icons.store,
+                                    color: Colors.white, size: 22),
                               ),
-                              child: const Icon(Icons.store,
-                                  color: Colors.white, size: 22),
+                              title: Text(ws['name'] ?? '',
+                                  style:
+                                      Theme.of(context).textTheme.titleMedium),
+                              subtitle: Text(
+                                ws['role'] ?? 'member',
+                                style: Theme.of(context).textTheme.labelMedium,
+                              ),
+                              trailing: const Icon(Icons.arrow_forward_ios,
+                                  size: 16),
                             ),
-                            title: Text(ws['name'] ?? '',
-                                style:
-                                    Theme.of(context).textTheme.titleMedium),
-                            subtitle: Text(
-                              ws['role'] ?? 'member',
-                              style: Theme.of(context).textTheme.labelMedium,
-                            ),
-                            trailing: const Icon(Icons.arrow_forward_ios,
-                                size: 16),
                           ),
                         );
                       },
@@ -124,8 +133,12 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                 const SizedBox(height: 32),
 
                 // Create workspace
-                GlassCard(
-                  borderRadius: BorderRadius.circular(20),
+                Container(
+                  decoration: BoxDecoration(
+                    color: SpiceColors.surfaceAlt,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: SpiceColors.border),
+                  ),
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,

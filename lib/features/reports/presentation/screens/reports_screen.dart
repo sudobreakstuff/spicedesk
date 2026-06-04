@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../../../../core/widgets/glass_widgets.dart';
 
 import '../../../../core/theme/app_theme.dart';
 
@@ -71,8 +70,12 @@ class ReportsScreen extends ConsumerWidget {
         Text('Sales Overview',
             style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 12),
-        GlassCard(
-          borderRadius: BorderRadius.circular(16),
+        Container(
+          decoration: BoxDecoration(
+            color: SpiceColors.surfaceAlt,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: SpiceColors.border),
+          ),
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,8 +154,12 @@ class ReportsScreen extends ConsumerWidget {
         // Top products
         Text('Top Products', style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 12),
-        GlassCard(
-          borderRadius: BorderRadius.circular(16),
+        Container(
+          decoration: BoxDecoration(
+            color: SpiceColors.surfaceAlt,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: SpiceColors.border),
+          ),
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
@@ -209,8 +216,12 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
-      borderRadius: BorderRadius.circular(16),
+    return Container(
+      decoration: BoxDecoration(
+        color: SpiceColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: SpiceColors.border),
+      ),
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/glass_widgets.dart';
 import '../../domain/auth_state.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -137,8 +136,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     const SizedBox(height: 40),
 
                     // Login form card
-                    GlassCard(
-                      borderRadius: BorderRadius.circular(24),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: SpiceColors.surfaceAlt,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: SpiceColors.border),
+                      ),
                       padding: const EdgeInsets.all(28),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
