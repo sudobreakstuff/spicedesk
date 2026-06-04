@@ -3,17 +3,105 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/network/supabase_client.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/domain/auth_state.dart';
+import '../../../printing/data/printing_service.dart';
 import '../../../workspace/domain/workspace_state.dart';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  String _contactNumber = '';
+  String _address = '';
+  String _receiptHeader = '';
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    final ws = ref.read(workspaceStateProvider);
+    if (ws.selectedId != null) {
+      try {
+        final data = await supabase
+            .from('workspaces')
+            .select('settings')
+            .eq('id', ws.selectedId!)
+            .maybeSingle();
+        if (data != null && data['settings'] != null) {
+          final settings = data['settings'] as Map<String, dynamic>;
+          setState(() {
+            _contactNumber = settings['contact_number']?.toString() ?? '';
+            _address = settings['address']?.toString() ?? '';
+            _receiptHeader = settings['receipt_header']?.toString() ?? '';
+          });
+        }
+      } catch (_) {}
+    }
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _saveSetting(String key, String value) async {
+    final wsId = ref.read(workspaceStateProvider).selectedId;
+    if (wsId == null) return;
+
+    try {
+      final data = await supabase
+          .from('workspaces')
+          .select('settings')
+          .eq('id', wsId)
+          .maybeSingle();
+      final settings = Map<String, dynamic>.from(
+          data?['settings'] as Map<String, dynamic>? ?? {});
+      settings[key] = value;
+      await supabase
+          .from('workspaces')
+          .update({'settings': settings}).eq('id', wsId);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Failed to save: $e'),
+          backgroundColor: SpiceColors.danger,
+        ));
+      }
+    }
+  }
+
+  Future<void> _saveBusinessName(String name) async {
+    try {
+      await ref.read(workspaceStateProvider.notifier).updateWorkspaceName(name);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Business name updated'),
+          backgroundColor: SpiceColors.accent,
+        ));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Failed to update name: $e'),
+          backgroundColor: SpiceColors.danger,
+        ));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final workspace = ref.watch(workspaceStateProvider);
     final user = ref.watch(authStateProvider).user;
+
+    final displayBusinessName = workspace.selectedName ?? 'Not set';
+    final displayContact = _contactNumber.isNotEmpty ? _contactNumber : 'Not set';
+    final displayAddress = _address.isNotEmpty ? _address : 'Not set';
+    final displayReceipt = _receiptHeader.isNotEmpty ? _receiptHeader : 'Customize receipt info';
 
     return Scaffold(
       backgroundColor: SpiceColors.surface,
@@ -29,14 +117,49 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 32),
 
           _section('Store Profile', [
-            _tile(Icons.store, 'Business Name', workspace.selectedName ?? 'Not set',
-                onTap: () => _showEditDialog(context, 'Business Name', workspace.selectedName ?? '', (v) {})),
-            _tile(Icons.phone, 'Contact Number', 'Not set',
-                onTap: () => _showEditDialog(context, 'Contact Number', '', (v) {})),
-            _tile(Icons.location_on, 'Address', 'Not set',
-                onTap: () {}),
-            _tile(Icons.receipt_long, 'Receipt Header', 'Customize receipt info',
-                onTap: () {}),
+            _tile(Icons.store, 'Business Name', displayBusinessName,
+                onTap: () => _showEditDialog(
+                  context,
+                  'Business Name',
+                  workspace.selectedName ?? '',
+                  onSave: _saveBusinessName,
+                )),
+            _tile(Icons.phone, 'Contact Number', displayContact,
+                onTap: () {
+                  _showEditDialog(
+                    context,
+                    'Contact Number',
+                    _contactNumber,
+                    onSave: (v) async {
+                      setState(() => _contactNumber = v);
+                      await _saveSetting('contact_number', v);
+                    },
+                  );
+                }),
+            _tile(Icons.location_on, 'Address', displayAddress,
+                onTap: () {
+                  _showEditDialog(
+                    context,
+                    'Address',
+                    _address,
+                    onSave: (v) async {
+                      setState(() => _address = v);
+                      await _saveSetting('address', v);
+                    },
+                  );
+                }),
+            _tile(Icons.receipt_long, 'Receipt Header', displayReceipt,
+                onTap: () {
+                  _showEditDialog(
+                    context,
+                    'Receipt Header',
+                    _receiptHeader,
+                    onSave: (v) async {
+                      setState(() => _receiptHeader = v);
+                      await _saveSetting('receipt_header', v);
+                    },
+                  );
+                }),
           ]),
 
           const SizedBox(height: 24),
@@ -45,10 +168,41 @@ class SettingsScreen extends ConsumerWidget {
             _tile(Icons.print, 'Connect Printer', 'Niimbot B21 / Bluetooth',
                 onTap: () => context.go('/printer-connect')),
             _tile(Icons.qr_code, 'Test Print', 'Verify printer setup',
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Printer not connected')),
+                onTap: () async {
+                  final ps = PrintingService();
+                  if (!ps.isConnected) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('No printer connected. Go to Connect Printer first.'),
+                          backgroundColor: SpiceColors.warning,
+                        ),
+                      );
+                    }
+                    return;
+                  }
+                  final scaffold = ScaffoldMessenger.of(context);
+                  final success = await ps.printReceipt(
+                    storeName: workspace.selectedName ?? 'SpiceDesk',
+                    transactionNumber: 'TEST-001',
+                    date: DateTime.now(),
+                    items: const [
+                      ReceiptLineItem(
+                        name: 'Test Item',
+                        quantity: 1,
+                        unitPrice: 0.0,
+                        lineTotal: 0.0,
+                      ),
+                    ],
+                    total: 0,
+                    paymentMethod: 'Test',
                   );
+                  if (mounted) {
+                    scaffold.showSnackBar(SnackBar(
+                      content: Text(success ? 'Test print sent' : 'Print failed'),
+                      backgroundColor: success ? SpiceColors.accent : SpiceColors.danger,
+                    ));
+                  }
                 }),
           ]),
 
@@ -209,36 +363,61 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  void _showEditDialog(BuildContext context, String label, String current, Function(String) onSave) {
+  void _showEditDialog(
+    BuildContext context,
+    String label,
+    String current, {
+    required Future<void> Function(String) onSave,
+  }) {
     final ctrl = TextEditingController(text: current);
+    bool saving = false;
+
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: SpiceColors.surfaceAlt,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: SpiceColors.border),
-        ),
-        title: Text('Edit $label'),
-        content: TextField(
-          controller: ctrl,
-          autofocus: true,
-          decoration: InputDecoration(labelText: label),
-          onSubmitted: (v) {
-            onSave(v);
-            Navigator.pop(ctx);
-          },
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () {
-              onSave(ctrl.text);
-              Navigator.pop(ctx);
-            },
-            child: const Text('Save'),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: SpiceColors.surfaceAlt,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: SpiceColors.border),
           ),
-        ],
+          title: Text('Edit $label'),
+          content: TextField(
+            controller: ctrl,
+            autofocus: true,
+            enabled: !saving,
+            decoration: InputDecoration(labelText: label),
+            onSubmitted: saving
+                ? null
+                : (v) async {
+                    setDialogState(() => saving = true);
+                    await onSave(v);
+                    if (ctx.mounted) Navigator.pop(ctx);
+                  },
+          ),
+          actions: [
+            TextButton(
+              onPressed: saving ? null : () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: saving
+                  ? null
+                  : () async {
+                      setDialogState(() => saving = true);
+                      await onSave(ctrl.text.trim());
+                      if (ctx.mounted) Navigator.pop(ctx);
+                    },
+              child: saving
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Save'),
+            ),
+          ],
+        ),
       ),
     );
   }

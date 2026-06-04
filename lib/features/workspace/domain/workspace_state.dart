@@ -25,11 +25,13 @@ class WorkspaceNotifier extends StateNotifier<WorkspaceState> {
 
   Future<void> createWorkspace(String name) async {
     final user = supabase.auth.currentUser;
-    if (user == null) return;
+    if (user == null) throw Exception('You must be logged in to create a workspace');
 
     final response = await supabase
         .from('workspaces')
-        .insert({'name': name, 'created_by': user.id}).select().single();
+        .insert({'name': name, 'created_by': user.id})
+        .select()
+        .single();
 
     final wsId = response['id'] as String;
     await supabase.from('workspace_members').insert({
@@ -44,11 +46,20 @@ class WorkspaceNotifier extends StateNotifier<WorkspaceState> {
   }
 
   Future<void> selectWorkspace(Map<String, dynamic> ws) async {
-    final id = ws['workspace_id'] ?? ws['id'];
-    final name = ws['name'] ?? ws['workspace_name'];
+    final id = (ws['workspace_id'] ?? ws['id']) as String;
+    final name = (ws['name'] ?? ws['workspace_name'] ?? 'Unknown') as String;
     await prefs.setString('workspace_id', id);
-    await prefs.setString('workspace_name', name ?? '');
+    await prefs.setString('workspace_name', name);
     state = WorkspaceState(selectedId: id, selectedName: name);
+  }
+
+  Future<void> updateWorkspaceName(String name) async {
+    if (state.selectedId == null) return;
+    await supabase
+        .from('workspaces')
+        .update({'name': name}).eq('id', state.selectedId!);
+    await prefs.setString('workspace_name', name);
+    state = WorkspaceState(selectedId: state.selectedId, selectedName: name);
   }
 
   Future<void> joinWorkspace(String inviteCode) async {
@@ -75,7 +86,8 @@ final workspaceStateProvider =
     StateNotifierProvider<WorkspaceNotifier, WorkspaceState>(
         (ref) => WorkspaceNotifier());
 
-final workspacesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+final workspacesProvider =
+    FutureProvider<List<Map<String, dynamic>>>((ref) async {
   final user = supabase.auth.currentUser;
   if (user == null) return [];
 

@@ -45,10 +45,34 @@ class HomeScreen extends ConsumerWidget {
             crossAxisSpacing: 16,
             childAspectRatio: 1.6,
             children: [
-              _StatCard(icon: Icons.trending_up, label: 'Today\'s Sales', value: 'R 0.00', accent: SpiceColors.accent),
-              _StatCard(icon: Icons.shopping_bag, label: 'Products', value: '0', accent: SpiceColors.primary),
-              _StatCard(icon: Icons.people, label: 'Customers', value: '0', accent: const Color(0xFF8B5CF6)),
-              _StatCard(icon: Icons.receipt_long, label: 'Transactions', value: '0', accent: SpiceColors.warning),
+              _StatCard(
+                icon: Icons.trending_up,
+                label: 'Today\'s Sales',
+                value: 'R 0.00',
+                accent: SpiceColors.accent,
+                onTap: () => context.go('/reports'),
+              ),
+              _StatCard(
+                icon: Icons.shopping_bag,
+                label: 'Products',
+                value: '0',
+                accent: SpiceColors.primary,
+                onTap: () => context.go('/inventory'),
+              ),
+              _StatCard(
+                icon: Icons.people,
+                label: 'Customers',
+                value: '0',
+                accent: const Color(0xFF8B5CF6),
+                onTap: () => context.go('/customers'),
+              ),
+              _StatCard(
+                icon: Icons.receipt_long,
+                label: 'Transactions',
+                value: '0',
+                accent: SpiceColors.warning,
+                onTap: () => context.go('/reports'),
+              ),
             ].animate(interval: 80.ms).fadeIn().slideY(begin: 12),
           ),
 
@@ -130,41 +154,49 @@ class _StatCard extends StatelessWidget {
   final String label;
   final String value;
   final Color accent;
+  final VoidCallback? onTap;
 
-  const _StatCard({required this.icon, required this.label, required this.value, required this.accent});
+  const _StatCard({required this.icon, required this.label, required this.value, required this.accent, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: SpiceColors.surfaceAlt,
+    return Material(
+      color: SpiceColors.surfaceAlt,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: SpiceColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: SpiceColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: 36, height: 36,
-                decoration: BoxDecoration(
-                  color: accent.withAlpha(25),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, color: accent, size: 18),
+              Row(
+                children: [
+                  Container(
+                    width: 36, height: 36,
+                    decoration: BoxDecoration(
+                      color: accent.withAlpha(25),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(icon, color: accent, size: 18),
+                  ),
+                  const Spacer(),
+                  Icon(Icons.trending_up, size: 14, color: SpiceColors.accent.withAlpha(100)),
+                ],
               ),
-              const Spacer(),
-              Icon(Icons.trending_up, size: 14, color: SpiceColors.accent.withAlpha(100)),
+              const SizedBox(height: 16),
+              Text(value, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
+              const SizedBox(height: 2),
+              Text(label, style: const TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
             ],
           ),
-          const SizedBox(height: 16),
-          Text(value, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
-          const SizedBox(height: 2),
-          Text(label, style: const TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
-        ],
+        ),
       ),
     );
   }

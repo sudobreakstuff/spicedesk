@@ -154,6 +154,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                   children: [
                                     Text('R ${item.unitPrice.toStringAsFixed(2)}',
                                         style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
+                                    if (item.costPrice > 0)
+                                      Text('Cost: R ${item.costPrice.toStringAsFixed(2)}',
+                                          style: const TextStyle(fontSize: 10, color: SpiceColors.textSecondary)),
                                     const SizedBox(height: 2),
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -161,9 +164,30 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                         color: statusColor.withAlpha(20),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
-                                      child: Text(
-                                        '${item.quantityOnHand.toInt()} in stock',
-                                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: statusColor),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                            margin: const EdgeInsets.only(right: 4),
+                                            decoration: BoxDecoration(
+                                              color: (item.productType == 'raw_material' ? SpiceColors.warning : SpiceColors.primary).withAlpha(30),
+                                              borderRadius: BorderRadius.circular(3),
+                                            ),
+                                            child: Text(
+                                              item.productType == 'raw_material' ? 'RAW' : 'FIN',
+                                              style: TextStyle(
+                                                fontSize: 8,
+                                                fontWeight: FontWeight.w700,
+                                                color: item.productType == 'raw_material' ? SpiceColors.warning : SpiceColors.primary,
+                                              ),
+                                            ),
+                                          ),
+                                          Text(
+                                            '${item.quantityOnHand.toInt()} ${item.unitOfMeasure}',
+                                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: statusColor),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ],

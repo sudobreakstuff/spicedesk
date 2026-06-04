@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
@@ -65,12 +66,14 @@ class ReportsScreen extends ConsumerWidget {
                   error: (_, __) => 'R 0.00',
                 ),
                 accent: SpiceColors.accent,
+                onTap: () => context.go('/pos'),
               ),
               _SummaryCard(
                 icon: Icons.attach_money,
                 label: 'Total Sales',
                 value: format.format(totalSales),
                 accent: SpiceColors.primary,
+                onTap: () => context.go('/pos'),
               ),
               _SummaryCard(
                 icon: Icons.inventory_2,
@@ -81,12 +84,14 @@ class ReportsScreen extends ConsumerWidget {
                   error: (_, __) => '0',
                 ),
                 accent: SpiceColors.warning,
+                onTap: () => context.go('/inventory'),
               ),
               _SummaryCard(
                 icon: Icons.receipt_long,
                 label: 'Transactions',
                 value: sales.length.toString(),
                 accent: const Color(0xFF8B5CF6),
+                onTap: () {}, // Already on reports screen
               ),
             ].animate(interval: 80.ms).fadeIn().slideY(begin: 12),
           ),
@@ -261,7 +266,7 @@ class ReportsScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '${sale.paymentMethod}  •  ${DateFormat('MMM d, yyyy').format(sale.createdAt)}',
+                            '${sale.paymentMethod}  \u2022  ${DateFormat('MMM d, yyyy').format(sale.createdAt)}',
                             style: const TextStyle(
                               fontSize: 11,
                               color: SpiceColors.textSecondary,
@@ -294,60 +299,69 @@ class _SummaryCard extends StatelessWidget {
   final String label;
   final String value;
   final Color accent;
+  final VoidCallback? onTap;
 
   const _SummaryCard({
     required this.icon,
     required this.label,
     required this.value,
     required this.accent,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: SpiceColors.surfaceAlt,
+    return Material(
+      color: SpiceColors.surfaceAlt,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: SpiceColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: SpiceColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: accent.withAlpha(25),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, color: accent, size: 18),
+              Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: accent.withAlpha(25),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(icon, color: accent, size: 18),
+                  ),
+                  const Spacer(),
+                  Icon(Icons.trending_up, size: 14, color: SpiceColors.accent.withAlpha(100)),
+                ],
               ),
-              const Spacer(),
-              Icon(Icons.trending_up, size: 14, color: SpiceColors.accent.withAlpha(100)),
+              const SizedBox(height: 16),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w700,
+                  color: SpiceColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: SpiceColors.textSecondary,
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 16),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.w700,
-              color: SpiceColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: SpiceColors.textSecondary,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

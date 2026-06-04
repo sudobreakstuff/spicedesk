@@ -9,7 +9,7 @@ final productsProvider = FutureProvider<List<Product>>((ref) async {
 
   final data = await supabase
       .from('products')
-      .select('id, name, sku, barcode, description, unit_price, tax_rate, image_url, is_active, category_id, categories(name)')
+      .select('id, name, sku, barcode, description, unit_price, cost_price, tax_rate, image_url, is_active, product_type, unit_of_measure, category_id, categories(name)')
       .eq('workspace_id', wsId)
       .order('name');
 
@@ -20,9 +20,12 @@ final productsProvider = FutureProvider<List<Product>>((ref) async {
       sku: row['sku'],
       barcode: row['barcode'],
       unitPrice: (row['unit_price'] as num?)?.toDouble() ?? 0.0,
+      costPrice: (row['cost_price'] as num?)?.toDouble() ?? 0.0,
       taxRate: (row['tax_rate'] as num?)?.toDouble() ?? 0.0,
       imageUrl: row['image_url'],
       isActive: row['is_active'] ?? true,
+      productType: row['product_type'] ?? 'finished',
+      unitOfMeasure: row['unit_of_measure'] ?? 'unit',
       category: row['categories'] != null ? (row['categories']['name'] ?? '') : '',
     );
   }).toList();
@@ -34,9 +37,12 @@ class Product {
   final String? sku;
   final String? barcode;
   final double unitPrice;
+  final double costPrice;
   final double taxRate;
   final String? imageUrl;
   final bool isActive;
+  final String productType;
+  final String unitOfMeasure;
   final String category;
 
   const Product({
@@ -45,9 +51,12 @@ class Product {
     this.sku,
     this.barcode,
     required this.unitPrice,
+    this.costPrice = 0.0,
     this.taxRate = 0.0,
     this.imageUrl,
     this.isActive = true,
+    this.productType = 'finished',
+    this.unitOfMeasure = 'unit',
     this.category = '',
   });
 }

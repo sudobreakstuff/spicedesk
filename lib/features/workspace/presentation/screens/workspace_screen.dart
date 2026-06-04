@@ -4,6 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../customers/data/customers_provider.dart';
+import '../../../inventory/data/inventory_provider.dart';
+import '../../../products/data/products_provider.dart';
+import '../../../sales/data/sales_provider.dart';
 import '../../domain/workspace_state.dart';
 
 class WorkspaceScreen extends ConsumerStatefulWidget {
@@ -24,15 +28,64 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     super.dispose();
   }
 
+  Future<void> _handleCreateWorkspace() async {
+    final name = _nameCtrl.text.trim();
+    if (name.isEmpty) {
+      setState(() => _error = 'Enter a business name');
+      return;
+    }
+    if (name.length < 2) {
+      setState(() => _error = 'Name must be at least 2 characters');
+      return;
+    }
+
+    setState(() {
+      _creating = true;
+      _error = null;
+    });
+
+    try {
+      await ref.read(workspaceStateProvider.notifier).createWorkspace(name);
+      _invalidateWorkspaceProviders();
+      if (!mounted) return;
+      _nameCtrl.clear();
+      context.go('/dashboard');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _creating = false);
+    }
+  }
+
+  Future<void> _handleSelectWorkspace(Map<String, dynamic> ws) async {
+    await ref.read(workspaceStateProvider.notifier).selectWorkspace(ws);
+    _invalidateWorkspaceProviders();
+    if (mounted) context.go('/dashboard');
+  }
+
+  void _invalidateWorkspaceProviders() {
+    ref.invalidate(workspacesProvider);
+    ref.invalidate(productsProvider);
+    ref.invalidate(inventoryProvider);
+    ref.invalidate(productsNeedingInventoryProvider);
+    ref.invalidate(customersProvider);
+    ref.invalidate(customerCountProvider);
+    ref.invalidate(salesProvider);
+    ref.invalidate(todaySalesProvider);
+  }
+
   @override
   Widget build(BuildContext context) {
     final workspaces = ref.watch(workspacesProvider);
 
     return Scaffold(
       appBar: AppBar(
+        title: const Text('Workspaces'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go('/dashboard'),
+          tooltip: 'Back to Dashboard',
         ),
       ),
       body: Center(
@@ -56,7 +109,6 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
 
                 const SizedBox(height: 32),
 
-                // Existing workspaces
                 workspaces.when(
                   data: (list) {
                     if (list.isEmpty) {
@@ -89,41 +141,49 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                       separatorBuilder: (_, __) => const SizedBox(height: 8),
                       itemBuilder: (context, index) {
                         final ws = list[index];
-                        return GestureDetector(
-                          onTap: () => ref
-                              .read(workspaceStateProvider.notifier)
-                              .selectWorkspace(ws),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: SpiceColors.surfaceAlt,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: SpiceColors.border),
-                            ),
-                            child: ListTile(
-                              leading: Container(
-                                width: 44,
-                                height: 44,
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    colors: [
-                                      SpiceColors.primary,
-                                      Color(0xFF818CF8)
-                                    ],
+                        return Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => _handleSelectWorkspace(ws),
+                            borderRadius: BorderRadius.circular(16),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: SpiceColors.surfaceAlt,
+                                borderRadius: BorderRadius.circular(16),
+                                border:
+                                    Border.all(color: SpiceColors.border),
+                              ),
+                              child: ListTile(
+                                leading: Container(
+                                  width: 44,
+                                  height: 44,
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [
+                                        SpiceColors.primary,
+                                        Color(0xFF818CF8)
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
-                                  borderRadius: BorderRadius.circular(12),
+                                  child: const Icon(Icons.store,
+                                      color: Colors.white, size: 22),
                                 ),
-                                child: const Icon(Icons.store,
-                                    color: Colors.white, size: 22),
+                                title: Text(
+                                  ws['name'] ?? '',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium,
+                                ),
+                                subtitle: Text(
+                                  ws['role'] ?? 'member',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelMedium,
+                                ),
+                                trailing: const Icon(Icons.arrow_forward_ios,
+                                    size: 16),
                               ),
-                              title: Text(ws['name'] ?? '',
-                                  style:
-                                      Theme.of(context).textTheme.titleMedium),
-                              subtitle: Text(
-                                ws['role'] ?? 'member',
-                                style: Theme.of(context).textTheme.labelMedium,
-                              ),
-                              trailing: const Icon(Icons.arrow_forward_ios,
-                                  size: 16),
                             ),
                           ),
                         );
@@ -131,14 +191,35 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                     );
                   },
                   loading: () => const Center(
-                    child: CircularProgressIndicator(),
+                    child: Padding(
+                      padding: EdgeInsets.all(48),
+                      child: CircularProgressIndicator(),
+                    ),
                   ),
-                  error: (e, _) => Text('Error: $e'),
+                  error: (e, _) => Container(
+                    decoration: BoxDecoration(
+                      color: SpiceColors.surfaceAlt,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: SpiceColors.danger),
+                    ),
+                    padding: const EdgeInsets.all(24),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.error_outline,
+                            color: SpiceColors.danger),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text('Failed to load workspaces: $e',
+                              style: const TextStyle(
+                                  color: SpiceColors.danger)),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
 
                 const SizedBox(height: 32),
 
-                // Create workspace
                 Container(
                   decoration: BoxDecoration(
                     color: SpiceColors.surfaceAlt,
@@ -156,13 +237,17 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                         controller: _nameCtrl,
                         decoration: const InputDecoration(
                           labelText: 'Business Name',
+                          hintText: 'e.g. My Coffee Shop',
                           prefixIcon: Icon(Icons.business),
                         ),
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) => _handleCreateWorkspace(),
                       ),
                       if (_error != null) ...[
                         const SizedBox(height: 8),
                         Text(_error!,
-                            style: const TextStyle(color: SpiceColors.danger)),
+                            style:
+                                const TextStyle(color: SpiceColors.danger)),
                       ],
                       const SizedBox(height: 16),
                       SizedBox(
@@ -170,38 +255,18 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                         child: ElevatedButton.icon(
                           onPressed: _creating
                               ? null
-                              : () async {
-                                  final name = _nameCtrl.text.trim();
-                                  if (name.isEmpty) {
-                                    setState(
-                                        () => _error = 'Enter a business name');
-                                    return;
-                                  }
-                                  setState(() {
-                                    _creating = true;
-                                    _error = null;
-                                  });
-                                  try {
-                                    await ref
-                                        .read(workspaceStateProvider.notifier)
-                                        .createWorkspace(name);
-                                    _nameCtrl.clear();
-                                  } catch (e) {
-                                    setState(() => _error = e.toString());
-                                  }
-                                  if (mounted) {
-                                    setState(() => _creating = false);
-                                  }
-                                },
+                              : _handleCreateWorkspace,
                           icon: _creating
                               ? const SizedBox(
                                   width: 16,
                                   height: 16,
                                   child: CircularProgressIndicator(
-                                      strokeWidth: 2, color: Colors.white),
+                                      strokeWidth: 2,
+                                      color: Colors.white),
                                 )
                               : const Icon(Icons.add, size: 20),
-                          label: Text(_creating ? 'Creating...' : 'Create'),
+                          label:
+                              Text(_creating ? 'Creating...' : 'Create'),
                         ),
                       ),
                     ],

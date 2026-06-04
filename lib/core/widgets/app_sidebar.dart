@@ -25,7 +25,6 @@ class AppSidebar extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          // Brand header
           Container(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
             decoration: BoxDecoration(
@@ -49,43 +48,48 @@ class AppSidebar extends ConsumerWidget {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: InkWell(
-                    onTap: () => context.go('/workspace'),
-                    borderRadius: BorderRadius.circular(6),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'SpiceDesk',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: SpiceColors.textPrimary,
-                              letterSpacing: -0.3,
+                  child: Tooltip(
+                    message: workspace.selectedId != null
+                        ? 'Switch workspace'
+                        : 'Select a workspace',
+                    child: InkWell(
+                      onTap: () => context.go('/workspace'),
+                      borderRadius: BorderRadius.circular(6),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'SpiceDesk',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: SpiceColors.textPrimary,
+                                letterSpacing: -0.3,
+                              ),
                             ),
-                          ),
-                          Row(
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  workspace.selectedName ?? 'No workspace',
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: SpiceColors.textSecondary,
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    workspace.selectedName ?? 'No workspace',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: SpiceColors.textSecondary,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
-                              const Icon(
-                                Icons.keyboard_arrow_down,
-                                size: 14,
-                                color: SpiceColors.textSecondary,
-                              ),
-                            ],
-                          ),
-                        ],
+                                const Icon(
+                                  Icons.keyboard_arrow_down,
+                                  size: 14,
+                                  color: SpiceColors.textSecondary,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -96,7 +100,6 @@ class AppSidebar extends ConsumerWidget {
 
           const SizedBox(height: 8),
 
-          // Navigation
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -161,7 +164,6 @@ class AppSidebar extends ConsumerWidget {
             ),
           ),
 
-          // User section
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
@@ -243,8 +245,7 @@ class _NavItem extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
               border: active
                   ? Border(
-                      left:
-                          BorderSide(color: SpiceColors.primary, width: 3),
+                      left: BorderSide(color: SpiceColors.primary, width: 3),
                     )
                   : null,
             ),
