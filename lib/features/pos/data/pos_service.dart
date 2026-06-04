@@ -35,7 +35,10 @@ final createSaleAction = Provider<Future<SaleResult> Function({
       'p_items': itemsJson,
     });
 
-    // Invalidate providers to refresh data
+    if (customerId != null) {
+      await supabase.rpc('increment_loyalty', params: {'p_customer_id': customerId});
+    }
+
     ref.invalidate(inventoryProvider);
     ref.invalidate(salesProvider);
     ref.invalidate(todaySalesProvider);

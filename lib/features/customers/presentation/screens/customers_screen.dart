@@ -298,13 +298,13 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               const Icon(
-                                                Icons.star,
+                                                Icons.military_tech_rounded,
                                                 size: 14,
                                                 color: SpiceColors.warning,
                                               ),
                                               const SizedBox(width: 4),
                                               Text(
-                                                '${customer.loyaltyPoints} pts',
+                                                'Loyalty: ${customer.loyaltyPoints}',
                                                 style: const TextStyle(
                                                   fontSize: 12,
                                                   fontWeight: FontWeight.w600,

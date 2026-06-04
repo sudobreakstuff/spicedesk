@@ -9,6 +9,7 @@ import '../../../inventory/data/inventory_provider.dart';
 import '../../../pos/data/pos_service.dart';
 import '../../../printing/data/printing_service.dart';
 import '../../../workspace/domain/workspace_state.dart';
+import '../../../customers/data/customers_provider.dart';
 
 class PosScreen extends ConsumerStatefulWidget {
   const PosScreen({super.key});
@@ -47,51 +48,25 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
   Future<void> _checkout() async {
     if (_cart.isEmpty) return;
-    final paymentMethod = await showDialog<String>(
+    final customersAsync = ref.read(customersProvider);
+    final customers = customersAsync.valueOrNull ?? [];
+
+    final result = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: SpiceColors.surfaceAlt,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: SpiceColors.border)),
-        title: const Text('Checkout'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Total: R ${_total.toStringAsFixed(2)}',
-                style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    color: SpiceColors.accent)),
-            const SizedBox(height: 20),
-            ...['Cash', 'Card', 'Mobile'].map((m) => ListTile(
-                  leading: Icon(
-                      m == 'Cash'
-                          ? Icons.money
-                          : m == 'Card'
-                              ? Icons.credit_card
-                              : Icons.phone_android,
-                      color: SpiceColors.textSecondary),
-                  title: Text(m),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                  onTap: () => Navigator.pop(ctx, m),
-                )),
-          ],
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel')),
-        ],
+      builder: (ctx) => _CheckoutDialog(
+        total: _total,
+        customers: customers,
       ),
     );
 
-    if (paymentMethod == null) return;
+    if (result == null) return;
+
+    final paymentMethod = result['paymentMethod'] as String;
+    final customerId = result['customerId'] as String?;
 
     try {
       final createSale = ref.read(createSaleAction);
-      final result = await createSale(
+      final saleResult = await createSale(
         items: _cart
             .map((c) => SaleItemInput(
                   productId: c.product.id,
@@ -101,12 +76,13 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 ))
             .toList(),
         paymentMethod: paymentMethod,
+        customerId: customerId,
       );
 
       if (mounted) {
         final cartSnapshot = List<_CartItem>.from(_cart);
         setState(() => _cart.clear());
-        _showReceiptDialog(result, cartSnapshot, paymentMethod);
+        _showReceiptDialog(saleResult, cartSnapshot, paymentMethod);
       }
     } catch (e) {
       if (mounted) {
@@ -717,6 +693,13 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     final productsAsync = ref.watch(productsProvider);
     final products = productsAsync.valueOrNull ?? [];
 
+    final inventoryAsync = ref.watch(inventoryProvider);
+    final inventoryItems = inventoryAsync.valueOrNull ?? [];
+    final inventoryMap = <String, double>{};
+    for (final inv in inventoryItems) {
+      inventoryMap[inv.productId] = inv.quantityOnHand;
+    }
+
     final filtered = _searchQuery.isEmpty
         ? products
         : products
@@ -803,8 +786,12 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                 final p = filtered[index];
                                 final hasCategory =
                                     p.category.isNotEmpty;
-                                return GestureDetector(
-                                  onTap: () => _addToCart(p),
+                                final stockQty = inventoryMap[p.id] ?? 0;
+                                final isOutOfStock = stockQty <= 0;
+                                return Opacity(
+                                  opacity: isOutOfStock ? 0.4 : 1.0,
+                                  child: GestureDetector(
+                                  onTap: isOutOfStock ? null : () => _addToCart(p),
                                   onLongPress: () =>
                                       _showProductActions(p),
                                   child: Container(
@@ -871,9 +858,23 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                                     SpiceColors.accent),
                                           ),
                                         ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          isOutOfStock
+                                              ? 'Out of stock'
+                                              : 'In stock: ${stockQty.toInt()}',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w500,
+                                            color: isOutOfStock
+                                                ? SpiceColors.danger
+                                                : SpiceColors.textSecondary,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ),
+                                ),
                                 ).animate().fadeIn(
                                     delay: (index * 40).ms);
                               },
@@ -1080,6 +1081,115 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           child: Icon(icon, size: 14, color: SpiceColors.textSecondary),
         ),
       ),
+    );
+  }
+}
+
+class _CheckoutDialog extends StatefulWidget {
+  final double total;
+  final List<Customer> customers;
+
+  const _CheckoutDialog({
+    required this.total,
+    required this.customers,
+  });
+
+  @override
+  State<_CheckoutDialog> createState() => _CheckoutDialogState();
+}
+
+class _CheckoutDialogState extends State<_CheckoutDialog> {
+  String? _selectedCustomerId;
+  String _selectedCustomerName = 'Walk-in';
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: SpiceColors.surfaceAlt,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: SpiceColors.border)),
+      title: const Text('Checkout'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Total: R ${widget.total.toStringAsFixed(2)}',
+                style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700,
+                    color: SpiceColors.accent)),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: SpiceColors.border),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  isExpanded: true,
+                  value: null,
+                  hint: Text(
+                    _selectedCustomerName,
+                    style: const TextStyle(
+                        color: SpiceColors.textPrimary, fontSize: 14),
+                  ),
+                  icon: const Icon(Icons.arrow_drop_down,
+                      color: SpiceColors.textSecondary),
+                  items: [
+                    const DropdownMenuItem<String>(
+                      value: 'walkin',
+                      child: Text('Walk-in',
+                          style: TextStyle(color: SpiceColors.textSecondary)),
+                    ),
+                    ...widget.customers.map((c) => DropdownMenuItem<String>(
+                          value: c.id,
+                          child: Text(c.name,
+                              style: const TextStyle(
+                                  color: SpiceColors.textPrimary)),
+                        )),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      if (value == null || value == 'walkin') {
+                        _selectedCustomerId = null;
+                        _selectedCustomerName = 'Walk-in';
+                      } else {
+                        _selectedCustomerId = value;
+                        _selectedCustomerName =
+                            widget.customers.firstWhere((c) => c.id == value).name;
+                      }
+                    });
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            ...['Cash', 'Card', 'Mobile'].map((m) => ListTile(
+                  leading: Icon(
+                      m == 'Cash'
+                          ? Icons.money
+                          : m == 'Card'
+                              ? Icons.credit_card
+                              : Icons.phone_android,
+                      color: SpiceColors.textSecondary),
+                  title: Text(m),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                  onTap: () => Navigator.pop(context, {
+                    'paymentMethod': m,
+                    'customerId': _selectedCustomerId,
+                  }),
+                )),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel')),
+      ],
     );
   }
 }
