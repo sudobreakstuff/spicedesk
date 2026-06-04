@@ -21,7 +21,12 @@ class SpiceDeskApp extends ConsumerWidget {
       routerConfig: router,
       title: 'SpiceDesk',
       builder: (context, child) {
-        final location = GoRouterState.of(context).matchedLocation;
+        String location;
+        try {
+          location = GoRouterState.of(context).matchedLocation;
+        } catch (_) {
+          return child ?? const SizedBox.shrink();
+        }
         final isAuthRoute = location == '/login' || location == '/register';
 
         if (isAuthRoute) {
