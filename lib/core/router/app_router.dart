@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
-import '../../features/auth/domain/auth_state.dart';
 import '../../features/dashboard/presentation/screens/home_screen.dart';
 import '../../features/pos/presentation/screens/pos_screen.dart';
 import '../../features/inventory/presentation/screens/inventory_screen.dart';
@@ -15,17 +14,10 @@ import '../../features/customers/presentation/screens/customers_screen.dart';
 import '../../features/marketing/presentation/screens/marketing_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authStateProvider);
-
   return GoRouter(
     initialLocation: '/dashboard',
     redirect: (context, state) {
-      final isLoggedIn = authState.isAuthenticated;
-      final isAuthRoute = state.matchedLocation == '/login' ||
-          state.matchedLocation == '/register';
-
-      if (!isLoggedIn && !isAuthRoute) return '/login';
-      if (isLoggedIn && isAuthRoute) return '/dashboard';
+      // Allow all routes without auth for now — login will be re-enabled later
       return null;
     },
     routes: [

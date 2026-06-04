@@ -23,7 +23,7 @@ class SpiceDeskApp extends ConsumerWidget {
       builder: (context, child) {
         String location;
         try {
-          location = GoRouterState.of(context).matchedLocation;
+          location = GoRouter.of(context).state.matchedLocation;
         } catch (_) {
           return child ?? const SizedBox.shrink();
         }
