@@ -11,13 +11,7 @@ class AppSidebar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final router = GoRouter.of(context);
-    String location;
-    try {
-      location = router.state.matchedLocation;
-    } catch (_) {
-      location = '/dashboard';
-    }
+    final location = GoRouterState.of(context).matchedLocation;
     final user = ref.watch(authStateProvider).user;
     final workspace = ref.watch(workspaceStateProvider);
 

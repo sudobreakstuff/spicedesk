@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -12,26 +13,47 @@ import '../../features/settings/presentation/screens/printer_connect_screen.dart
 import '../../features/workspace/presentation/screens/workspace_screen.dart';
 import '../../features/customers/presentation/screens/customers_screen.dart';
 import '../../features/marketing/presentation/screens/marketing_screen.dart';
+import '../../core/widgets/app_sidebar.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/dashboard',
-    redirect: (context, state) {
-      // Allow all routes without auth for now — login will be re-enabled later
-      return null;
-    },
     routes: [
       GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
       GoRoute(path: '/register', builder: (_, __) => const RegisterScreen()),
       GoRoute(path: '/workspace', builder: (_, __) => const WorkspaceScreen()),
-      GoRoute(path: '/dashboard', builder: (_, __) => const HomeScreen()),
-      GoRoute(path: '/pos', builder: (_, __) => const PosScreen()),
-      GoRoute(path: '/inventory', builder: (_, __) => const InventoryScreen()),
-      GoRoute(path: '/reports', builder: (_, __) => const ReportsScreen()),
-      GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
-      GoRoute(path: '/printer-connect', builder: (_, __) => const PrinterConnectScreen()),
-      GoRoute(path: '/customers', builder: (_, __) => const CustomersScreen()),
-      GoRoute(path: '/marketing', builder: (_, __) => const MarketingScreen()),
+      GoRoute(
+          path: '/printer-connect',
+          builder: (_, __) => const PrinterConnectScreen()),
+      ShellRoute(
+        builder: (_, __, child) => Row(
+          children: [
+            const AppSidebar(),
+            Expanded(child: child),
+          ],
+        ),
+        routes: [
+          GoRoute(
+              path: '/dashboard',
+              builder: (_, __) => const HomeScreen()),
+          GoRoute(path: '/pos', builder: (_, __) => const PosScreen()),
+          GoRoute(
+              path: '/inventory',
+              builder: (_, __) => const InventoryScreen()),
+          GoRoute(
+              path: '/reports',
+              builder: (_, __) => const ReportsScreen()),
+          GoRoute(
+              path: '/settings',
+              builder: (_, __) => const SettingsScreen()),
+          GoRoute(
+              path: '/customers',
+              builder: (_, __) => const CustomersScreen()),
+          GoRoute(
+              path: '/marketing',
+              builder: (_, __) => const MarketingScreen()),
+        ],
+      ),
     ],
   );
 });
