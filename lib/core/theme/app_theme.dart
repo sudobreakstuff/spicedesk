@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
+const _fontFamily = 'Inter';
 
 const _primary = Color(0xFF6366F1);
 const _surface = Color(0xFF0D1117);
@@ -25,54 +26,42 @@ final appTheme = ThemeData(
     onSurface: _textPrimary,
     onError: Colors.white,
   ),
-  textTheme: GoogleFonts.interTextTheme(
-    ThemeData.dark().textTheme,
-  ).copyWith(
-    headlineLarge: GoogleFonts.inter(
-      fontSize: 32,
-      fontWeight: FontWeight.w700,
-      color: _textPrimary,
-      letterSpacing: -0.5,
+  textTheme: const TextTheme(
+    headlineLarge: TextStyle(
+      fontSize: 32, fontWeight: FontWeight.w700, color: _textPrimary,
+      fontFamily: _fontFamily, letterSpacing: -0.5,
     ),
-    headlineMedium: GoogleFonts.inter(
-      fontSize: 24,
-      fontWeight: FontWeight.w600,
-      color: _textPrimary,
+    headlineMedium: TextStyle(
+      fontSize: 24, fontWeight: FontWeight.w600, color: _textPrimary,
+      fontFamily: _fontFamily,
     ),
-    headlineSmall: GoogleFonts.inter(
-      fontSize: 20,
-      fontWeight: FontWeight.w600,
-      color: _textPrimary,
+    headlineSmall: TextStyle(
+      fontSize: 20, fontWeight: FontWeight.w600, color: _textPrimary,
+      fontFamily: _fontFamily,
     ),
-    titleLarge: GoogleFonts.inter(
-      fontSize: 18,
-      fontWeight: FontWeight.w600,
-      color: _textPrimary,
+    titleLarge: TextStyle(
+      fontSize: 18, fontWeight: FontWeight.w600, color: _textPrimary,
+      fontFamily: _fontFamily,
     ),
-    titleMedium: GoogleFonts.inter(
-      fontSize: 16,
-      fontWeight: FontWeight.w500,
-      color: _textPrimary,
+    titleMedium: TextStyle(
+      fontSize: 16, fontWeight: FontWeight.w500, color: _textPrimary,
+      fontFamily: _fontFamily,
     ),
-    bodyLarge: GoogleFonts.inter(
-      fontSize: 16,
-      fontWeight: FontWeight.w400,
-      color: _textPrimary,
+    bodyLarge: TextStyle(
+      fontSize: 16, fontWeight: FontWeight.w400, color: _textPrimary,
+      fontFamily: _fontFamily,
     ),
-    bodyMedium: GoogleFonts.inter(
-      fontSize: 14,
-      fontWeight: FontWeight.w400,
-      color: _textSecondary,
+    bodyMedium: TextStyle(
+      fontSize: 14, fontWeight: FontWeight.w400, color: _textSecondary,
+      fontFamily: _fontFamily,
     ),
-    labelLarge: GoogleFonts.inter(
-      fontSize: 14,
-      fontWeight: FontWeight.w600,
-      color: _textPrimary,
+    labelLarge: TextStyle(
+      fontSize: 14, fontWeight: FontWeight.w600, color: _textPrimary,
+      fontFamily: _fontFamily,
     ),
-    labelMedium: GoogleFonts.inter(
-      fontSize: 12,
-      fontWeight: FontWeight.w500,
-      color: _textSecondary,
+    labelMedium: TextStyle(
+      fontSize: 12, fontWeight: FontWeight.w500, color: _textSecondary,
+      fontFamily: _fontFamily,
     ),
   ),
   cardTheme: CardThemeData(
@@ -114,7 +103,7 @@ final appTheme = ThemeData(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      textStyle: GoogleFonts.inter(
+      textStyle: const TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w600,
       ),
@@ -144,7 +133,7 @@ final appTheme = ThemeData(
     foregroundColor: _textPrimary,
     elevation: 0,
     centerTitle: false,
-    titleTextStyle: GoogleFonts.inter(
+    titleTextStyle: const TextStyle(
       fontSize: 18,
       fontWeight: FontWeight.w600,
       color: _textPrimary,
