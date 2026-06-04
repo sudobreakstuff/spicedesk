@@ -19,14 +19,20 @@ class ReportsScreen extends ConsumerWidget {
     final productsAsync = ref.watch(productsProvider);
 
     final sales = salesAsync.valueOrNull ?? [];
+    final products = productsAsync.valueOrNull ?? [];
     final format = NumberFormat.currency(symbol: 'R ');
 
-    final totalSales = sales.fold<double>(0, (sum, s) => sum + s.total);
+    final totalSales =
+        sales.fold<double>(0, (sum, s) => sum + s.total);
 
-    final chartData = sales.take(12).toList().reversed.toList();
+    final chartData =
+        sales.take(12).toList().reversed.toList();
     final maxY = chartData.isEmpty
         ? 100.0
-        : chartData.map((s) => s.total).reduce((a, b) => a > b ? a : b) * 1.2;
+        : chartData.map((s) => s.total).reduce((a, b) => a > b ? a : b) *
+            1.2;
+
+    final recentTxns = sales.take(10).toList();
 
     return Scaffold(
       backgroundColor: SpiceColors.surface,
@@ -45,7 +51,8 @@ class ReportsScreen extends ConsumerWidget {
           const SizedBox(height: 4),
           const Text(
             'Sales and business analytics',
-            style: TextStyle(fontSize: 14, color: SpiceColors.textSecondary),
+            style: TextStyle(
+                fontSize: 14, color: SpiceColors.textSecondary),
           ),
           const SizedBox(height: 32),
 
@@ -66,32 +73,38 @@ class ReportsScreen extends ConsumerWidget {
                   error: (_, __) => 'R 0.00',
                 ),
                 accent: SpiceColors.accent,
+                isLoading: todaySales.isLoading,
                 onTap: () => context.go('/pos'),
               ),
               _SummaryCard(
                 icon: Icons.attach_money,
                 label: 'Total Sales',
-                value: format.format(totalSales),
+                value: salesAsync.isLoading
+                    ? '...'
+                    : format.format(totalSales),
                 accent: SpiceColors.primary,
+                isLoading: salesAsync.isLoading,
                 onTap: () => context.go('/pos'),
               ),
               _SummaryCard(
                 icon: Icons.inventory_2,
                 label: 'Products',
-                value: productsAsync.when(
-                  data: (p) => p.length.toString(),
-                  loading: () => '...',
-                  error: (_, __) => '0',
-                ),
+                value: productsAsync.isLoading
+                    ? '...'
+                    : products.length.toString(),
                 accent: SpiceColors.warning,
+                isLoading: productsAsync.isLoading,
                 onTap: () => context.go('/inventory'),
               ),
               _SummaryCard(
                 icon: Icons.receipt_long,
                 label: 'Transactions',
-                value: sales.length.toString(),
+                value: salesAsync.isLoading
+                    ? '...'
+                    : sales.length.toString(),
                 accent: const Color(0xFF8B5CF6),
-                onTap: () {}, // Already on reports screen
+                isLoading: salesAsync.isLoading,
+                onTap: () {},
               ),
             ].animate(interval: 80.ms).fadeIn().slideY(begin: 12),
           ),
@@ -127,73 +140,93 @@ class ReportsScreen extends ConsumerWidget {
                 const SizedBox(height: 16),
                 SizedBox(
                   height: 200,
-                  child: chartData.isEmpty
+                  child: salesAsync.isLoading
                       ? const Center(
-                          child: Text(
-                            'No sales data',
-                            style: TextStyle(color: SpiceColors.textSecondary),
-                          ),
-                        )
-                      : BarChart(
-                          BarChartData(
-                            alignment: BarChartAlignment.spaceAround,
-                            maxY: maxY,
-                            barGroups: List.generate(chartData.length, (i) {
-                              return BarChartGroupData(
-                                x: i,
-                                barRods: [
-                                  BarChartRodData(
-                                    toY: chartData[i].total,
-                                    color: SpiceColors.primary,
-                                    width: 16,
-                                    borderRadius: const BorderRadius.vertical(
-                                      top: Radius.circular(4),
-                                    ),
-                                  ),
-                                ],
-                              );
-                            }),
-                            titlesData: FlTitlesData(
-                              show: true,
-                              bottomTitles: AxisTitles(
-                                sideTitles: SideTitles(
-                                  showTitles: true,
-                                  reservedSize: 28,
-                                  getTitlesWidget: (value, meta) {
-                                    return Padding(
-                                      padding: const EdgeInsets.only(top: 8),
-                                      child: Text(
-                                        '${value.toInt() + 1}',
-                                        style: const TextStyle(
-                                          color: SpiceColors.textSecondary,
-                                          fontSize: 10,
+                          child: CircularProgressIndicator())
+                      : chartData.isEmpty
+                          ? const Center(
+                              child: Text(
+                                'No sales data',
+                                style: TextStyle(
+                                    color:
+                                        SpiceColors.textSecondary),
+                              ),
+                            )
+                          : BarChart(
+                              BarChartData(
+                                alignment:
+                                    BarChartAlignment.spaceAround,
+                                maxY: maxY,
+                                barGroups:
+                                    List.generate(chartData.length,
+                                        (i) {
+                                  return BarChartGroupData(
+                                    x: i,
+                                    barRods: [
+                                      BarChartRodData(
+                                        toY: chartData[i].total,
+                                        color: SpiceColors.primary,
+                                        width: 16,
+                                        borderRadius:
+                                            const BorderRadius
+                                                .vertical(
+                                          top: Radius.circular(4),
                                         ),
                                       ),
-                                    );
-                                  },
+                                    ],
+                                  );
+                                }),
+                                titlesData: FlTitlesData(
+                                  show: true,
+                                  bottomTitles: AxisTitles(
+                                    sideTitles: SideTitles(
+                                      showTitles: true,
+                                      reservedSize: 28,
+                                      getTitlesWidget:
+                                          (value, meta) {
+                                        return Padding(
+                                          padding:
+                                              const EdgeInsets.only(
+                                                  top: 8),
+                                          child: Text(
+                                            '${value.toInt() + 1}',
+                                            style: const TextStyle(
+                                              color: SpiceColors
+                                                  .textSecondary,
+                                              fontSize: 10,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                  leftTitles: const AxisTitles(
+                                    sideTitles: SideTitles(
+                                        showTitles: false),
+                                  ),
+                                  topTitles: const AxisTitles(
+                                    sideTitles: SideTitles(
+                                        showTitles: false),
+                                  ),
+                                  rightTitles: const AxisTitles(
+                                    sideTitles: SideTitles(
+                                        showTitles: false),
+                                  ),
                                 ),
-                              ),
-                              leftTitles: const AxisTitles(
-                                sideTitles: SideTitles(showTitles: false),
-                              ),
-                              topTitles: const AxisTitles(
-                                sideTitles: SideTitles(showTitles: false),
-                              ),
-                              rightTitles: const AxisTitles(
-                                sideTitles: SideTitles(showTitles: false),
-                              ),
-                            ),
-                            gridData: FlGridData(
-                              show: true,
-                              drawVerticalLine: false,
-                              getDrawingHorizontalLine: (value) => FlLine(
-                                color: SpiceColors.border.withAlpha(80),
-                                strokeWidth: 1,
+                                gridData: FlGridData(
+                                  show: true,
+                                  drawVerticalLine: false,
+                                  getDrawingHorizontalLine:
+                                      (value) => FlLine(
+                                    color: SpiceColors.border
+                                        .withAlpha(80),
+                                    strokeWidth: 1,
+                                  ),
+                                ),
+                                borderData:
+                                    FlBorderData(show: false),
                               ),
                             ),
-                            borderData: FlBorderData(show: false),
-                          ),
-                        ),
                 ),
               ],
             ),
@@ -209,7 +242,17 @@ class ReportsScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 12),
-          if (sales.isEmpty)
+          if (salesAsync.isLoading)
+            Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                color: SpiceColors.surfaceAlt,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: SpiceColors.border),
+              ),
+              child: const Center(child: CircularProgressIndicator()),
+            ).animate(delay: 400.ms).fadeIn()
+          else if (recentTxns.isEmpty)
             Container(
               padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
@@ -219,22 +262,30 @@ class ReportsScreen extends ConsumerWidget {
               ),
               child: const Column(
                 children: [
-                  Icon(Icons.receipt_long, size: 32, color: SpiceColors.textSecondary),
+                  Icon(Icons.receipt_long,
+                      size: 32,
+                      color: SpiceColors.textSecondary),
                   SizedBox(height: 12),
-                  Text('No transactions yet', style: TextStyle(color: SpiceColors.textSecondary)),
+                  Text('No transactions yet',
+                      style: TextStyle(
+                          color: SpiceColors.textSecondary)),
                   SizedBox(height: 4),
-                  Text('Sales will appear here after transactions are completed',
-                      style: TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
+                  Text(
+                      'Sales will appear here after transactions are completed',
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: SpiceColors.textSecondary)),
                 ],
               ),
             ).animate(delay: 400.ms).fadeIn()
           else
-            ...sales.take(10).toList().asMap().entries.map((entry) {
+            ...recentTxns.asMap().entries.map((entry) {
               final index = entry.key;
               final sale = entry.value;
               return Container(
                 margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   color: SpiceColors.surfaceAlt,
                   borderRadius: BorderRadius.circular(12),
@@ -249,12 +300,14 @@ class ReportsScreen extends ConsumerWidget {
                         color: SpiceColors.primary.withAlpha(25),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.receipt, color: SpiceColors.primary, size: 20),
+                      child: const Icon(Icons.receipt,
+                          color: SpiceColors.primary, size: 20),
                     ),
                     const SizedBox(width: 14),
                     Expanded(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start,
                         children: [
                           Text(
                             sale.transactionNumber,
@@ -300,6 +353,7 @@ class _SummaryCard extends StatelessWidget {
   final String value;
   final Color accent;
   final VoidCallback? onTap;
+  final bool isLoading;
 
   const _SummaryCard({
     required this.icon,
@@ -307,6 +361,7 @@ class _SummaryCard extends StatelessWidget {
     required this.value,
     required this.accent,
     this.onTap,
+    this.isLoading = false,
   });
 
   @override
@@ -339,18 +394,35 @@ class _SummaryCard extends StatelessWidget {
                     child: Icon(icon, color: accent, size: 18),
                   ),
                   const Spacer(),
-                  Icon(Icons.trending_up, size: 14, color: SpiceColors.accent.withAlpha(100)),
+                  if (!isLoading)
+                    Icon(Icons.trending_up,
+                        size: 14,
+                        color: SpiceColors.accent.withAlpha(100))
+                  else
+                    const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2),
+                    ),
                 ],
               ),
               const SizedBox(height: 16),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w700,
-                  color: SpiceColors.textPrimary,
+              if (isLoading)
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              else
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w700,
+                    color: SpiceColors.textPrimary,
+                  ),
                 ),
-              ),
               const SizedBox(height: 2),
               Text(
                 label,

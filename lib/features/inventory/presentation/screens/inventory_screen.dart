@@ -36,7 +36,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           item.productName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           item.sku.toLowerCase().contains(_searchQuery.toLowerCase());
       final matchesFilter = _filter == 'all' ||
-          (_filter == 'low' && item.quantityOnHand <= item.reorderPoint) ||
+          (_filter == 'low' && item.quantityOnHand <= item.reorderPoint && item.quantityOnHand > 0) ||
           (_filter == 'out' && item.quantityOnHand == 0);
       return matchesSearch && matchesFilter;
     }).toList();
@@ -98,13 +98,13 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.inventory_2_outlined, size: 48, color: SpiceColors.textSecondary),
+                            const Icon(Icons.inventory_2_outlined, size: 48, color: SpiceColors.textSecondary),
                             const SizedBox(height: 12),
                             Text(items.isEmpty ? 'No inventory tracked' : 'No matching items',
                                 style: const TextStyle(color: SpiceColors.textSecondary)),
                             const SizedBox(height: 8),
-                            Text('Add products and stock from the POS or settings',
-                                style: const TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
+                            const Text('Add products and stock from the POS or settings',
+                                style: TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
                           ],
                         ),
                       )
@@ -118,85 +118,255 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                           final statusColor = isOut ? SpiceColors.danger : isLow ? SpiceColors.warning : SpiceColors.accent;
                           final statusIcon = isOut ? Icons.error_outline : isLow ? Icons.warning_amber_rounded : Icons.check_circle_outline;
 
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 8),
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            decoration: BoxDecoration(
-                              color: SpiceColors.surfaceAlt,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: SpiceColors.border),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 40, height: 40,
-                                  decoration: BoxDecoration(
-                                    color: statusColor.withAlpha(25),
-                                    borderRadius: BorderRadius.circular(10),
+                          return GestureDetector(
+                            onLongPress: () => _showInventoryActions(item),
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: SpiceColors.surfaceAlt,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: SpiceColors.border),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 40, height: 40,
+                                    decoration: BoxDecoration(
+                                      color: statusColor.withAlpha(25),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Icon(statusIcon, color: statusColor, size: 20),
                                   ),
-                                  child: Icon(statusIcon, color: statusColor, size: 20),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(item.productName,
+                                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
+                                        const SizedBox(height: 2),
+                                        Text('SKU: ${item.sku}',
+                                            style: const TextStyle(fontSize: 11, color: SpiceColors.textSecondary)),
+                                      ],
+                                    ),
+                                  ),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
-                                      Text(item.productName,
+                                      Text('R ${item.unitPrice.toStringAsFixed(2)}',
                                           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
+                                      if (item.costPrice > 0)
+                                        Text('Cost: R ${item.costPrice.toStringAsFixed(2)}',
+                                            style: const TextStyle(fontSize: 10, color: SpiceColors.textSecondary)),
                                       const SizedBox(height: 2),
-                                      Text('SKU: ${item.sku}',
-                                          style: const TextStyle(fontSize: 11, color: SpiceColors.textSecondary)),
-                                    ],
-                                  ),
-                                ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    Text('R ${item.unitPrice.toStringAsFixed(2)}',
-                                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
-                                    if (item.costPrice > 0)
-                                      Text('Cost: R ${item.costPrice.toStringAsFixed(2)}',
-                                          style: const TextStyle(fontSize: 10, color: SpiceColors.textSecondary)),
-                                    const SizedBox(height: 2),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: statusColor.withAlpha(20),
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                                            margin: const EdgeInsets.only(right: 4),
-                                            decoration: BoxDecoration(
-                                              color: (item.productType == 'raw_material' ? SpiceColors.warning : SpiceColors.primary).withAlpha(30),
-                                              borderRadius: BorderRadius.circular(3),
-                                            ),
-                                            child: Text(
-                                              item.productType == 'raw_material' ? 'RAW' : 'FIN',
-                                              style: TextStyle(
-                                                fontSize: 8,
-                                                fontWeight: FontWeight.w700,
-                                                color: item.productType == 'raw_material' ? SpiceColors.warning : SpiceColors.primary,
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: statusColor.withAlpha(20),
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                              margin: const EdgeInsets.only(right: 4),
+                                              decoration: BoxDecoration(
+                                                color: (item.productType == 'raw_material' ? SpiceColors.warning : SpiceColors.primary).withAlpha(30),
+                                                borderRadius: BorderRadius.circular(3),
+                                              ),
+                                              child: Text(
+                                                item.productType == 'raw_material' ? 'RAW' : 'FIN',
+                                                style: TextStyle(
+                                                  fontSize: 8,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: item.productType == 'raw_material' ? SpiceColors.warning : SpiceColors.primary,
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                          Text(
-                                            '${item.quantityOnHand.toInt()} ${item.unitOfMeasure}',
-                                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: statusColor),
-                                          ),
-                                        ],
+                                            Text(
+                                              '${item.quantityOnHand.toInt()} ${item.unitOfMeasure}',
+                                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: statusColor),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ).animate().fadeIn(delay: (index * 40).ms);
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ).animate().fadeIn(delay: (index * 40).ms),
+                          );
                         },
                       ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showInventoryActions(InventoryItem item) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: SpiceColors.surfaceAlt,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        side: BorderSide(color: SpiceColors.border),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: SpiceColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  item.productName,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: SpiceColors.textPrimary,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const Icon(Icons.edit, color: SpiceColors.primary),
+                title: const Text('Edit Stock'),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showEditStockDialog(item);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: SpiceColors.danger),
+                title: const Text('Delete Inventory Entry'),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showDeleteInventoryDialog(item);
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showEditStockDialog(InventoryItem item) {
+    final quantityCtrl = TextEditingController(text: item.quantityOnHand.toInt().toString());
+    final reorderCtrl = TextEditingController(text: item.reorderPoint.toInt().toString());
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: SpiceColors.surfaceAlt,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: SpiceColors.border),
+        ),
+        title: const Text('Edit Stock'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              item.productName,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: SpiceColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'SKU: ${item.sku}',
+              style: const TextStyle(fontSize: 11, color: SpiceColors.textSecondary),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: quantityCtrl,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'Quantity on Hand'),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: reorderCtrl,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'Reorder Point'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final wsId = ref.read(workspaceStateProvider).selectedId;
+              if (wsId == null) return;
+              final qty = double.tryParse(quantityCtrl.text);
+              final reorder = double.tryParse(reorderCtrl.text);
+              if (qty == null || reorder == null) return;
+
+              await supabase.from('inventory').update({
+                'quantity_on_hand': qty,
+                'reorder_point': reorder,
+              }).eq('id', item.id);
+
+              ref.invalidate(inventoryProvider);
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteInventoryDialog(InventoryItem item) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: SpiceColors.surfaceAlt,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: SpiceColors.border),
+        ),
+        title: const Text('Delete Inventory Entry'),
+        content: Text(
+          'Remove "${item.productName}" from inventory tracking? The product itself will not be deleted.',
+          style: const TextStyle(color: SpiceColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              await supabase.from('inventory').delete().eq('id', item.id);
+              ref.invalidate(inventoryProvider);
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: SpiceColors.danger,
+            ),
+            child: const Text('Delete'),
           ),
         ],
       ),

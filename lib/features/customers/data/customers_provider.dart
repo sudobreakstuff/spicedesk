@@ -8,7 +8,7 @@ final customersProvider = FutureProvider<List<Customer>>((ref) async {
 
   final data = await supabase
       .from('customers')
-      .select('id, name, email, phone, loyalty_points, created_at')
+      .select('id, name, email, phone, notes, loyalty_points, created_at')
       .eq('workspace_id', wsId)
       .order('name');
 
@@ -18,6 +18,7 @@ final customersProvider = FutureProvider<List<Customer>>((ref) async {
       name: row['name'] ?? '',
       email: row['email'],
       phone: row['phone'],
+      notes: row['notes'],
       loyaltyPoints: row['loyalty_points'] ?? 0,
       createdAt: row['created_at'] != null
           ? DateTime.tryParse(row['created_at']) ?? DateTime.now()
@@ -36,6 +37,7 @@ class Customer {
   final String name;
   final String? email;
   final String? phone;
+  final String? notes;
   final int loyaltyPoints;
   final DateTime createdAt;
 
@@ -44,6 +46,7 @@ class Customer {
     required this.name,
     this.email,
     this.phone,
+    this.notes,
     this.loyaltyPoints = 0,
     required this.createdAt,
   });

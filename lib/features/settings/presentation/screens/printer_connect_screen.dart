@@ -80,7 +80,7 @@ class _PrinterConnectScreenState extends ConsumerState<PrinterConnectScreen> {
             backgroundColor: SpiceColors.accent,
           ),
         );
-        Navigator.pop(context, true);
+        context.go('/settings');
       }
     }
   }
@@ -91,7 +91,7 @@ class _PrinterConnectScreenState extends ConsumerState<PrinterConnectScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+          onPressed: () => context.go('/settings'),
         ),
         title: const Text('Connect Printer'),
         actions: [

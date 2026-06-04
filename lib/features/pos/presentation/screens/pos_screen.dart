@@ -120,6 +120,301 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     }
   }
 
+  void _showProductActions(Product product) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: SpiceColors.surfaceAlt,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        side: BorderSide(color: SpiceColors.border),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: SpiceColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  product.name,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: SpiceColors.textPrimary,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const Icon(Icons.edit, color: SpiceColors.primary),
+                title: const Text('Edit Product'),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showEditProductDialog(product);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: SpiceColors.danger),
+                title: const Text('Delete Product'),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showDeleteProductDialog(product);
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showEditProductDialog(Product product) {
+    final nameCtrl = TextEditingController(text: product.name);
+    final priceCtrl =
+        TextEditingController(text: product.unitPrice.toString());
+    final costCtrl =
+        TextEditingController(text: product.costPrice.toString());
+    final skuCtrl = TextEditingController(text: product.sku ?? '');
+    final categoryCtrl = TextEditingController(text: product.category);
+    String productType = product.productType;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: SpiceColors.surfaceAlt,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: SpiceColors.border),
+          ),
+          title: const Text('Edit Product'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameCtrl,
+                  decoration: const InputDecoration(labelText: 'Product Name'),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: priceCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration:
+                      const InputDecoration(labelText: 'Selling Price (R)'),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: costCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration:
+                      const InputDecoration(labelText: 'Cost Price (R)'),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: skuCtrl,
+                  decoration: const InputDecoration(labelText: 'SKU'),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: categoryCtrl,
+                  decoration: const InputDecoration(labelText: 'Category'),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    const Text('Type:',
+                        style: TextStyle(
+                            color: SpiceColors.textSecondary, fontSize: 13)),
+                    const SizedBox(width: 12),
+                    ChoiceChip(
+                      label: const Text('Finished'),
+                      selected: productType == 'finished',
+                      onSelected: (_) =>
+                          setDialogState(() => productType = 'finished'),
+                      selectedColor: SpiceColors.primary.withAlpha(40),
+                      labelStyle: TextStyle(
+                        color: productType == 'finished'
+                            ? SpiceColors.primary
+                            : SpiceColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ChoiceChip(
+                      label: const Text('Raw Material'),
+                      selected: productType == 'raw_material',
+                      onSelected: (_) =>
+                          setDialogState(() => productType = 'raw_material'),
+                      selectedColor: SpiceColors.warning.withAlpha(40),
+                      labelStyle: TextStyle(
+                        color: productType == 'raw_material'
+                            ? SpiceColors.warning
+                            : SpiceColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final name = nameCtrl.text.trim();
+                if (name.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text('Product name is required')),
+                  );
+                  return;
+                }
+                final price = double.tryParse(priceCtrl.text) ?? 0;
+                final cost = double.tryParse(costCtrl.text) ?? 0;
+                final category = categoryCtrl.text.trim();
+
+                try {
+                  final wsId = ref.read(workspaceStateProvider).selectedId;
+                  if (wsId == null) return;
+
+                  await supabase
+                      .from('products')
+                      .update({
+                        'name': name,
+                        'unit_price': price,
+                        'cost_price': cost,
+                        'sku': skuCtrl.text.trim().isEmpty
+                            ? null
+                            : skuCtrl.text.trim(),
+                        'product_type': productType,
+                      })
+                      .eq('id', product.id);
+
+                  if (category.isNotEmpty) {
+                    final catResult = await supabase
+                        .from('categories')
+                        .upsert({
+                          'workspace_id': wsId,
+                          'name': category,
+                        },
+                            onConflict: 'workspace_id, name')
+                        .select('id')
+                        .single();
+                    await supabase
+                        .from('products')
+                        .update({
+                          'category_id': catResult['id'],
+                        })
+                        .eq('id', product.id);
+                  }
+
+                  ref.invalidate(productsProvider);
+                  ref.invalidate(inventoryProvider);
+
+                  if (ctx.mounted) {
+                    Navigator.pop(ctx);
+                  }
+                } catch (e) {
+                  if (mounted && ctx.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error: $e')),
+                    );
+                  }
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteProductDialog(Product product) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: SpiceColors.surfaceAlt,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: SpiceColors.border),
+        ),
+        title: const Text('Delete Product'),
+        content: Text(
+          'Are you sure you want to delete "${product.name}"? This will also remove its inventory tracking.',
+          style: const TextStyle(color: SpiceColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                final wsId = ref.read(workspaceStateProvider).selectedId;
+                if (wsId == null) return;
+
+                await supabase
+                    .from('inventory')
+                    .delete()
+                    .eq('product_id', product.id)
+                    .eq('workspace_id', wsId);
+                await supabase
+                    .from('products')
+                    .delete()
+                    .eq('id', product.id);
+
+                ref.invalidate(productsProvider);
+                ref.invalidate(inventoryProvider);
+
+                setState(() {
+                  _cart.removeWhere((c) => c.product.id == product.id);
+                });
+
+                if (ctx.mounted) Navigator.pop(ctx);
+
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text('"${product.name}" deleted'),
+                    backgroundColor: SpiceColors.accent,
+                  ));
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text('Error deleting product: $e'),
+                    backgroundColor: SpiceColors.danger,
+                  ));
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: SpiceColors.danger,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showAddProductDialog() {
     final nameCtrl = TextEditingController();
     final priceCtrl = TextEditingController();
@@ -255,7 +550,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   });
 
                   if (category.isNotEmpty) {
-                    await supabase
+                    final catResult = await supabase
                         .from('categories')
                         .upsert({
                           'workspace_id': wsId,
@@ -264,17 +559,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                             onConflict: 'workspace_id, name')
                         .select('id')
                         .single();
-
-                    final catRes = await supabase
-                        .from('categories')
-                        .select('id')
-                        .eq('workspace_id', wsId)
-                        .eq('name', category)
-                        .single();
                     await supabase
                         .from('products')
                         .update({
-                          'category_id': catRes['id'],
+                          'category_id': catResult['id'],
                         })
                         .eq('id', productId);
                   }
@@ -287,7 +575,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   }
                 } catch (e) {
                   if (ctx.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    ScaffoldMessenger.of(ctx).showSnackBar(
                       SnackBar(content: Text('Error: $e')),
                     );
                   }
@@ -400,6 +688,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                     p.category.isNotEmpty;
                                 return GestureDetector(
                                   onTap: () => _addToCart(p),
+                                  onLongPress: () =>
+                                      _showProductActions(p),
                                   child: Container(
                                     decoration: BoxDecoration(
                                       color: SpiceColors.surfaceAlt,
