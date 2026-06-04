@@ -1,13 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/supabase_client.dart';
 import '../../../features/workspace/domain/workspace_state.dart';
+import '../../products/data/products_provider.dart';
 import '../../inventory/data/inventory_provider.dart';
 import '../../sales/data/sales_provider.dart';
 import '../../customers/data/customers_provider.dart';
 
 /// Create a sale via the `create_sale` RPC function.
 /// Includes automatic inventory deduction and stock movement records.
-final createSaleAction = Provider<Future<String> Function({
+final createSaleAction = Provider<Future<SaleResult> Function({
   required List<SaleItemInput> items,
   required String paymentMethod,
   String? customerId,
@@ -39,10 +40,31 @@ final createSaleAction = Provider<Future<String> Function({
     ref.invalidate(salesProvider);
     ref.invalidate(todaySalesProvider);
     ref.invalidate(customersProvider);
+    ref.invalidate(productsProvider);
 
-    return result['transaction_number'] as String;
+    return SaleResult.fromJson(result);
   };
 });
+
+class SaleResult {
+  final String transactionNumber;
+  final String invoiceNumber;
+  final double total;
+
+  const SaleResult({
+    required this.transactionNumber,
+    required this.invoiceNumber,
+    required this.total,
+  });
+
+  factory SaleResult.fromJson(Map<String, dynamic> json) {
+    return SaleResult(
+      transactionNumber: json['transaction_number'] ?? '',
+      invoiceNumber: json['invoice_number'] ?? '',
+      total: (json['total'] as num?)?.toDouble() ?? 0,
+    );
+  }
+}
 
 class SaleItemInput {
   final String productId;

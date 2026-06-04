@@ -7,6 +7,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../products/data/products_provider.dart';
 import '../../../inventory/data/inventory_provider.dart';
 import '../../../pos/data/pos_service.dart';
+import '../../../printing/data/printing_service.dart';
 import '../../../workspace/domain/workspace_state.dart';
 
 class PosScreen extends ConsumerStatefulWidget {
@@ -90,7 +91,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
     try {
       final createSale = ref.read(createSaleAction);
-      final txnNumber = await createSale(
+      final result = await createSale(
         items: _cart
             .map((c) => SaleItemInput(
                   productId: c.product.id,
@@ -103,21 +104,137 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       );
 
       if (mounted) {
+        final cartSnapshot = List<_CartItem>.from(_cart);
         setState(() => _cart.clear());
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(
-              'Sale complete: $txnNumber | R ${_total.toStringAsFixed(2)}'),
-          backgroundColor: SpiceColors.accent,
-        ));
+        _showReceiptDialog(result, cartSnapshot, paymentMethod);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Error: $e'),
+          content: Text('Checkout failed: $e'),
           backgroundColor: SpiceColors.danger,
         ));
       }
     }
+  }
+
+  void _showReceiptDialog(SaleResult result, List<_CartItem> items, String paymentMethod) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: SpiceColors.surfaceAlt,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: SpiceColors.border),
+        ),
+        title: Row(
+          children: [
+            Icon(Icons.check_circle, color: SpiceColors.accent, size: 24),
+            const SizedBox(width: 10),
+            const Text('Sale Complete',
+                style: TextStyle(color: SpiceColors.textPrimary)),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: SpiceColors.surface,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _receiptRow('Txn', result.transactionNumber),
+                    const SizedBox(height: 4),
+                    _receiptRow('Invoice', result.invoiceNumber),
+                    const SizedBox(height: 4),
+                    _receiptRow('Paid', paymentMethod),
+                    _receiptRow('Date', '${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year} ${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}'),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              ...items.map((item) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  children: [
+                    Expanded(child: Text(item.product.name,
+                        style: const TextStyle(fontSize: 13, color: SpiceColors.textPrimary))),
+                    Text('x${item.quantity}',
+                        style: const TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
+                    const SizedBox(width: 12),
+                    Text('R ${(item.unitPrice * item.quantity).toStringAsFixed(2)}',
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
+                  ],
+                ),
+              )),
+              const SizedBox(height: 12),
+              Divider(color: SpiceColors.border),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Total', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
+                  Text('R ${result.total.toStringAsFixed(2)}',
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: SpiceColors.accent)),
+                ],
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton.icon(
+            onPressed: () async {
+              try {
+                final printing = PrintingService();
+                if (printing.isConnected) {
+                  await printing.printReceipt(
+                    storeName: 'SpiceDesk',
+                    transactionNumber: result.transactionNumber,
+                    date: DateTime.now(),
+                    items: items.map((i) => ReceiptLineItem(
+                      name: i.product.name,
+                      quantity: i.quantity,
+                      unitPrice: i.unitPrice,
+                      lineTotal: i.unitPrice * i.quantity,
+                    )).toList(),
+                    total: result.total,
+                    paymentMethod: paymentMethod,
+                  );
+                }
+              } catch (_) {}
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            icon: const Icon(Icons.print, size: 18),
+            label: const Text('Print'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Done'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _receiptRow(String label, String value) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 60,
+          child: Text(label, style: const TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
+        ),
+        Expanded(
+          child: Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: SpiceColors.textPrimary)),
+        ),
+      ],
+    );
   }
 
   void _showProductActions(Product product) {
