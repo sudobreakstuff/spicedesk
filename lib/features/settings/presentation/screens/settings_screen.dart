@@ -45,34 +45,51 @@ class SettingsScreen extends ConsumerWidget {
             _tile(Icons.print, 'Connect Printer', 'Niimbot B21 / Bluetooth',
                 onTap: () => context.go('/printer-connect')),
             _tile(Icons.qr_code, 'Test Print', 'Verify printer setup',
-                onTap: () {}),
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Printer not connected')),
+                  );
+                }),
           ]),
 
           const SizedBox(height: 24),
 
           _section('Workspace', [
             _tile(Icons.group, 'Members', 'Manage team access',
-                onTap: () {}),
+                onTap: () => _showComingSoon(context)),
             _tile(Icons.link, 'Invite Code', 'Share to invite members',
-                onTap: () {}),
+                onTap: () => _showInviteCodeDialog(context, workspace.selectedId)),
           ]),
 
           const SizedBox(height: 24),
 
           _section('Data & Sync', [
             _tile(Icons.cloud_sync, 'Sync Status', 'All changes synced',
-                onTap: () {}),
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('All changes synced')),
+                  );
+                }),
             _tile(Icons.download, 'Export Data', 'Download CSV backup',
-                onTap: () {}),
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Export feature coming soon')),
+                  );
+                }),
           ]),
 
           const SizedBox(height: 24),
 
           _section('Account', [
             _tile(Icons.person, 'Profile', user?.email ?? 'Not signed in',
-                onTap: () {}),
+                onTap: () => _showProfileDialog(context, user?.email)),
             _tile(Icons.logout, 'Sign Out', 'Log out of SpiceDesk',
-                onTap: () => ref.read(authStateProvider.notifier).logout(),
+                onTap: () async {
+                  await ref.read(authStateProvider.notifier).logout();
+                  if (context.mounted) {
+                    context.go('/login');
+                  }
+                },
                 color: SpiceColors.danger),
           ]).animate(delay: 400.ms).fadeIn(),
 
@@ -89,6 +106,104 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 32),
+        ],
+      ),
+    );
+  }
+
+  void _showComingSoon(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: SpiceColors.surfaceAlt,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: SpiceColors.border),
+        ),
+        title: const Text('Coming Soon'),
+        content: const Text('Members management will be available soon.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showInviteCodeDialog(BuildContext context, String? workspaceId) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: SpiceColors.surfaceAlt,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: SpiceColors.border),
+        ),
+        title: const Text('Invite Code'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Share this code with team members:'),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              decoration: BoxDecoration(
+                color: SpiceColors.surface,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: SpiceColors.border),
+              ),
+              child: Text(
+                workspaceId ?? 'No workspace selected',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: SpiceColors.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showProfileDialog(BuildContext context, String? email) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: SpiceColors.surfaceAlt,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: SpiceColors.border),
+        ),
+        title: const Text('Profile'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Signed in as:'),
+            const SizedBox(height: 8),
+            Text(
+              email ?? 'Not signed in',
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: SpiceColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Close'),
+          ),
         ],
       ),
     );

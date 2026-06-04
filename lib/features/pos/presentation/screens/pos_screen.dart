@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/supabase_client.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../products/data/products_provider.dart';
 import '../../../pos/data/pos_service.dart';
+import '../../../workspace/domain/workspace_state.dart';
 
 class PosScreen extends ConsumerStatefulWidget {
   const PosScreen({super.key});
@@ -103,6 +105,109 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     }
   }
 
+  void _showAddProductDialog() {
+    final nameCtrl = TextEditingController();
+    final priceCtrl = TextEditingController();
+    final skuCtrl = TextEditingController();
+    final categoryCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: SpiceColors.surfaceAlt,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: SpiceColors.border),
+        ),
+        title: const Text('Add Product'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameCtrl,
+              decoration: const InputDecoration(labelText: 'Name'),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: priceCtrl,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'Price'),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: skuCtrl,
+              decoration: const InputDecoration(labelText: 'SKU'),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: categoryCtrl,
+              decoration: const InputDecoration(labelText: 'Category'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final name = nameCtrl.text.trim();
+              if (name.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Name is required')),
+                );
+                return;
+              }
+              final wsId = ref.read(workspaceStateProvider).selectedId;
+              if (wsId == null) return;
+              final price = double.tryParse(priceCtrl.text) ?? 0;
+              final sku = skuCtrl.text.trim().isEmpty ? null : skuCtrl.text.trim();
+              final category = categoryCtrl.text.trim();
+
+              final productRes = await supabase.from('products').insert({
+                'workspace_id': wsId,
+                'name': name,
+                'unit_price': price,
+                'sku': sku,
+              }).select('id').single();
+
+              final productId = productRes['id'] as String;
+
+              if (category.isNotEmpty) {
+                await supabase.from('categories').upsert({
+                  'workspace_id': wsId,
+                  'name': category,
+                }, onConflict: 'workspace_id, name').select('id').single();
+
+                final catRes = await supabase
+                    .from('categories')
+                    .select('id')
+                    .eq('workspace_id', wsId)
+                    .eq('name', category)
+                    .single();
+                await supabase.from('products').update({
+                  'category_id': catRes['id'],
+                }).eq('id', productId);
+              }
+
+              await supabase.from('inventory').insert({
+                'workspace_id': wsId,
+                'product_id': productId,
+                'quantity_on_hand': 0,
+                'reorder_point': 0,
+              });
+
+              ref.invalidate(productsProvider);
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _searchCtrl.dispose();
@@ -148,6 +253,12 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                           ),
                           onChanged: (v) => setState(() => _searchQuery = v),
                         ),
+                      ),
+                      const SizedBox(width: 12),
+                      IconButton(
+                        icon: const Icon(Icons.add_circle, color: SpiceColors.primary, size: 32),
+                        tooltip: 'Add Product',
+                        onPressed: _showAddProductDialog,
                       ),
                     ],
                   ),

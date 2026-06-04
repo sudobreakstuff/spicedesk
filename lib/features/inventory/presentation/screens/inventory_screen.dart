@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/supabase_client.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../inventory/data/inventory_provider.dart';
+import '../../../products/data/products_provider.dart';
+import '../../../workspace/domain/workspace_state.dart';
 
 class InventoryScreen extends ConsumerStatefulWidget {
   const InventoryScreen({super.key});
@@ -64,7 +67,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                 ),
                 const SizedBox(width: 12),
                 ElevatedButton.icon(
-                  onPressed: () {},
+                  onPressed: _showAddStockDialog,
                   icon: const Icon(Icons.add, size: 18),
                   label: const Text('Add Stock'),
                   style: ElevatedButton.styleFrom(
@@ -173,6 +176,92 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showAddStockDialog() {
+    final products = ref.read(productsProvider).valueOrNull ?? [];
+    if (products.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No products available. Add a product first.')),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        String selectedProductId = products.first.id;
+        final quantityCtrl = TextEditingController();
+        final reorderPointCtrl = TextEditingController();
+
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) => AlertDialog(
+            backgroundColor: SpiceColors.surfaceAlt,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: SpiceColors.border),
+            ),
+            title: const Text('Add Stock'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButtonFormField<String>(
+                  initialValue: selectedProductId,
+                  isExpanded: true,
+                  decoration: const InputDecoration(labelText: 'Product'),
+                  items: products
+                      .map<DropdownMenuItem<String>>((p) =>
+                          DropdownMenuItem(value: p.id, child: Text(p.name)))
+                      .toList(),
+                  onChanged: (v) {
+                    if (v != null) {
+                      setDialogState(() => selectedProductId = v);
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: quantityCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Quantity'),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: reorderPointCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Reorder Point'),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final wsId = ref.read(workspaceStateProvider).selectedId;
+                  if (wsId == null) return;
+                  final qty = double.tryParse(quantityCtrl.text) ?? 0;
+                  final reorder = double.tryParse(reorderPointCtrl.text) ?? 0;
+
+                  await supabase.from('inventory').insert({
+                    'workspace_id': wsId,
+                    'product_id': selectedProductId,
+                    'quantity_on_hand': qty,
+                    'reorder_point': reorder,
+                  });
+
+                  ref.invalidate(inventoryProvider);
+                  if (ctx.mounted) Navigator.pop(ctx);
+                },
+                child: const Text('Save'),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

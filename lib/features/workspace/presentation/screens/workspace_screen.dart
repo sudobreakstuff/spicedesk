@@ -29,6 +29,12 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     final workspaces = ref.watch(workspacesProvider);
 
     return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/dashboard'),
+        ),
+      ),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(32),

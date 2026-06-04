@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme.dart';
 
@@ -62,7 +63,7 @@ class HomeScreen extends ConsumerWidget {
                   icon: Icons.point_of_sale_rounded,
                   label: 'New Sale',
                   subtitle: 'Start a transaction',
-                  onTap: () {},
+                  onTap: () => context.go('/pos'),
                   color: SpiceColors.accent,
                 ),
               ),
@@ -72,7 +73,7 @@ class HomeScreen extends ConsumerWidget {
                   icon: Icons.add_box_rounded,
                   label: 'Add Product',
                   subtitle: 'Add to inventory',
-                  onTap: () {},
+                  onTap: () => context.go('/inventory'),
                   color: SpiceColors.primary,
                 ),
               ),
@@ -82,7 +83,7 @@ class HomeScreen extends ConsumerWidget {
                   icon: Icons.analytics_rounded,
                   label: 'View Reports',
                   subtitle: 'See your analytics',
-                  onTap: () {},
+                  onTap: () => context.go('/reports'),
                   color: SpiceColors.warning,
                 ),
               ),
