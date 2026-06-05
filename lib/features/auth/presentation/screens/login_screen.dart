@@ -75,7 +75,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (result == null || result.isEmpty) return;
 
     try {
-      await supabase.auth.resetPasswordForEmail(result);
+      await supabase.auth.resetPasswordForEmail(result,
+          redirectTo: 'spicedesk://reset-password');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

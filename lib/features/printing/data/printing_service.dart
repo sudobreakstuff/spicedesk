@@ -55,7 +55,7 @@ class PrintingService {
       // Create a print task for this printer model
       _printTask = _client!.createPrintTask(const PrintOptions(
         density: 2,
-        totalPages: 1,
+        totalPages: 5,
       ));
 
       return PrinterConnectionResult.success('$_printerName ($_printerModel)');
@@ -89,82 +89,82 @@ class PrintingService {
     if (_printTask == null) return false;
 
     try {
-      final page = PrintPage(400, 600);
+      final page = PrintPage(400, 400);
 
-      int y = 20;
+      int y = 18;
 
-      // Header — store name (large, bold, centered)
+      // Header — store name
       await page.addText(
         storeName,
-        TextOptions(x: 200, y: y, align: HAlignment.center, fontSize: 28, fontWeight: FontWeight.bold),
+        TextOptions(x: 200, y: y, align: HAlignment.center, fontSize: 20, fontWeight: FontWeight.bold),
       );
-      y += 40;
+      y += 30;
 
       // Transaction number
       await page.addText(
         'Txn: $transactionNumber',
-        TextOptions(x: 200, y: y, align: HAlignment.center, fontSize: 16),
+        TextOptions(x: 200, y: y, align: HAlignment.center, fontSize: 14),
       );
-      y += 24;
+      y += 18;
 
       // Date
       await page.addText(
         '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}',
-        TextOptions(x: 200, y: y, align: HAlignment.center, fontSize: 16),
+        TextOptions(x: 200, y: y, align: HAlignment.center, fontSize: 14),
       );
-      y += 30;
+      y += 20;
 
       // Payment method
       if (paymentMethod != null) {
         await page.addText(
           paymentMethod,
-          TextOptions(x: 200, y: y, align: HAlignment.center, fontSize: 16),
+          TextOptions(x: 200, y: y, align: HAlignment.center, fontSize: 14),
         );
-        y += 24;
+        y += 18;
       }
 
       // Divider
       page.addLine(LineOptions(x: 20, y: y, endX: 380, endY: y));
-      y += 16;
+      y += 12;
 
       // Items
       for (final item in items) {
         await page.addText(
           item.name,
-          TextOptions(x: 20, y: y, fontSize: 20),
+          TextOptions(x: 20, y: y, fontSize: 14),
         );
         await page.addText(
           'x${item.quantity}',
-          TextOptions(x: 250, y: y, fontSize: 16),
+          TextOptions(x: 250, y: y, fontSize: 12),
         );
         await page.addText(
           'R ${item.lineTotal.toStringAsFixed(2)}',
-          TextOptions(x: 380, y: y, align: HAlignment.right, fontSize: 20),
+          TextOptions(x: 380, y: y, align: HAlignment.right, fontSize: 14),
         );
-        y += 28;
+        y += 20;
       }
 
       // Divider
       page.addLine(LineOptions(x: 20, y: y, endX: 380, endY: y));
-      y += 16;
+      y += 12;
 
       // Total
       await page.addText(
         'TOTAL: R ${total.toStringAsFixed(2)}',
-        TextOptions(x: 200, y: y, align: HAlignment.center, fontSize: 32, fontWeight: FontWeight.bold),
+        TextOptions(x: 200, y: y, align: HAlignment.center, fontSize: 22, fontWeight: FontWeight.bold),
       );
-      y += 44;
+      y += 32;
 
       // Footer
       await page.addText(
         'Thank you!',
-        TextOptions(x: 200, y: y, align: HAlignment.center, fontSize: 20),
+        TextOptions(x: 200, y: y, align: HAlignment.center, fontSize: 14),
       );
-      y += 28;
+      y += 20;
 
       await page.addText(
         'Made by Shahid Singh',
-        TextOptions(x: 200, y: y, align: HAlignment.center, fontSize: 16),
+        TextOptions(x: 200, y: y, align: HAlignment.center, fontSize: 12),
       );
 
       // Encode and print

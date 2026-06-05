@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 import '../../../../core/network/supabase_client.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -104,7 +107,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     final validStr = '${validUntil.day}/${validUntil.month}/${validUntil.year}';
 
     final invoiceText = _buildInvoiceText(storeName, result, items, dateStr, paymentMethod);
-    final quoteText = _buildQuoteText(storeName, items, dateStr, validStr);
+    final quoteText = _buildQuoteText(storeName, items, dateStr, validStr, result.total);
 
     showDialog(
       context: context,
@@ -196,6 +199,13 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           ),
           TextButton.icon(
             onPressed: () async {
+              await _generatePdfInvoice(storeName, result, items, dateStr, paymentMethod);
+            },
+            icon: const Icon(Icons.picture_as_pdf, size: 18),
+            label: const Text('PDF'),
+          ),
+          TextButton.icon(
+            onPressed: () async {
               try {
                 final printing = PrintingService();
                 if (printing.isConnected) {
@@ -248,8 +258,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     return buf.toString();
   }
 
-  String _buildQuoteText(String storeName, List<_CartItem> items, String dateStr, String validStr) {
-    final total = _total;
+  String _buildQuoteText(String storeName, List<_CartItem> items, String dateStr, String validStr, double total) {
     final buf = StringBuffer();
     buf.writeln('*QUOTE*');
     buf.writeln(storeName);
@@ -267,6 +276,53 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     buf.writeln('Prices valid until $validStr');
     buf.writeln('Thank you for your inquiry!');
     return buf.toString();
+  }
+
+  Future<void> _generatePdfInvoice(
+      String storeName, SaleResult result, List<_CartItem> items, String dateStr, String paymentMethod) async {
+    final doc = pw.Document();
+    doc.addPage(pw.Page(
+      pageFormat: PdfPageFormat.a4,
+      build: (pw.Context context) {
+        final headers = ['Item', 'Qty', 'Price', 'Total'];
+        return pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text(storeName, style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold)),
+            pw.SizedBox(height: 4),
+            pw.Text('Invoice: ${result.invoiceNumber}', style: const pw.TextStyle(fontSize: 12)),
+            pw.Text('Date: $dateStr', style: const pw.TextStyle(fontSize: 12)),
+            pw.Text('Payment: $paymentMethod', style: const pw.TextStyle(fontSize: 12)),
+            pw.Text('Txn: ${result.transactionNumber}', style: const pw.TextStyle(fontSize: 12)),
+            pw.SizedBox(height: 16),
+            pw.TableHelper.fromTextArray(
+              headers: headers,
+              data: items.map((i) => [
+                    i.product.name,
+                    '${i.quantity}',
+                    'R ${i.unitPrice.toStringAsFixed(2)}',
+                    'R ${(i.unitPrice * i.quantity).toStringAsFixed(2)}',
+                  ]).toList(),
+              headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 11),
+              cellStyle: const pw.TextStyle(fontSize: 11),
+            ),
+            pw.SizedBox(height: 24),
+            pw.Align(
+              alignment: pw.Alignment.centerRight,
+              child: pw.Text('TOTAL: R ${result.total.toStringAsFixed(2)}',
+                  style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+            ),
+            pw.SizedBox(height: 32),
+            pw.Text('Thank you for your business!', style: const pw.TextStyle(fontSize: 12)),
+          ],
+        );
+      },
+    ));
+
+    await Printing.sharePdf(
+      bytes: await doc.save(),
+      filename: 'invoice_${result.invoiceNumber}.pdf',
+    );
   }
 
   Widget _receiptRow(String label, String value) {
@@ -789,7 +845,9 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   @override
   Widget build(BuildContext context) {
     final productsAsync = ref.watch(productsProvider);
-    final products = productsAsync.valueOrNull ?? [];
+    final products = (productsAsync.valueOrNull ?? [])
+        .where((p) => p.productType != 'raw_material')
+        .toList();
 
     final inventoryAsync = ref.watch(inventoryProvider);
     final inventoryItems = inventoryAsync.valueOrNull ?? [];
@@ -849,7 +907,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
+            const SizedBox(height: 20),
                 Expanded(
                   child: productsAsync.isLoading
                       ? const Center(child: CircularProgressIndicator())
@@ -1199,6 +1257,8 @@ class _CheckoutDialog extends StatefulWidget {
 class _CheckoutDialogState extends State<_CheckoutDialog> {
   String? _selectedCustomerId;
   String _selectedCustomerName = 'Walk-in';
+  String _serviceType = 'Dine-in';
+  final _serviceTypes = ['Dine-in', 'Pickup', 'Delivery'];
 
   @override
   Widget build(BuildContext context) {
@@ -1264,6 +1324,35 @@ class _CheckoutDialogState extends State<_CheckoutDialog> {
               ),
             ),
             const SizedBox(height: 20),
+            const Text('Service Type',
+                style: TextStyle(
+                    fontSize: 13,
+                    color: SpiceColors.textSecondary)),
+            const SizedBox(height: 8),
+            Row(
+              children: _serviceTypes.map((t) => Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  label: Text(t),
+                  selected: _serviceType == t,
+                  onSelected: (_) =>
+                      setState(() => _serviceType = t),
+                  selectedColor:
+                      SpiceColors.primary.withAlpha(40),
+                  labelStyle: TextStyle(
+                    color: _serviceType == t
+                        ? SpiceColors.primary
+                        : SpiceColors.textSecondary,
+                  ),
+                ),
+              )).toList(),
+            ),
+            const SizedBox(height: 20),
+            const Text('Payment Method',
+                style: TextStyle(
+                    fontSize: 13,
+                    color: SpiceColors.textSecondary)),
+            const SizedBox(height: 8),
             ...['Cash', 'Card', 'Mobile'].map((m) => ListTile(
                   leading: Icon(
                       m == 'Cash'
@@ -1276,7 +1365,7 @@ class _CheckoutDialogState extends State<_CheckoutDialog> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8)),
                   onTap: () => Navigator.pop(context, {
-                    'paymentMethod': m,
+                    'paymentMethod': '$m ($_serviceType)',
                     'customerId': _selectedCustomerId,
                   }),
                 )),
