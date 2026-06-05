@@ -437,6 +437,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         });
                         await supabase.from('sale_items').delete().eq('workspace_id', workspaceId);
 
+                        setDialogState(() => progress = 'Deleting invoices...');
+                        await supabase.from('invoices').delete().eq('workspace_id', workspaceId);
+
                         setDialogState(() => progress = 'Deleting quote items...');
                         await supabase.from('quote_items').delete().eq('workspace_id', workspaceId);
 

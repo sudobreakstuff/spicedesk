@@ -52,46 +52,29 @@ class AppSidebar extends ConsumerWidget {
                     message: workspace.selectedId != null
                         ? 'Switch workspace'
                         : 'Select a workspace',
-                    child: InkWell(
-                      onTap: () => context.go('/workspace'),
-                      borderRadius: BorderRadius.circular(6),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'SpiceDesk',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: SpiceColors.textPrimary,
-                                letterSpacing: -0.3,
-                              ),
-                            ),
-                            Row(
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    workspace.selectedName ?? 'No workspace',
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: SpiceColors.textSecondary,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                const Icon(
-                                  Icons.keyboard_arrow_down,
-                                  size: 14,
-                                  color: SpiceColors.textSecondary,
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'SpiceDesk',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: SpiceColors.textPrimary,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                Text(
+                  workspace.selectedName ?? 'My Store',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: SpiceColors.textSecondary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
                   ),
                 ),
               ],

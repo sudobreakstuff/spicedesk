@@ -12,7 +12,6 @@ import '../../features/inventory/presentation/screens/inventory_screen.dart';
 import '../../features/reports/presentation/screens/reports_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/settings/presentation/screens/printer_connect_screen.dart';
-import '../../features/workspace/presentation/screens/workspace_screen.dart';
 import '../../features/customers/presentation/screens/customers_screen.dart';
 import '../../features/marketing/presentation/screens/marketing_screen.dart';
 import '../../core/widgets/app_sidebar.dart';
@@ -39,7 +38,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
       GoRoute(path: '/register', builder: (_, __) => const RegisterScreen()),
-      GoRoute(path: '/workspace', builder: (_, __) => const WorkspaceScreen()),
       GoRoute(
           path: '/printer-connect',
           builder: (_, __) => const PrinterConnectScreen()),
