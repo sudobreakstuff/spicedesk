@@ -258,6 +258,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 color: SpiceColors.danger),
           ]).animate(delay: 400.ms).fadeIn(),
 
+          const SizedBox(height: 24),
+
+          _section('Danger Zone', [
+            _tile(Icons.delete_forever, 'Reset All Data',
+                'Permanently delete all sales, products, inventory, and customers',
+                onTap: () => _showResetAllDataDialog(context, workspace.selectedId),
+                color: SpiceColors.danger),
+          ]),
+
           const SizedBox(height: 32),
           const Center(
             child: Column(
@@ -368,6 +377,59 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showResetAllDataDialog(BuildContext context, String? workspaceId) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: SpiceColors.surfaceAlt,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: SpiceColors.danger),
+        ),
+        title: const Text('Reset All Data', style: TextStyle(color: SpiceColors.danger)),
+        content: const Text(
+          'This will permanently delete all sales, products, inventory, and customers for this workspace. This cannot be undone.',
+          style: TextStyle(color: SpiceColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (workspaceId == null) return;
+              try {
+                await supabase.from('stock_movements').delete().eq('workspace_id', workspaceId);
+                await supabase.from('sales_transactions').delete().eq('workspace_id', workspaceId);
+                await supabase.from('inventory').delete().eq('workspace_id', workspaceId);
+                await supabase.from('products').delete().eq('workspace_id', workspaceId);
+                await supabase.from('customers').delete().eq('workspace_id', workspaceId);
+                await supabase.from('quotes').delete().eq('workspace_id', workspaceId);
+                if (ctx.mounted) Navigator.pop(ctx);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text('All data has been reset for this workspace'),
+                    backgroundColor: SpiceColors.accent,
+                  ));
+                }
+              } catch (e) {
+                if (ctx.mounted) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                    content: Text('Failed to reset data: $e'),
+                    backgroundColor: SpiceColors.danger,
+                  ));
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: SpiceColors.danger),
+            child: const Text('Delete Everything'),
           ),
         ],
       ),

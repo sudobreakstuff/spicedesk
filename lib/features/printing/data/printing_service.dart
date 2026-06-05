@@ -30,11 +30,8 @@ class PrintingService {
   }
 
   /// Connect to a Niimbot printer via BluetoothDevice
-  /// Uses our B21 driver for BLE connection (with longer timeouts),
-  /// then hands off to the niim_blue_flutter library for protocol and printing.
   Future<PrinterConnectionResult> connect(BluetoothDevice device) async {
     try {
-      // Step 1: Connect BLE using our driver (avoids library timeout)
       final b21 = B21PrinterDriver();
       final bleOk = await b21.connect(device);
       if (!bleOk) {
@@ -43,26 +40,22 @@ class PrintingService {
       }
       debugPrint('SpiceDesk: BLE connected via custom driver');
 
-      // Step 2: Let the library handle protocol negotiation
       _client = NiimbotBluetoothClient();
       _client!.setDevice(device);
       _client!.setDebug(true);
 
-      // Try library connect (device is already BLE-connected, so this is fast)
       try {
         final info = await _client!.connect();
         _connected = true;
         _printerName = info.deviceName ?? 'Niimbot Printer';
         debugPrint('SpiceDesk: Library negotiation OK');
       } catch (e) {
-        // Library timed out on negotiation — try continuing anyway
         debugPrint('SpiceDesk: Library negotiation warning: $e');
-        // The device IS connected via BLE. Try to fetch printer info.
         _connected = true;
         _printerName = device.platformName;
+        _lastError = 'Printer connected but print protocol failed — check B21 firmware';
       }
 
-      // Step 3: Fetch printer details
       if (_connected) {
         try {
           await _client!.fetchPrinterInfo();
@@ -73,7 +66,6 @@ class PrintingService {
           _printerModel = 'Unknown';
         }
 
-        // Create print task
         try {
           _printTask = _client!.createPrintTask(const PrintOptions(
             density: 2,
@@ -87,8 +79,7 @@ class PrintingService {
         }
       }
 
-      // Disconnect our raw BLE driver (library now owns the connection)
-      await b21.disconnect();
+      await b21.disconnectSafe();
 
       if (_connected) {
         return PrinterConnectionResult.success('$_printerName ($_printerModel)');
@@ -123,7 +114,11 @@ class PrintingService {
     String? paymentMethod,
   }) async {
     if (_client == null || !_connected) return false;
-    if (_printTask == null) return false;
+    if (_printTask == null) {
+      _lastError = 'Printer connected but print protocol failed — check B21 firmware';
+      debugPrint('SpiceDesk: Print task is null, cannot print');
+      return false;
+    }
 
     try {
       final page = PrintPage(400, 400);

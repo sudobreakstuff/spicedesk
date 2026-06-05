@@ -11,6 +11,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../products/data/products_provider.dart';
 import '../../../inventory/data/inventory_provider.dart';
 import '../../../pos/data/pos_service.dart';
+import '../../../pos/data/quote_service.dart';
 import '../../../printing/data/printing_service.dart';
 import '../../../workspace/domain/workspace_state.dart';
 import '../../../customers/data/customers_provider.dart';
@@ -29,7 +30,32 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
   double get _total => _cart.fold(0.0, (sum, i) => sum + (i.unitPrice * i.quantity));
 
+  Map<String, double> _getInventoryMap() {
+    final inventoryItems = ref.read(inventoryProvider).valueOrNull ?? [];
+    final map = <String, double>{};
+    for (final inv in inventoryItems) {
+      map[inv.productId] = inv.quantityOnHand;
+    }
+    return map;
+  }
+
   void _addToCart(Product product) {
+    final inventoryMap = _getInventoryMap();
+    final stock = inventoryMap[product.id] ?? 0;
+    final currentInCart = _cart.fold<int>(0, (sum, i) {
+      if (i.product.id == product.id) return sum + i.quantity;
+      return sum;
+    });
+
+    if (currentInCart + 1 > stock) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Insufficient stock: only $stock available for ${product.name}'),
+        backgroundColor: SpiceColors.warning,
+        duration: const Duration(seconds: 2),
+      ));
+      return;
+    }
+
     setState(() {
       final idx = _cart.indexWhere((c) => c.product.id == product.id);
       if (idx >= 0) {
@@ -98,6 +124,155 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         ));
       }
     }
+  }
+
+  Future<void> _createQuote() async {
+    if (_cart.isEmpty) return;
+    final customersAsync = ref.read(customersProvider);
+    final customers = customersAsync.valueOrNull ?? [];
+
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (ctx) => _CheckoutDialog(
+        total: _total,
+        customers: customers,
+        isQuote: true,
+      ),
+    );
+
+    if (result == null) return;
+
+    final customerId = result['customerId'] as String?;
+
+    try {
+      final createQuote = ref.read(createQuoteAction);
+      final quoteResult = await createQuote(
+        items: _cart
+            .map((c) => SaleItemInput(
+                  productId: c.product.id,
+                  productName: c.product.name,
+                  quantity: c.quantity,
+                  unitPrice: c.unitPrice,
+                ))
+            .toList(),
+        customerId: customerId,
+      );
+
+      if (mounted) {
+        final cartSnapshot = List<_CartItem>.from(_cart);
+        setState(() => _cart.clear());
+        _showQuoteReceiptDialog(quoteResult, cartSnapshot);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Quote failed: $e'),
+          backgroundColor: SpiceColors.danger,
+        ));
+      }
+    }
+  }
+
+  void _showQuoteReceiptDialog(QuoteResult result, List<_CartItem> items) {
+    final workspace = ref.read(workspaceStateProvider);
+    final storeName = workspace.selectedName ?? 'SpiceDesk';
+    final now = DateTime.now();
+    final dateStr = '${now.day}/${now.month}/${now.year} ${now.hour}:${now.minute.toString().padLeft(2, '0')}';
+    final validStr = '${result.validUntil.day}/${result.validUntil.month}/${result.validUntil.year}';
+
+    final quoteText = _buildQuoteText(storeName, items, dateStr, validStr, result.total);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: SpiceColors.surfaceAlt,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: SpiceColors.border),
+        ),
+        title: Row(
+          children: [
+            Icon(Icons.description, color: SpiceColors.primary, size: 24),
+            const SizedBox(width: 10),
+            const Text('Quote Created',
+                style: TextStyle(color: SpiceColors.textPrimary)),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: SpiceColors.surface,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _receiptRow('Quote', result.quoteNumber),
+                    const SizedBox(height: 4),
+                    _receiptRow('Valid until', validStr),
+                    _receiptRow('Date', dateStr),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              ...items.map((item) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  children: [
+                    Expanded(child: Text(item.product.name,
+                        style: const TextStyle(fontSize: 13, color: SpiceColors.textPrimary))),
+                    Text('x${item.quantity}',
+                        style: const TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
+                    const SizedBox(width: 12),
+                    Text('R ${(item.unitPrice * item.quantity).toStringAsFixed(2)}',
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
+                  ],
+                ),
+              )),
+              const SizedBox(height: 12),
+              Divider(color: SpiceColors.border),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Total', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
+                  Text('R ${result.total.toStringAsFixed(2)}',
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: SpiceColors.accent)),
+                ],
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton.icon(
+            onPressed: () async {
+              final encoded = Uri.encodeComponent(quoteText);
+              final uri = Uri.parse('https://wa.me/?text=$encoded');
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+            },
+            icon: const Icon(Icons.share, size: 18),
+            label: const Text('WhatsApp'),
+          ),
+          TextButton.icon(
+            onPressed: () async {
+              await _generateQuotePdf(storeName, result, items, dateStr);
+            },
+            icon: const Icon(Icons.picture_as_pdf, size: 18),
+            label: const Text('PDF'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Done'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showReceiptDialog(SaleResult result, List<_CartItem> items, String paymentMethod) {
@@ -324,6 +499,57 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     await Printing.sharePdf(
       bytes: await doc.save(),
       filename: 'invoice_${result.invoiceNumber}.pdf',
+    );
+  }
+
+  Future<void> _generateQuotePdf(
+      String storeName, QuoteResult result, List<_CartItem> items, String dateStr) async {
+    final doc = pw.Document();
+    final validStr = '${result.validUntil.day}/${result.validUntil.month}/${result.validUntil.year}';
+    doc.addPage(pw.Page(
+      pageFormat: PdfPageFormat.a4,
+      build: (pw.Context context) {
+        final headers = ['Item', 'Qty', 'Price', 'Total'];
+        return pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text('QUOTE', style: pw.TextStyle(fontSize: 28, fontWeight: pw.FontWeight.bold, color: PdfColors.blue)),
+            pw.SizedBox(height: 4),
+            pw.Text(storeName, style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+            pw.SizedBox(height: 8),
+            pw.Text('Quote: ${result.quoteNumber}', style: const pw.TextStyle(fontSize: 12)),
+            pw.Text('Date: $dateStr', style: const pw.TextStyle(fontSize: 12)),
+            pw.Text('Valid until: $validStr', style: const pw.TextStyle(fontSize: 12)),
+            pw.SizedBox(height: 16),
+            pw.TableHelper.fromTextArray(
+              headers: headers,
+              data: items.map((i) => [
+                    i.product.name,
+                    '${i.quantity}',
+                    'R ${i.unitPrice.toStringAsFixed(2)}',
+                    'R ${(i.unitPrice * i.quantity).toStringAsFixed(2)}',
+                  ]).toList(),
+              headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 11),
+              cellStyle: const pw.TextStyle(fontSize: 11),
+            ),
+            pw.SizedBox(height: 24),
+            pw.Align(
+              alignment: pw.Alignment.centerRight,
+              child: pw.Text('TOTAL: R ${result.total.toStringAsFixed(2)}',
+                  style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+            ),
+            pw.SizedBox(height: 32),
+            pw.Text('Prices valid until $validStr', style: const pw.TextStyle(fontSize: 12)),
+            pw.SizedBox(height: 8),
+            pw.Text('Thank you for your inquiry!', style: const pw.TextStyle(fontSize: 12)),
+          ],
+        );
+      },
+    ));
+
+    await Printing.sharePdf(
+      bytes: await doc.save(),
+      filename: 'quote_${result.quoteNumber}.pdf',
     );
   }
 
@@ -1200,22 +1426,44 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 48,
-                        child: ElevatedButton(
-                          onPressed: _cart.isEmpty ? null : _checkout,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: SpiceColors.accent,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: SizedBox(
+                              height: 48,
+                              child: OutlinedButton(
+                                onPressed: _cart.isEmpty ? null : _createQuote,
+                                style: OutlinedButton.styleFrom(
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10)),
+                                ),
+                                child: const Text('Quote',
+                                    style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600)),
+                              ),
+                            ),
                           ),
-                          child: const Text('Checkout',
-                              style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600)),
-                        ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: SizedBox(
+                              height: 48,
+                              child: ElevatedButton(
+                                onPressed: _cart.isEmpty ? null : _checkout,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: SpiceColors.accent,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10)),
+                                ),
+                                child: const Text('Checkout',
+                                    style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600)),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -1246,10 +1494,12 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 class _CheckoutDialog extends StatefulWidget {
   final double total;
   final List<Customer> customers;
+  final bool isQuote;
 
   const _CheckoutDialog({
     required this.total,
     required this.customers,
+    this.isQuote = false,
   });
 
   @override
@@ -1264,12 +1514,13 @@ class _CheckoutDialogState extends State<_CheckoutDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final isQuote = widget.isQuote;
     return AlertDialog(
       backgroundColor: SpiceColors.surfaceAlt,
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(color: SpiceColors.border)),
-      title: const Text('Checkout'),
+      title: Text(isQuote ? 'Create Quote' : 'Checkout'),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1325,53 +1576,77 @@ class _CheckoutDialogState extends State<_CheckoutDialog> {
                 ),
               ),
             ),
-            const SizedBox(height: 20),
-            const Text('Service Type',
-                style: TextStyle(
-                    fontSize: 13,
-                    color: SpiceColors.textSecondary)),
-            const SizedBox(height: 8),
-            Row(
-              children: _serviceTypes.map((t) => Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: ChoiceChip(
-                  label: Text(t),
-                  selected: _serviceType == t,
-                  onSelected: (_) =>
-                      setState(() => _serviceType = t),
-                  selectedColor:
-                      SpiceColors.primary.withAlpha(40),
-                  labelStyle: TextStyle(
-                    color: _serviceType == t
-                        ? SpiceColors.primary
-                        : SpiceColors.textSecondary,
+            if (!isQuote) ...[
+              const SizedBox(height: 20),
+              const Text('Service Type',
+                  style: TextStyle(
+                      fontSize: 13,
+                      color: SpiceColors.textSecondary)),
+              const SizedBox(height: 8),
+              Row(
+                children: _serviceTypes.map((t) => Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: ChoiceChip(
+                    label: Text(t),
+                    selected: _serviceType == t,
+                    onSelected: (_) =>
+                        setState(() => _serviceType = t),
+                    selectedColor:
+                        SpiceColors.primary.withAlpha(40),
+                    labelStyle: TextStyle(
+                      color: _serviceType == t
+                          ? SpiceColors.primary
+                          : SpiceColors.textSecondary,
+                    ),
                   ),
-                ),
-              )).toList(),
-            ),
-            const SizedBox(height: 20),
-            const Text('Payment Method',
-                style: TextStyle(
-                    fontSize: 13,
-                    color: SpiceColors.textSecondary)),
-            const SizedBox(height: 8),
-            ...['Cash', 'Card', 'Mobile'].map((m) => ListTile(
-                  leading: Icon(
-                      m == 'Cash'
-                          ? Icons.money
-                          : m == 'Card'
-                              ? Icons.credit_card
-                              : Icons.phone_android,
-                      color: SpiceColors.textSecondary),
-                  title: Text(m),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                  onTap: () => Navigator.pop(context, {
-                    'paymentMethod': m.toLowerCase(),
-                    'orderType': _serviceType,
+                )).toList(),
+              ),
+              const SizedBox(height: 20),
+              const Text('Payment Method',
+                  style: TextStyle(
+                      fontSize: 13,
+                      color: SpiceColors.textSecondary)),
+              const SizedBox(height: 8),
+              ...['Cash', 'Card', 'Mobile'].map((m) => ListTile(
+                    leading: Icon(
+                        m == 'Cash'
+                            ? Icons.money
+                            : m == 'Card'
+                                ? Icons.credit_card
+                                : Icons.phone_android,
+                        color: SpiceColors.textSecondary),
+                    title: Text(m),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                    onTap: () => Navigator.pop(context, {
+                      'paymentMethod': m.toLowerCase(),
+                      'orderType': _serviceType,
+                      'customerId': _selectedCustomerId,
+                    }),
+                  )),
+            ] else ...[
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context, {
                     'customerId': _selectedCustomerId,
+                    'isQuote': true,
                   }),
-                )),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: SpiceColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Create Quote',
+                      style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600)),
+                ),
+              ),
+            ],
           ],
         ),
       ),

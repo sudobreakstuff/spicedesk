@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/domain/auth_state.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/workspace/domain/workspace_state.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/dashboard/presentation/screens/home_screen.dart';
 import '../../features/pos/presentation/screens/pos_screen.dart';
@@ -18,6 +19,7 @@ import '../../core/widgets/app_sidebar.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
+  final workspaceState = ref.watch(workspaceStateProvider);
 
   return GoRouter(
     initialLocation: '/dashboard',
@@ -25,9 +27,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final isLoggedIn = authState.isAuthenticated;
       final isAuthRoute =
           state.uri.path == '/login' || state.uri.path == '/register';
+      final isWorkspaceRoute = state.uri.path == '/workspace';
 
       if (!isLoggedIn && !isAuthRoute) return '/login';
       if (isLoggedIn && isAuthRoute) return '/dashboard';
+      if (isLoggedIn && !isWorkspaceRoute && workspaceState.selectedId == null) {
+        return '/workspace';
+      }
       return null;
     },
     routes: [

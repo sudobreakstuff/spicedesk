@@ -825,7 +825,18 @@ class _ExpandedPanel extends ConsumerWidget {
                 ),
               );
             }),
-          ],
+          ] else if (!isLoading && salesData != null)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                'No purchases yet',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: SpiceColors.textSecondary,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
           const SizedBox(height: 12),
           Row(
             children: [

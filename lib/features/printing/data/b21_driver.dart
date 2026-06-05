@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
@@ -145,7 +144,23 @@ class B21PrinterDriver {
   }
 
   /// Send a command and wait for response
-  Future<NiimbotResponse?> sendCommand(int command, {Uint8List? data, Duration timeout = const Duration(seconds: 5)}) async {
+  Future<NiimbotResponse?> sendCommand(int command, {Uint8List? data, Duration timeout = const Duration(seconds: 5), int retries = 1}) async {
+    if (_writeChar == null) return null;
+
+    for (int attempt = 0; attempt <= retries; attempt++) {
+      if (attempt > 0) {
+        debugPrint('B21: Retry $attempt for cmd=0x${command.toRadixString(16)}');
+        await Future.delayed(const Duration(milliseconds: 50));
+      }
+
+      final result = await _sendRaw(command, data: data, timeout: timeout);
+      if (result != null) return result;
+    }
+    debugPrint('B21: All retries failed for cmd=0x${command.toRadixString(16)}');
+    return null;
+  }
+
+  Future<NiimbotResponse?> _sendRaw(int command, {Uint8List? data, Duration timeout = const Duration(seconds: 5)}) async {
     if (_writeChar == null) return null;
 
     final cmdData = data ?? Uint8List(0);
@@ -154,7 +169,6 @@ class B21PrinterDriver {
     final lenLo = cmdData.length & 0xFF;
     final lenHi = (cmdData.length >> 8) & 0xFF;
 
-    // Build packet: HEAD(2) + CMD(2) + LEN(2) + DATA + CHECKSUM(2)
     final packet = Uint8List(6 + cmdData.length + 2);
     packet[0] = 0x55;
     packet[1] = 0x55;
@@ -164,7 +178,6 @@ class B21PrinterDriver {
     packet[5] = lenHi;
     packet.setAll(6, cmdData);
 
-    // Simple checksum
     int checksum = 0;
     for (int i = 0; i < 6 + cmdData.length; i++) {
       checksum += packet[i];
@@ -195,7 +208,7 @@ class B21PrinterDriver {
       debugPrint('B21: Send error: $e');
       return null;
     } finally {
-      sub?.cancel();
+      sub.cancel();
     }
   }
 
@@ -204,13 +217,11 @@ class B21PrinterDriver {
     if (!_connected) return false;
 
     try {
-      // Send init/status command
-      final status = await sendCommand(0x0C); // Get device status
+      final status = await sendCommand(0x0C, retries: 2);
       debugPrint('B21: Status response: ${status?.data}');
 
-      // For a simple test, just try to wake up the printer
-      await sendCommand(0x10, data: Uint8List.fromList([0x01])); // Wake/init
-      await Future.delayed(const Duration(milliseconds: 500));
+      await sendCommand(0x10, data: Uint8List.fromList([0x01]), retries: 2);
+      await Future.delayed(const Duration(milliseconds: 50));
 
       debugPrint('B21: Test print commands sent');
       return true;
@@ -223,6 +234,14 @@ class B21PrinterDriver {
 
   String? _lastError;
   String? get lastError => _lastError;
+
+  Future<void> disconnectSafe() async {
+    _connected = false;
+    await _notifySub?.cancel();
+    _notifySub = null;
+    _writeChar = null;
+    _notifyChar = null;
+  }
 
   Future<void> disconnect() async {
     _connected = false;

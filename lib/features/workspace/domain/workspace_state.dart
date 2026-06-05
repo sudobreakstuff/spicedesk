@@ -20,30 +20,6 @@ class WorkspaceNotifier extends StateNotifier<WorkspaceState> {
     final name = prefs.getString('workspace_name');
     if (id != null) {
       state = WorkspaceState(selectedId: id, selectedName: name);
-    } else {
-      // Auto-select first workspace on fresh login
-      _autoSelectFirst();
-    }
-  }
-
-  Future<void> _autoSelectFirst() async {
-    final user = supabase.auth.currentUser;
-    if (user == null) return;
-
-    final data = await supabase
-        .from('workspace_members')
-        .select('workspace_id, workspaces(name)')
-        .eq('user_id', user.id)
-        .limit(1)
-        .maybeSingle();
-
-    if (data != null) {
-      final ws = data['workspaces'] as Map<String, dynamic>? ?? {};
-      final id = data['workspace_id'] as String;
-      final name = ws['name'] as String? ?? 'My Store';
-      await prefs.setString('workspace_id', id);
-      await prefs.setString('workspace_name', name);
-      state = WorkspaceState(selectedId: id, selectedName: name);
     }
   }
 
