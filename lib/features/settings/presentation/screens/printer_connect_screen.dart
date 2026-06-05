@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -110,6 +112,26 @@ class _PrinterConnectScreenState extends ConsumerState<PrinterConnectScreen> {
       ),
       body: Column(
         children: [
+          if (Platform.isLinux)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              color: SpiceColors.warning.withAlpha(30),
+              child: const Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded,
+                      color: SpiceColors.warning, size: 18),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'BLE support on Linux may be unreliable. Ensure the printer is paired and nearby before connecting.',
+                      style: TextStyle(
+                          color: SpiceColors.warning, fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           if (_statusMessage != null)
             Container(
               width: double.infinity,

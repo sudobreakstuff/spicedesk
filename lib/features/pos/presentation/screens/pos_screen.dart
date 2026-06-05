@@ -410,11 +410,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   if (category.isNotEmpty) {
                     final catResult = await supabase
                         .from('categories')
-                        .upsert({
+                        .insert({
                           'workspace_id': wsId,
                           'name': category,
-                        },
-                            onConflict: 'workspace_id, name')
+                        })
                         .select('id')
                         .single();
                     await supabase
@@ -672,11 +671,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   if (category.isNotEmpty) {
                     final catResult = await supabase
                         .from('categories')
-                        .upsert({
+                        .insert({
                           'workspace_id': wsId,
                           'name': category,
-                        },
-                            onConflict: 'workspace_id, name')
+                        })
                         .select('id')
                         .single();
                     await supabase

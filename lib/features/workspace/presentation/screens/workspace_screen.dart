@@ -49,6 +49,12 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
       _invalidateWorkspaceProviders();
       if (!mounted) return;
       _nameCtrl.clear();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Workspace "$name" created successfully'),
+          backgroundColor: SpiceColors.accent,
+        ),
+      );
       context.go('/dashboard');
     } catch (e) {
       if (!mounted) return;

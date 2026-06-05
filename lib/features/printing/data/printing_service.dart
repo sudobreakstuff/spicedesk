@@ -26,6 +26,12 @@ class PrintingService {
   }
 
   /// Connect to a Niimbot printer via BluetoothDevice
+  ///
+  /// NOTE: On Linux, the library's connect() has a hardcoded ~15s BLE timeout
+  /// which may not be sufficient for all adapters. If connections fail:
+  ///   - Try increasing system BLE scan time via bluetoothctl
+  ///   - Ensure the printer is in pairing mode and within 1m
+  ///   - Alternative: use bluetoothctl to manually pair before connecting
   Future<PrinterConnectionResult> connect(BluetoothDevice device) async {
     try {
       _client = NiimbotBluetoothClient();

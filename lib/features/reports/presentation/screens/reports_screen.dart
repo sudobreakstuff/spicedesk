@@ -4,8 +4,10 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/network/supabase_client.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../sales/data/sales_provider.dart';
+import '../../../workspace/domain/workspace_state.dart';
 
 class ReportsScreen extends ConsumerStatefulWidget {
   const ReportsScreen({super.key});
@@ -17,6 +19,55 @@ class ReportsScreen extends ConsumerStatefulWidget {
 class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   String _selectedPeriod = 'Daily';
   static const _periods = ['Daily', 'Weekly', 'Monthly'];
+
+  int _selectedReportMonth = DateTime.now().month;
+  int _selectedReportYear = DateTime.now().year;
+  List<Map<String, dynamic>> _monthlyTransactions = [];
+  bool _loadingMonthly = false;
+
+  static const _months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+  static const _years = [2024, 2025, 2026];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _fetchMonthlyTransactions());
+  }
+
+  Future<void> _fetchMonthlyTransactions() async {
+    final wsId = ref.read(workspaceStateProvider).selectedId;
+    if (wsId == null) return;
+
+    setState(() => _loadingMonthly = true);
+
+    try {
+      final startDate = DateTime(_selectedReportYear, _selectedReportMonth, 1);
+      final endDate = DateTime(_selectedReportYear, _selectedReportMonth + 1, 0);
+
+      final startStr = startDate.toIso8601String().split('T')[0];
+      final endStr = endDate.toIso8601String().split('T')[0];
+
+      final data = await supabase
+          .from('sales_transactions')
+          .select('transaction_number, invoice_number, grand_total, payment_method, created_at')
+          .eq('workspace_id', wsId)
+          .gte('created_at', '$startStr 00:00:00')
+          .lte('created_at', '$endStr 23:59:59')
+          .order('created_at', ascending: false);
+
+      if (mounted) {
+        setState(() {
+          _monthlyTransactions = data;
+          _loadingMonthly = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loadingMonthly = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -259,8 +310,160 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
           ),
           const SizedBox(height: 12),
           _buildTransactionsList(salesAsync, sales, format),
+          const SizedBox(height: 36),
+          Row(
+            children: [
+              const Icon(Icons.calendar_month, size: 20, color: SpiceColors.primary),
+              const SizedBox(width: 8),
+              const Text('Monthly Report',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
+              const Spacer(),
+              _buildMonthDropdown(),
+              const SizedBox(width: 12),
+              _buildYearDropdown(),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildMonthlyTransactionsTable(),
+          const SizedBox(height: 8),
+          const Align(
+            alignment: Alignment.centerRight,
+            child: Text('Export feature coming soon',
+                style: TextStyle(fontSize: 11, color: SpiceColors.textSecondary, fontStyle: FontStyle.italic)),
+          ),
           const SizedBox(height: 32),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMonthDropdown() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: SpiceColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: SpiceColors.border),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<int>(
+          value: _selectedReportMonth,
+          isDense: true,
+          dropdownColor: SpiceColors.surfaceAlt,
+          items: List.generate(12, (i) {
+            return DropdownMenuItem(value: i + 1, child: Text(_months[i]));
+          }),
+          onChanged: (v) {
+            if (v != null) {
+              setState(() => _selectedReportMonth = v);
+              _fetchMonthlyTransactions();
+            }
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildYearDropdown() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: SpiceColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: SpiceColors.border),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<int>(
+          value: _selectedReportYear,
+          isDense: true,
+          dropdownColor: SpiceColors.surfaceAlt,
+          items: _years.map((y) {
+            return DropdownMenuItem(value: y, child: Text('$y'));
+          }).toList(),
+          onChanged: (v) {
+            if (v != null) {
+              setState(() => _selectedReportYear = v);
+              _fetchMonthlyTransactions();
+            }
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMonthlyTransactionsTable() {
+    if (_loadingMonthly) {
+      return Container(
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: SpiceColors.surfaceAlt,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: SpiceColors.border),
+        ),
+        child: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_monthlyTransactions.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: SpiceColors.surfaceAlt,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: SpiceColors.border),
+        ),
+        child: const Row(
+          children: [
+            Icon(Icons.info_outline, color: SpiceColors.textSecondary, size: 18),
+            SizedBox(width: 8),
+            Text('No transactions for selected month',
+                style: TextStyle(color: SpiceColors.textSecondary)),
+          ],
+        ),
+      );
+    }
+
+    final tableFormat = NumberFormat.currency(symbol: 'R ', decimalDigits: 2);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: SpiceColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: SpiceColors.border),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: DataTable(
+          headingRowColor: WidgetStateProperty.all(SpiceColors.surface.withAlpha(80)),
+          dataRowMinHeight: 40,
+          dataRowMaxHeight: 48,
+          columns: const [
+            DataColumn(label: Text('Date', style: TextStyle(fontWeight: FontWeight.w600))),
+            DataColumn(label: Text('Txn #', style: TextStyle(fontWeight: FontWeight.w600))),
+            DataColumn(label: Text('Invoice #', style: TextStyle(fontWeight: FontWeight.w600))),
+            DataColumn(label: Text('Payment', style: TextStyle(fontWeight: FontWeight.w600))),
+            DataColumn(numeric: true, label: Text('Total', style: TextStyle(fontWeight: FontWeight.w600))),
+          ],
+          rows: _monthlyTransactions.map((txn) {
+            final createdAt = txn['created_at'] != null
+                ? DateTime.tryParse(txn['created_at'] ?? '')
+                : null;
+            return DataRow(cells: [
+              DataCell(Text(
+                createdAt != null ? DateFormat('MMM d, yyyy').format(createdAt) : '—',
+                style: const TextStyle(fontSize: 12),
+              )),
+              DataCell(Text(txn['transaction_number'] ?? '—', style: const TextStyle(fontSize: 12))),
+              DataCell(Text(txn['invoice_number'] ?? '—', style: const TextStyle(fontSize: 12))),
+              DataCell(Text(txn['payment_method'] ?? '—', style: const TextStyle(fontSize: 12))),
+              DataCell(Text(
+                tableFormat.format((txn['grand_total'] as num?)?.toDouble() ?? 0),
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.accent),
+              )),
+            ]);
+          }).toList(),
+        ),
       ),
     );
   }
