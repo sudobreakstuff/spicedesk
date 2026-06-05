@@ -74,7 +74,7 @@ class _PendingOrdersScreenState extends ConsumerState<PendingOrdersScreen> {
                 child: Text(quote['quote_number'] ?? 'Quote', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
               ),
               const SizedBox(height: 16),
-              if (quote['status'] == 'accepted')
+              if (quote['status'] != 'rejected')
                 ListTile(
                   leading: const Icon(Icons.shopping_cart, color: SpiceColors.accent),
                   title: const Text('Convert to Sale'),
