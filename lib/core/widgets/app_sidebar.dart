@@ -124,6 +124,12 @@ class AppSidebar extends ConsumerWidget {
                   active: location == '/reports',
                 ),
                 _NavItem(
+                  icon: Icons.description_outlined,
+                  label: 'Pending Orders',
+                  path: '/pending',
+                  active: location == '/pending',
+                ),
+                _NavItem(
                   icon: Icons.campaign_rounded,
                   label: 'Marketing',
                   path: '/marketing',

@@ -860,7 +860,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     final costCtrl = TextEditingController();
     final skuCtrl = TextEditingController();
     final categoryCtrl = TextEditingController();
-    String productType = 'finished';
 
     showDialog(
       context: context,
@@ -903,40 +902,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 TextField(
                   controller: categoryCtrl,
                   decoration: const InputDecoration(labelText: 'Category'),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    const Text('Type:',
-                        style: TextStyle(
-                            color: SpiceColors.textSecondary, fontSize: 13)),
-                    const SizedBox(width: 12),
-                    ChoiceChip(
-                      label: const Text('Finished'),
-                      selected: productType == 'finished',
-                      onSelected: (_) =>
-                          setDialogState(() => productType = 'finished'),
-                      selectedColor: SpiceColors.primary.withAlpha(40),
-                      labelStyle: TextStyle(
-                        color: productType == 'finished'
-                            ? SpiceColors.primary
-                            : SpiceColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    ChoiceChip(
-                      label: const Text('Raw Material'),
-                      selected: productType == 'raw_material',
-                      onSelected: (_) =>
-                          setDialogState(() => productType = 'raw_material'),
-                      selectedColor: SpiceColors.warning.withAlpha(40),
-                      labelStyle: TextStyle(
-                        color: productType == 'raw_material'
-                            ? SpiceColors.warning
-                            : SpiceColors.textSecondary,
-                      ),
-                    ),
-                  ],
                 ),
               ],
             ),
@@ -982,7 +947,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                         'sku': skuCtrl.text.trim().isEmpty
                             ? null
                             : skuCtrl.text.trim(),
-                        'product_type': productType,
+                        'product_type': 'finished',
                         'unit_of_measure': 'unit',
                       })
                       .select()

@@ -68,7 +68,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
 
   Future<void> _loadData() async {
     final wsId = ref.read(workspaceStateProvider).selectedId;
-    if (wsId == null) return;
+    if (wsId == null) {
+      setState(() => _loading = false);
+      return;
+    }
 
     setState(() => _loading = true);
 

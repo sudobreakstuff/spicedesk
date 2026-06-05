@@ -10,6 +10,7 @@ import '../../features/dashboard/presentation/screens/home_screen.dart';
 import '../../features/pos/presentation/screens/pos_screen.dart';
 import '../../features/inventory/presentation/screens/inventory_screen.dart';
 import '../../features/reports/presentation/screens/reports_screen.dart';
+import '../../features/pending/presentation/screens/pending_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/customers/presentation/screens/customers_screen.dart';
 import '../../features/expenses/presentation/screens/expenses_screen.dart';
@@ -57,6 +58,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
               path: '/reports',
               builder: (_, __) => const ReportsScreen()),
+          GoRoute(
+              path: '/pending',
+              builder: (_, __) => const PendingOrdersScreen()),
           GoRoute(
               path: '/settings',
               builder: (_, __) => const SettingsScreen()),
