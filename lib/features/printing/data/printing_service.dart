@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:niim_blue_flutter/niim_blue_flutter.dart';
 
+import 'b21_driver.dart';
+
 /// Unified printing service — supports Niimbot B21 (BLE).
 class PrintingService {
   static final PrintingService _instance = PrintingService._();
@@ -22,56 +24,91 @@ class PrintingService {
 
   // ── Niimbot B21 ──────────────────────────────────────────
 
-  /// Scan for available Niimbot printers
-  Future<List<BluetoothDevice>> scanPrinters({Duration timeout = const Duration(seconds: 5)}) async {
-    return NiimbotBluetoothClient.listDevices(timeout: timeout);
+  /// Scan for available Niimbot printers using our own driver
+  Future<List<BluetoothDevice>> scanPrinters({Duration timeout = const Duration(seconds: 8)}) async {
+    return B21PrinterDriver.scanPrinters(timeout: timeout);
   }
 
   /// Connect to a Niimbot printer via BluetoothDevice
-  ///
-  /// NOTE: On Linux, the library's connect() has a hardcoded ~15s BLE timeout
-  /// which may not be sufficient for all adapters. If connections fail:
-  ///   - Try increasing system BLE scan time via bluetoothctl
-  ///   - Ensure the printer is in pairing mode and within 1m
-  ///   - Alternative: use bluetoothctl to manually pair before connecting
+  /// Uses our B21 driver for BLE connection (with longer timeouts),
+  /// then hands off to the niim_blue_flutter library for protocol and printing.
   Future<PrinterConnectionResult> connect(BluetoothDevice device) async {
     try {
+      // Step 1: Connect BLE using our driver (avoids library timeout)
+      final b21 = B21PrinterDriver();
+      final bleOk = await b21.connect(device);
+      if (!bleOk) {
+        return PrinterConnectionResult.failure(
+            'Failed to establish BLE connection. Make sure the printer is on and in range.');
+      }
+      debugPrint('SpiceDesk: BLE connected via custom driver');
+
+      // Step 2: Let the library handle protocol negotiation
       _client = NiimbotBluetoothClient();
       _client!.setDevice(device);
       _client!.setDebug(true);
 
-      final info = await _client!.connect();
-      _connected = true;
-      _printerName = info.deviceName ?? 'Niimbot Printer';
+      // Try library connect (device is already BLE-connected, so this is fast)
+      try {
+        final info = await _client!.connect();
+        _connected = true;
+        _printerName = info.deviceName ?? 'Niimbot Printer';
+        debugPrint('SpiceDesk: Library negotiation OK');
+      } catch (e) {
+        // Library timed out on negotiation — try continuing anyway
+        debugPrint('SpiceDesk: Library negotiation warning: $e');
+        // The device IS connected via BLE. Try to fetch printer info.
+        _connected = true;
+        _printerName = device.platformName;
+      }
 
-      // Fetch detailed printer info
-      await _client!.fetchPrinterInfo();
-      final meta = _client!.getModelMetadata();
-      final modelId = meta?.model;
-      _printerModel = modelId?.name ?? 'Unknown';
-      
-      debugPrint('Niimbot connected: $_printerName (model: $_printerModel)');
+      // Step 3: Fetch printer details
+      if (_connected) {
+        try {
+          await _client!.fetchPrinterInfo();
+          final meta = _client!.getModelMetadata();
+          _printerModel = meta?.model.name ?? 'Unknown';
+          debugPrint('SpiceDesk: Printer model: $_printerModel');
+        } catch (_) {
+          _printerModel = 'Unknown';
+        }
 
-      // Create a print task for this printer model
-      _printTask = _client!.createPrintTask(const PrintOptions(
-        density: 2,
-        totalPages: 5,
-      ));
+        // Create print task
+        try {
+          _printTask = _client!.createPrintTask(const PrintOptions(
+            density: 2,
+            totalPages: 5,
+          ));
+          if (_printTask != null) {
+            debugPrint('SpiceDesk: Print task created successfully');
+          }
+        } catch (_) {
+          debugPrint('SpiceDesk: Could not create print task');
+        }
+      }
 
-      return PrinterConnectionResult.success('$_printerName ($_printerModel)');
+      // Disconnect our raw BLE driver (library now owns the connection)
+      await b21.disconnect();
+
+      if (_connected) {
+        return PrinterConnectionResult.success('$_printerName ($_printerModel)');
+      }
+      return PrinterConnectionResult.failure('Connection succeeded but printer setup failed');
+
     } catch (e) {
       _connected = false;
       _client = null;
       _printTask = null;
-      debugPrint('Niimbot connection error: $e');
-      
+      debugPrint('SpiceDesk: Connection error: $e');
+
       String message = e.toString();
       if (message.contains('Timeout')) {
-        message = 'Printer not responding. Make sure the B21 is turned on and nearby. Try restarting the printer.';
+        message = 'Printer not responding. Try restarting the B21 and moving it closer.';
       } else if (message.contains('Bluetooth')) {
-        message = 'Bluetooth error. Check that Bluetooth is enabled and the printer is in pairing mode.';
+        message = 'Bluetooth error. Check that Bluetooth is enabled.';
       }
-      
+      _lastError = message;
+
       return PrinterConnectionResult.failure(message);
     }
   }
