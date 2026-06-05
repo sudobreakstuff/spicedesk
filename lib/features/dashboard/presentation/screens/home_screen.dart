@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../../../core/network/supabase_client.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../sales/data/sales_provider.dart';
 import '../../../products/data/products_provider.dart';
@@ -353,11 +354,43 @@ class HomeScreen extends ConsumerWidget {
 
           const SizedBox(height: 36),
 
-          const Text('Pending Orders',
-              style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: SpiceColors.textPrimary)),
+          Row(children: [
+            const Text('Pending Orders',
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: SpiceColors.textPrimary)),
+            const Spacer(),
+            Material(
+              color: SpiceColors.accent.withAlpha(20),
+              borderRadius: BorderRadius.circular(8),
+              child: InkWell(
+                onTap: () => context.go('/pos'),
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: SpiceColors.accent.withAlpha(80)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.add_circle_outline,
+                          size: 14, color: SpiceColors.accent),
+                      SizedBox(width: 6),
+                      Text('Add Quote',
+                          style: TextStyle(
+                              fontSize: 13,
+                              color: SpiceColors.accent,
+                              fontWeight: FontWeight.w500)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ]),
           const SizedBox(height: 16),
           if (pendingQuotes.isLoading)
             _buildShimmerList(5)
@@ -396,7 +429,9 @@ class HomeScreen extends ConsumerWidget {
                   final quote = entry.value;
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Row(
+                    child: GestureDetector(
+                      onTap: () => _showQuoteActionDialog(context, ref, quote),
+                      child: Row(
                       children: [
                         Container(
                           width: 36,
@@ -450,18 +485,19 @@ class HomeScreen extends ConsumerWidget {
                             ],
                           ),
                         ),
-                        Text(
-                          format.format(quote.total),
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: SpiceColors.accent,
-                          ),
-                        ),
-                      ],
+                    Text(
+                      format.format(quote.total),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: SpiceColors.accent,
+                      ),
                     ),
-                  );
-                }).toList(),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
               ),
             ).animate(delay: 400.ms).fadeIn(),
 
@@ -621,6 +657,265 @@ class HomeScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+void _showQuoteActionDialog(BuildContext context, WidgetRef ref, PendingQuote quote) {
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      backgroundColor: SpiceColors.surfaceAlt,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: SpiceColors.border),
+      ),
+      title: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: quote.statusColor.withAlpha(25),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(Icons.description_rounded,
+                size: 18, color: quote.statusColor),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Quote Details',
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: SpiceColors.textPrimary)),
+                Text(quote.quoteNumber,
+                    style: const TextStyle(
+                        fontSize: 12, color: SpiceColors.textSecondary)),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: () => Navigator.pop(ctx),
+            icon: const Icon(Icons.close,
+                size: 20, color: SpiceColors.textSecondary),
+          ),
+        ],
+      ),
+      titlePadding: const EdgeInsets.fromLTRB(24, 20, 8, 0),
+      contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
+      content: SizedBox(
+        width: 420,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                _qInfoChip('Status', quote.displayStatus,
+                    color: quote.statusColor),
+                const SizedBox(width: 16),
+                _qInfoChip('Total',
+                    NumberFormat.currency(symbol: 'R ').format(quote.total)),
+                const SizedBox(width: 16),
+                if (quote.customerName != null)
+                  _qInfoChip('Customer', quote.customerName!),
+              ],
+            ),
+            const SizedBox(height: 20),
+            const Text('Actions',
+                style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: SpiceColors.textPrimary)),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _qActionButton('Draft', const Color(0xFF8B949E),
+                    quote.status == 'draft', () async {
+                  await _updateQuoteStatus(ctx, ref, quote.id, 'draft');
+                }),
+                _qActionButton('Sent', const Color(0xFF6366F1),
+                    quote.status == 'sent', () async {
+                  await _updateQuoteStatus(ctx, ref, quote.id, 'sent');
+                }),
+                _qActionButton('Accepted', const Color(0xFF238636),
+                    quote.status == 'accepted', () async {
+                  await _updateQuoteStatus(ctx, ref, quote.id, 'accepted');
+                }),
+                _qActionButton('Rejected', const Color(0xFFDA3633),
+                    quote.status == 'rejected', () async {
+                  await _updateQuoteStatus(ctx, ref, quote.id, 'rejected');
+                }),
+              ],
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: Material(
+                color: SpiceColors.danger.withAlpha(20),
+                borderRadius: BorderRadius.circular(8),
+                child: InkWell(
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (c) => AlertDialog(
+                        backgroundColor: SpiceColors.surfaceAlt,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          side: BorderSide(color: SpiceColors.border),
+                        ),
+                        title: const Text('Delete Quote?',
+                            style: TextStyle(color: SpiceColors.danger)),
+                        content: const Text(
+                            'This will permanently remove this quote.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(c, false),
+                            child: const Text('Cancel'),
+                          ),
+                          ElevatedButton(
+                            onPressed: () => Navigator.pop(c, true),
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: SpiceColors.danger),
+                            child: const Text('Delete'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirm == true) {
+                      try {
+                        await supabase
+                            .from('quote_items')
+                            .delete()
+                            .eq('quote_id', quote.id);
+                        await supabase
+                            .from('quotes')
+                            .delete()
+                            .eq('id', quote.id);
+                        ref.invalidate(pendingQuotesProvider);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Quote deleted'),
+                              backgroundColor: SpiceColors.accent,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text('Failed to delete: $e'),
+                            backgroundColor: SpiceColors.danger,
+                          ));
+                        }
+                      }
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      border:
+                          Border.all(color: SpiceColors.danger.withAlpha(80)),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Center(
+                      child: Text('Delete Quote',
+                          style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: SpiceColors.danger)),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+Future<void> _updateQuoteStatus(
+    BuildContext ctx, WidgetRef ref, String quoteId, String status) async {
+  try {
+    await supabase
+        .from('quotes')
+        .update({'status': status})
+        .eq('id', quoteId);
+    ref.invalidate(pendingQuotesProvider);
+    if (ctx.mounted) {
+      ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+        content: Text('Quote marked as $status'),
+        backgroundColor: SpiceColors.accent,
+      ));
+    }
+  } catch (e) {
+    if (ctx.mounted) {
+      ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+        content: Text('Failed to update: $e'),
+        backgroundColor: SpiceColors.danger,
+      ));
+    }
+  }
+}
+
+Widget _qInfoChip(String label, String value, {Color? color}) {
+  return RichText(
+    text: TextSpan(children: [
+      TextSpan(
+          text: '$label: ',
+          style: const TextStyle(
+              fontSize: 11, color: SpiceColors.textSecondary)),
+      TextSpan(
+          text: value,
+          style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: color ?? SpiceColors.textPrimary)),
+    ]),
+  );
+}
+
+Widget _qActionButton(
+    String label, Color color, bool isActive, VoidCallback onTap) {
+  return Material(
+    color: isActive ? color.withAlpha(30) : color.withAlpha(10),
+    borderRadius: BorderRadius.circular(8),
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          border: Border.all(color: isActive ? color : color.withAlpha(40)),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (isActive)
+              const Padding(
+                padding: EdgeInsets.only(right: 4),
+                child: Icon(Icons.check, size: 14, color: SpiceColors.accent),
+              ),
+            Text(label,
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: isActive ? color : color.withAlpha(180))),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 class _StatCard extends StatelessWidget {

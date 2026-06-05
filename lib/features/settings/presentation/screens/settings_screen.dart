@@ -8,7 +8,6 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../auth/domain/auth_state.dart';
 import '../../../customers/data/customers_provider.dart';
 import '../../../inventory/data/inventory_provider.dart';
-import '../../../printing/data/printing_service.dart';
 import '../../../products/data/products_provider.dart';
 import '../../../sales/data/sales_provider.dart';
 import '../../../workspace/domain/workspace_state.dart';
@@ -176,75 +175,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
           const SizedBox(height: 24),
 
-          _section('Receipt Printer', [
-            _tile(Icons.print, 'Connect Printer', 'Niimbot B21 / Bluetooth',
-                onTap: () => context.go('/printer-connect')),
-            _tile(Icons.qr_code, 'Test Print', 'Verify printer setup',
-                onTap: () async {
-                  final ps = PrintingService();
-                  if (!ps.isConnected) {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('No printer connected. Go to Connect Printer first.'),
-                          backgroundColor: SpiceColors.warning,
-                        ),
-                      );
-                    }
-                    return;
-                  }
-                  final scaffold = ScaffoldMessenger.of(context);
-                  final success = await ps.printReceipt(
-                    storeName: workspace.selectedName ?? 'SpiceDesk',
-                    transactionNumber: 'TEST-001',
-                    date: DateTime.now(),
-                    items: const [
-                      ReceiptLineItem(
-                        name: 'Test Item',
-                        quantity: 1,
-                        unitPrice: 0.0,
-                        lineTotal: 0.0,
-                      ),
-                    ],
-                    total: 0,
-                    paymentMethod: 'Test',
-                  );
-                  if (mounted) {
-                    final errorMsg = ps.lastError;
-                    scaffold.showSnackBar(SnackBar(
-                      content: Text(success
-                          ? 'Test print sent'
-                          : 'Print failed: ${errorMsg ?? "Unknown error"}'),
-                      backgroundColor: success ? SpiceColors.accent : SpiceColors.danger,
-                    ));
-                  }
-                }),
-          ]),
-
-          const SizedBox(height: 24),
-
           _section('Workspace', [
             _tile(Icons.group, 'Members', 'Manage team access',
                 onTap: () => _showComingSoon(context)),
             _tile(Icons.link, 'Invite Code', 'Share to invite members',
                 onTap: () => _showInviteCodeDialog(context, workspace.selectedId)),
-          ]),
-
-          const SizedBox(height: 24),
-
-          _section('Data & Sync', [
-            _tile(Icons.cloud_sync, 'Sync Status', 'All changes synced',
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('All changes synced')),
-                  );
-                }),
-            _tile(Icons.download, 'Export Data', 'Download CSV backup',
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Export feature coming soon')),
-                  );
-                }),
           ]),
 
           const SizedBox(height: 24),

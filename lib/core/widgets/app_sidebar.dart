@@ -129,31 +129,17 @@ class AppSidebar extends ConsumerWidget {
                   path: '/marketing',
                   active: location == '/marketing',
                 ),
-                const SizedBox(height: 12),
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  child: Text(
-                    'SYSTEM',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: SpiceColors.textSecondary,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
+                _NavItem(
+                  icon: Icons.info_outline_rounded,
+                  label: 'About',
+                  path: '/about',
+                  active: location == '/about',
                 ),
                 _NavItem(
                   icon: Icons.settings_rounded,
                   label: 'Settings',
                   path: '/settings',
                   active: location.startsWith('/settings'),
-                ),
-                _NavItem(
-                  icon: Icons.info_outline_rounded,
-                  label: 'About',
-                  path: '/about',
-                  active: location == '/about',
                 ),
               ],
             ),
@@ -190,13 +176,6 @@ class AppSidebar extends ConsumerWidget {
                       fontWeight: FontWeight.w500,
                     ),
                     overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const Text(
-                  'v1.2',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: SpiceColors.textSecondary,
                   ),
                 ),
               ],

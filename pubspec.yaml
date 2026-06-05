@@ -26,11 +26,6 @@ dependencies:
   # Navigation
   go_router: ^14.6.2
 
-  # Printing — Niimbot B21 thermal label printer (BLE)
-  # Printing — Niimbot B21 label printer (BLE)
-  niim_blue_flutter: ^1.0.1
-  flutter_blue_plus: ^1.36.8
-
   # Charts
   fl_chart: ^0.69.2
 
@@ -62,6 +57,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  # App icon uses default Flutter icon with SpiceDesk brand colors.
+  # Gradient icon displayed on login screen.
   assets:
     - assets/images/
     - assets/icons/

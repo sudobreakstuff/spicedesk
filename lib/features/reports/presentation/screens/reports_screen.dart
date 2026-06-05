@@ -72,27 +72,33 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
 
     setState(() => _loading = true);
 
-    final start = '${_startDate.toIso8601String().split('T')[0]} 00:00:00';
-    final end = '${_endDate.toIso8601String().split('T')[0]} 23:59:59';
+    try {
+      final start = '${_startDate.toIso8601String().split('T')[0]} 00:00:00';
+      final end = '${_endDate.toIso8601String().split('T')[0]} 23:59:59';
 
-    final data = await supabase
-        .from('sales_transactions')
-        .select(
-            'id, transaction_number, invoice_number, grand_total, payment_method, created_at, status, customers(name)')
-        .eq('workspace_id', wsId)
-        .gte('created_at', start)
-        .lte('created_at', end)
-        .order('created_at', ascending: false)
-        .limit(200);
+      final data = await supabase
+          .from('sales_transactions')
+          .select(
+              'id, transaction_number, invoice_number, grand_total, payment_method, created_at, status, customers(name)')
+          .eq('workspace_id', wsId)
+          .gte('created_at', start)
+          .lte('created_at', end)
+          .order('created_at', ascending: false)
+          .limit(200);
 
-    if (mounted) {
-      setState(() {
-        _filteredSales = data;
-        _loading = false;
-        _expandedTransactionId = null;
-        _detailsCache.clear();
-      });
-      _loadStats();
+      if (mounted) {
+        setState(() {
+          _filteredSales = data;
+          _loading = false;
+          _expandedTransactionId = null;
+          _detailsCache.clear();
+        });
+        _loadStats();
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _loading = false);
+      }
     }
   }
 
@@ -271,7 +277,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: SpiceColors.surface,
-      body: ListView(
+      body: RefreshIndicator(
+        onRefresh: _loadData,
+        color: SpiceColors.primary,
+        backgroundColor: SpiceColors.surfaceAlt,
+        child: ListView(
         padding: const EdgeInsets.all(32),
         children: [
           Row(children: [
@@ -503,6 +513,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                       fontSize: 11, color: SpiceColors.textSecondary))),
           const SizedBox(height: 32),
         ],
+      ),
       ),
     );
   }

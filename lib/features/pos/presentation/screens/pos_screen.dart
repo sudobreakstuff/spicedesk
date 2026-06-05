@@ -12,7 +12,6 @@ import '../../../products/data/products_provider.dart';
 import '../../../inventory/data/inventory_provider.dart';
 import '../../../pos/data/pos_service.dart';
 import '../../../pos/data/quote_service.dart';
-import '../../../printing/data/printing_service.dart';
 import '../../../workspace/domain/workspace_state.dart';
 import '../../../customers/data/customers_provider.dart';
 
@@ -380,31 +379,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             },
             icon: const Icon(Icons.picture_as_pdf, size: 18),
             label: const Text('PDF'),
-          ),
-          TextButton.icon(
-            onPressed: () async {
-              try {
-                final printing = PrintingService();
-                if (printing.isConnected) {
-                  await printing.printReceipt(
-                    storeName: storeName,
-                    transactionNumber: result.transactionNumber,
-                    date: DateTime.now(),
-                    items: items.map((i) => ReceiptLineItem(
-                      name: i.product.name,
-                      quantity: i.quantity,
-                      unitPrice: i.unitPrice,
-                      lineTotal: i.unitPrice * i.quantity,
-                    )).toList(),
-                    total: result.total,
-                    paymentMethod: paymentMethod,
-                  );
-                }
-              } catch (_) {}
-              if (ctx.mounted) Navigator.pop(ctx);
-            },
-            icon: const Icon(Icons.print, size: 18),
-            label: const Text('Print'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx),

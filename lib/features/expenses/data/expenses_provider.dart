@@ -12,7 +12,7 @@ final expensesProvider = FutureProvider<List<ExpenseItem>>((ref) async {
       .select(
           'id, product_id, quantity_change, movement_type, notes, created_at, performed_by, products(name, unit_price, cost_price)')
       .eq('workspace_id', wsId)
-      .inFilter('movement_type', ['purchase', 'expense'])
+      .or('movement_type.eq.purchase,movement_type.eq.expense')
       .order('created_at', ascending: false)
       .limit(200);
 
