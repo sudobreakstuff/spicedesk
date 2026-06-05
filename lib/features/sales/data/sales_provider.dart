@@ -78,10 +78,27 @@ final dailySalesProvider = FutureProvider<DailySalesReport>((ref) async {
     }
   }
 
+  double totalCost = 0;
+  try {
+    final costData = await supabase
+        .from('sale_items')
+        .select('quantity, products!inner(cost_price)')
+        .eq('workspace_id', wsId)
+        .gte('sales_transactions.created_at', '$today 00:00:00')
+        .lte('sales_transactions.created_at', '$today 23:59:59');
+    for (final row in costData) {
+      final quantity = (row['quantity'] as num?)?.toDouble() ?? 0;
+      final costPrice =
+          (row['products']?['cost_price'] as num?)?.toDouble() ?? 0;
+      totalCost += costPrice * quantity;
+    }
+  } catch (_) {}
+
   return DailySalesReport(
     totalSales: totalSales,
     transactionCount: data.length,
     hourlyBreakdown: hourlyMap,
+    totalCost: totalCost,
   );
 });
 
@@ -129,12 +146,30 @@ final weeklySalesProvider = FutureProvider<WeeklySalesReport>((ref) async {
     }
   }
 
+  final todayStr = now.toIso8601String().split('T')[0];
+  double totalCost = 0;
+  try {
+    final costData = await supabase
+        .from('sale_items')
+        .select('quantity, products!inner(cost_price)')
+        .eq('workspace_id', wsId)
+        .gte('sales_transactions.created_at', '$startStr 00:00:00')
+        .lte('sales_transactions.created_at', '$todayStr 23:59:59');
+    for (final row in costData) {
+      final quantity = (row['quantity'] as num?)?.toDouble() ?? 0;
+      final costPrice =
+          (row['products']?['cost_price'] as num?)?.toDouble() ?? 0;
+      totalCost += costPrice * quantity;
+    }
+  } catch (_) {}
+
   return WeeklySalesReport(
     totalSales: totalSales,
     avgPerDay: totalSales / 7,
     bestDay: bestDay,
     transactionCount: data.length,
     dailyBreakdown: dailyMap,
+    totalCost: totalCost,
   );
 });
 
@@ -174,12 +209,30 @@ final monthlySalesProvider = FutureProvider<MonthlySalesReport>((ref) async {
     }
   }
 
+  final todayStr = now.toIso8601String().split('T')[0];
+  double totalCost = 0;
+  try {
+    final costData = await supabase
+        .from('sale_items')
+        .select('quantity, products!inner(cost_price)')
+        .eq('workspace_id', wsId)
+        .gte('sales_transactions.created_at', '$startStr 00:00:00')
+        .lte('sales_transactions.created_at', '$todayStr 23:59:59');
+    for (final row in costData) {
+      final quantity = (row['quantity'] as num?)?.toDouble() ?? 0;
+      final costPrice =
+          (row['products']?['cost_price'] as num?)?.toDouble() ?? 0;
+      totalCost += costPrice * quantity;
+    }
+  } catch (_) {}
+
   return MonthlySalesReport(
     totalSales: totalSales,
     avgPerWeek: numWeeks > 0 ? totalSales / numWeeks : 0,
     dailyAverage: daysInMonth > 0 ? totalSales / daysInMonth : 0,
     transactionCount: data.length,
     weeklyBreakdown: weeklyMap,
+    totalCost: totalCost,
   );
 });
 
@@ -219,21 +272,28 @@ class DailySalesReport {
   final double totalSales;
   final int transactionCount;
   final Map<int, double> hourlyBreakdown;
+  final double totalCost;
 
   DailySalesReport({
     required this.totalSales,
     required this.transactionCount,
     required this.hourlyBreakdown,
+    this.totalCost = 0,
   });
 
   factory DailySalesReport.empty() => DailySalesReport(
         totalSales: 0,
         transactionCount: 0,
         hourlyBreakdown: {for (int i = 0; i < 24; i++) i: 0.0},
+        totalCost: 0,
       );
 
   double get averageOrderValue =>
       transactionCount > 0 ? totalSales / transactionCount : 0;
+
+  double get totalProfit => totalSales - totalCost;
+  double get profitMargin =>
+      totalSales > 0 ? (totalProfit / totalSales * 100) : 0;
 
   int get topHour => (hourlyBreakdown.entries.toList()
         ..sort((a, b) => b.value.compareTo(a.value)))
@@ -247,6 +307,7 @@ class WeeklySalesReport {
   final String bestDay;
   final int transactionCount;
   final Map<String, double> dailyBreakdown;
+  final double totalCost;
 
   const WeeklySalesReport({
     required this.totalSales,
@@ -254,6 +315,7 @@ class WeeklySalesReport {
     required this.bestDay,
     required this.transactionCount,
     required this.dailyBreakdown,
+    this.totalCost = 0,
   });
 
   factory WeeklySalesReport.empty() => const WeeklySalesReport(
@@ -262,7 +324,12 @@ class WeeklySalesReport {
         bestDay: 'Mon',
         transactionCount: 0,
         dailyBreakdown: {},
+        totalCost: 0,
       );
+
+  double get totalProfit => totalSales - totalCost;
+  double get profitMargin =>
+      totalSales > 0 ? (totalProfit / totalSales * 100) : 0;
 }
 
 class MonthlySalesReport {
@@ -271,6 +338,7 @@ class MonthlySalesReport {
   final double dailyAverage;
   final int transactionCount;
   final Map<String, double> weeklyBreakdown;
+  final double totalCost;
 
   const MonthlySalesReport({
     required this.totalSales,
@@ -278,6 +346,7 @@ class MonthlySalesReport {
     required this.dailyAverage,
     required this.transactionCount,
     required this.weeklyBreakdown,
+    this.totalCost = 0,
   });
 
   factory MonthlySalesReport.empty() => const MonthlySalesReport(
@@ -286,5 +355,69 @@ class MonthlySalesReport {
         dailyAverage: 0,
         transactionCount: 0,
         weeklyBreakdown: {},
+        totalCost: 0,
+      );
+
+  double get totalProfit => totalSales - totalCost;
+  double get profitMargin =>
+      totalSales > 0 ? (totalProfit / totalSales * 100) : 0;
+}
+
+final profitProvider = FutureProvider<ProfitReport>((ref) async {
+  final wsId = ref.watch(workspaceStateProvider).selectedId;
+  if (wsId == null) return ProfitReport.zero();
+
+  final data = await supabase
+      .from('sale_items')
+      .select('quantity, unit_price, line_total, products!inner(cost_price)')
+      .eq('workspace_id', wsId);
+
+  double totalRevenue = 0;
+  double totalCost = 0;
+  int totalItems = 0;
+
+  for (final row in data) {
+    final lineTotal = (row['line_total'] as num?)?.toDouble() ?? 0;
+    final quantity = (row['quantity'] as num?)?.toDouble() ?? 0;
+    final costPrice =
+        (row['products']?['cost_price'] as num?)?.toDouble() ?? 0;
+
+    totalRevenue += lineTotal;
+    totalCost += costPrice * quantity;
+    totalItems += 1;
+  }
+
+  return ProfitReport(
+    totalRevenue: totalRevenue,
+    totalCost: totalCost,
+    totalProfit: totalRevenue - totalCost,
+    profitMargin: totalRevenue > 0
+        ? ((totalRevenue - totalCost) / totalRevenue * 100)
+        : 0,
+    totalItemsSold: totalItems,
+  );
+});
+
+class ProfitReport {
+  final double totalRevenue;
+  final double totalCost;
+  final double totalProfit;
+  final double profitMargin;
+  final int totalItemsSold;
+
+  const ProfitReport({
+    required this.totalRevenue,
+    required this.totalCost,
+    required this.totalProfit,
+    required this.profitMargin,
+    required this.totalItemsSold,
+  });
+
+  factory ProfitReport.zero() => const ProfitReport(
+        totalRevenue: 0,
+        totalCost: 0,
+        totalProfit: 0,
+        profitMargin: 0,
+        totalItemsSold: 0,
       );
 }

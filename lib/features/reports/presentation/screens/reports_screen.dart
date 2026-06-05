@@ -26,6 +26,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     final monthlyAsync = ref.watch(monthlySalesProvider);
     final totalTxnsAsync = ref.watch(totalTransactionsProvider);
     final salesAsync = ref.watch(salesProvider);
+    final profitAsync = ref.watch(profitProvider);
 
     final sales = salesAsync.valueOrNull ?? [];
     final format = NumberFormat.currency(symbol: 'R ', decimalDigits: 2);
@@ -113,6 +114,70 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                     value: totalTxnsAsync.isLoading
                         ? '...'
                         : totalTxns.toString(),
+                    subtitle: 'All time',
+                  ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 24),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final crossAxisCount = constraints.maxWidth > 900
+                  ? 4
+                  : constraints.maxWidth > 600
+                      ? 2
+                      : 1;
+              return GridView.count(
+                crossAxisCount: crossAxisCount,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 16,
+                childAspectRatio: 1.5,
+                children: [
+                  _SummaryCard(
+                    icon: Icons.trending_up,
+                    label: 'Total Revenue',
+                    accent: SpiceColors.accent,
+                    isLoading: profitAsync.isLoading,
+                    value: profitAsync.isLoading
+                        ? '...'
+                        : format.format(
+                            profitAsync.valueOrNull?.totalRevenue ?? 0),
+                    subtitle: 'All time',
+                  ),
+                  _SummaryCard(
+                    icon: Icons.shopping_cart_outlined,
+                    label: 'Cost of Goods',
+                    accent: SpiceColors.warning,
+                    isLoading: profitAsync.isLoading,
+                    value: profitAsync.isLoading
+                        ? '...'
+                        : format.format(
+                            profitAsync.valueOrNull?.totalCost ?? 0),
+                  ),
+                  _SummaryCard(
+                    icon: Icons.savings_outlined,
+                    label: 'Net Profit',
+                    accent: SpiceColors.primary,
+                    isLoading: profitAsync.isLoading,
+                    value: profitAsync.isLoading
+                        ? '...'
+                        : format.format(
+                            profitAsync.valueOrNull?.totalProfit ?? 0),
+                    subtitle: profitAsync.valueOrNull != null
+                        ? '${profitAsync.valueOrNull!.profitMargin.toStringAsFixed(1)}% margin'
+                        : '',
+                  ),
+                  _SummaryCard(
+                    icon: Icons.inventory_2_outlined,
+                    label: 'Items Sold',
+                    accent: const Color(0xFF8B5CF6),
+                    isLoading: profitAsync.isLoading,
+                    value: profitAsync.isLoading
+                        ? '...'
+                        : '${profitAsync.valueOrNull?.totalItemsSold ?? 0}',
                     subtitle: 'All time',
                   ),
                 ],
@@ -402,6 +467,15 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                 value: report.transactionCount > 0
                     ? '${report.topHour.toString().padLeft(2, '0')}:00'
                     : '—'),
+            _StatItem(
+                label: 'Cost',
+                value: format.format(report.totalCost)),
+            _StatItem(
+                label: 'Profit',
+                value: format.format(report.totalProfit)),
+            _StatItem(
+                label: 'Margin',
+                value: '${report.profitMargin.toStringAsFixed(1)}%'),
           ]),
           loading: () => const SizedBox.shrink(),
           error: (_, __) => const SizedBox.shrink(),
@@ -416,6 +490,15 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                 label: 'Avg / Day',
                 value: format.format(report.avgPerDay)),
             _StatItem(label: 'Best Day', value: report.bestDay),
+            _StatItem(
+                label: 'Cost',
+                value: format.format(report.totalCost)),
+            _StatItem(
+                label: 'Profit',
+                value: format.format(report.totalProfit)),
+            _StatItem(
+                label: 'Margin',
+                value: '${report.profitMargin.toStringAsFixed(1)}%'),
           ]),
           loading: () => const SizedBox.shrink(),
           error: (_, __) => const SizedBox.shrink(),
@@ -432,6 +515,15 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
             _StatItem(
                 label: 'Daily Avg',
                 value: format.format(report.dailyAverage)),
+            _StatItem(
+                label: 'Cost',
+                value: format.format(report.totalCost)),
+            _StatItem(
+                label: 'Profit',
+                value: format.format(report.totalProfit)),
+            _StatItem(
+                label: 'Margin',
+                value: '${report.profitMargin.toStringAsFixed(1)}%'),
           ]),
           loading: () => const SizedBox.shrink(),
           error: (_, __) => const SizedBox.shrink(),

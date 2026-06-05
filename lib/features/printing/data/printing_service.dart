@@ -30,6 +30,7 @@ class PrintingService {
     try {
       _client = NiimbotBluetoothClient();
       _client!.setDevice(device);
+      _client!.setDebug(true);
 
       final info = await _client!.connect();
       _connected = true;
@@ -38,7 +39,10 @@ class PrintingService {
       // Fetch detailed printer info
       await _client!.fetchPrinterInfo();
       final meta = _client!.getModelMetadata();
-      _printerModel = meta?.model.name ?? 'Unknown';
+      final modelId = meta?.model;
+      _printerModel = modelId?.name ?? 'Unknown';
+      
+      debugPrint('Niimbot connected: $_printerName (model: $_printerModel)');
 
       // Create a print task for this printer model
       _printTask = _client!.createPrintTask(const PrintOptions(
@@ -46,12 +50,21 @@ class PrintingService {
         totalPages: 1,
       ));
 
-      return PrinterConnectionResult.success(_printerName!);
+      return PrinterConnectionResult.success('$_printerName ($_printerModel)');
     } catch (e) {
       _connected = false;
       _client = null;
       _printTask = null;
-      return PrinterConnectionResult.failure(e.toString());
+      debugPrint('Niimbot connection error: $e');
+      
+      String message = e.toString();
+      if (message.contains('Timeout')) {
+        message = 'Printer not responding. Make sure the B21 is turned on and nearby. Try restarting the printer.';
+      } else if (message.contains('Bluetooth')) {
+        message = 'Bluetooth error. Check that Bluetooth is enabled and the printer is in pairing mode.';
+      }
+      
+      return PrinterConnectionResult.failure(message);
     }
   }
 
