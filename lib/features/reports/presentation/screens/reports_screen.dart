@@ -63,7 +63,19 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   @override
   void initState() {
     super.initState();
-    _loadData();
+    // Load once workspace is available
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final wsId = ref.read(workspaceStateProvider).selectedId;
+    if (wsId != null && _filteredSales.isEmpty && !_loading) {
+      _loadData();
+    }
   }
 
   Future<void> _loadData() async {
@@ -278,13 +290,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final wsId = ref.watch(workspaceStateProvider).selectedId;
-
-    // Load data when workspace is available and we haven't loaded yet
-    if (wsId != null && _filteredSales.isEmpty && !_loading) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _loadData());
-    }
-
     return Scaffold(
       backgroundColor: SpiceColors.surface,
       body: RefreshIndicator(

@@ -76,129 +76,16 @@ class _PendingOrdersScreenState extends ConsumerState<PendingOrdersScreen> {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  'Update Status: ${quote['quote_number'] ?? quoteId}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: SpiceColors.textPrimary,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              ...['draft', 'sent', 'accepted', 'rejected'].map((status) {
-                final color = _statusColor(status);
-                return ListTile(
-                  leading: Icon(
-                    status == 'draft'
-                        ? Icons.edit_note
-                        : status == 'sent'
-                            ? Icons.send
-                            : status == 'accepted'
-                                ? Icons.check_circle
-                                : Icons.cancel,
-                    color: color,
-                  ),
-                  title: Text(status[0].toUpperCase() + status.substring(1),
-                      style: TextStyle(color: color)),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                  onTap: () async {
+              if (quote['status'] == 'accepted')
+                ListTile(
+                  leading: const Icon(Icons.shopping_cart, color: SpiceColors.accent),
+                  title: const Text('Convert to Sale'),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  onTap: () {
                     Navigator.pop(ctx);
-                    try {
-                      await supabase
-                          .from('quotes')
-                          .update({'status': status}).eq('id', quoteId);
-                      _loadQuotes();
-                    } catch (_) {}
+                    _convertQuoteToSale(quote);
                   },
-                );
-              }),
-              const SizedBox(height: 8),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _deleteQuote(Map<String, dynamic> quote) {
-    final quoteId = quote['id'] as String;
-    final quoteNumber = quote['quote_number'] ?? quoteId;
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: SpiceColors.surfaceAlt,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: SpiceColors.border),
-        ),
-        title: const Text('Delete Quote'),
-        content: Text(
-          'Are you sure you want to delete quote "$quoteNumber"?',
-          style: const TextStyle(color: SpiceColors.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              try {
-                await supabase.from('quotes').delete().eq('id', quoteId);
-                if (ctx.mounted) Navigator.pop(ctx);
-                _loadQuotes();
-              } catch (_) {}
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: SpiceColors.danger,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showQuoteActions(Map<String, dynamic> quote) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: SpiceColors.surfaceAlt,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        side: BorderSide(color: SpiceColors.border),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: SpiceColors.border,
-                  borderRadius: BorderRadius.circular(2),
                 ),
-              ),
-              const SizedBox(height: 12),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  quote['quote_number'] ?? 'Quote',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: SpiceColors.textPrimary,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
               ListTile(
                 leading:
                     const Icon(Icons.edit, color: SpiceColors.primary),
@@ -325,7 +212,7 @@ class _PendingOrdersScreenState extends ConsumerState<PendingOrdersScreen> {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: GestureDetector(
-                    onLongPress: () => _showQuoteActions(quote),
+                    onLongPress: () => _showStatusDialog(quote),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 20, vertical: 14),
@@ -430,5 +317,73 @@ class _PendingOrdersScreenState extends ConsumerState<PendingOrdersScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _deleteQuote(Map<String, dynamic> quote) async {
+    try {
+      await supabase.from('quote_items').delete().eq('quote_id', quote['id']);
+      await supabase.from('quotes').delete().eq('id', quote['id']);
+      _loadQuotes();
+    } catch (_) {}
+  }
+
+  Future<void> _convertQuoteToSale(Map<String, dynamic> quote) async {
+    final wsId = ref.read(workspaceStateProvider).selectedId;
+    if (wsId == null) return;
+
+    try {
+      // Get quote items
+      final items = await supabase
+          .from('quote_items')
+          .select('product_id, product_name, quantity, unit_price')
+          .eq('quote_id', quote['id'])
+          .eq('workspace_id', wsId);
+
+      if (items.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Quote has no items')),
+          );
+        }
+        return;
+      }
+
+      final saleItems = items.map((item) => {
+        'product_id': item['product_id'] ?? '',
+        'product_name': item['product_name'] ?? '',
+        'quantity': (item['quantity'] as num?)?.toInt() ?? 1,
+        'unit_price': (item['unit_price'] as num?)?.toDouble() ?? 0,
+      }).toList();
+
+      await supabase.rpc('create_sale', params: {
+        'p_workspace_id': wsId,
+        'p_customer_id': quote['customer_id'],
+        'p_payment_method': 'credit',
+        'p_items': saleItems,
+      });
+
+      // Mark quote as accepted
+      await supabase
+          .from('quotes')
+          .update({'status': 'accepted'})
+          .eq('id', quote['id']);
+
+      _loadQuotes();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Quote converted to sale successfully'),
+            backgroundColor: SpiceColors.accent,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
   }
 }
