@@ -143,6 +143,34 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 letterSpacing: 0.5,
                               ),
                         ),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: SpiceColors.primary.withAlpha(15),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: SpiceColors.primary.withAlpha(40),
+                            ),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.favorite_rounded,
+                                  color: SpiceColors.primary, size: 12),
+                              SizedBox(width: 6),
+                              Text(
+                                'Dedicated to Mum and Dad',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: SpiceColors.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ).animate().fadeIn(duration: 500.ms).slideY(
                         begin: 0.05, curve: Curves.easeOut),

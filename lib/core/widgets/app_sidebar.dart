@@ -106,6 +106,12 @@ class AppSidebar extends ConsumerWidget {
                   active: location == '/inventory',
                 ),
                 _NavItem(
+                  icon: Icons.money_off_rounded,
+                  label: 'Expenses',
+                  path: '/expenses',
+                  active: location == '/expenses',
+                ),
+                _NavItem(
                   icon: Icons.people_rounded,
                   label: 'Customers',
                   path: '/customers',
@@ -142,6 +148,12 @@ class AppSidebar extends ConsumerWidget {
                   label: 'Settings',
                   path: '/settings',
                   active: location.startsWith('/settings'),
+                ),
+                _NavItem(
+                  icon: Icons.info_outline_rounded,
+                  label: 'About',
+                  path: '/about',
+                  active: location == '/about',
                 ),
               ],
             ),

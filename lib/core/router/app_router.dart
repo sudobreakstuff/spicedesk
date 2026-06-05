@@ -13,7 +13,9 @@ import '../../features/reports/presentation/screens/reports_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/settings/presentation/screens/printer_connect_screen.dart';
 import '../../features/customers/presentation/screens/customers_screen.dart';
+import '../../features/expenses/presentation/screens/expenses_screen.dart';
 import '../../features/marketing/presentation/screens/marketing_screen.dart';
+import '../../features/about/presentation/screens/about_screen.dart';
 import '../../core/widgets/app_sidebar.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -66,8 +68,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               path: '/customers',
               builder: (_, __) => const CustomersScreen()),
           GoRoute(
+              path: '/expenses',
+              builder: (_, __) => const ExpensesScreen()),
+          GoRoute(
               path: '/marketing',
               builder: (_, __) => const MarketingScreen()),
+          GoRoute(
+              path: '/about',
+              builder: (_, __) => const AboutScreen()),
         ],
       ),
     ],

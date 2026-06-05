@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/supabase_client.dart';
 import '../../../features/workspace/domain/workspace_state.dart';
@@ -71,6 +73,35 @@ final createQuoteAction = Provider<Future<QuoteResult> Function({
   };
 });
 
+final pendingQuotesProvider = FutureProvider<List<PendingQuote>>((ref) async {
+  ref.watch(workspaceStateProvider);
+  final wsId = ref.watch(workspaceStateProvider).selectedId;
+  if (wsId == null) return [];
+
+  final data = await supabase
+      .from('quotes')
+      .select('id, quote_number, total, status, created_at, customer_id, customers(name)')
+      .eq('workspace_id', wsId)
+      .neq('status', 'accepted')
+      .neq('status', 'rejected')
+      .order('created_at', ascending: false)
+      .limit(5);
+
+  return data.map<PendingQuote>((row) {
+    final customer = row['customers'] as Map<String, dynamic>?;
+    return PendingQuote(
+      id: row['id'],
+      quoteNumber: row['quote_number'] ?? '',
+      total: (row['total'] as num?)?.toDouble() ?? 0,
+      status: row['status'] ?? 'draft',
+      customerName: customer?['name'],
+      createdAt: row['created_at'] != null
+          ? DateTime.tryParse(row['created_at'] ?? '') ?? DateTime.now()
+          : DateTime.now(),
+    );
+  }).toList();
+});
+
 class QuoteResult {
   final String quoteNumber;
   final double total;
@@ -81,4 +112,52 @@ class QuoteResult {
     required this.total,
     required this.validUntil,
   });
+}
+
+class PendingQuote {
+  final String id;
+  final String quoteNumber;
+  final double total;
+  final String status;
+  final String? customerName;
+  final DateTime createdAt;
+
+  const PendingQuote({
+    required this.id,
+    required this.quoteNumber,
+    required this.total,
+    required this.status,
+    this.customerName,
+    required this.createdAt,
+  });
+
+  String get displayStatus {
+    switch (status) {
+      case 'draft':
+        return 'Draft';
+      case 'sent':
+        return 'Sent';
+      case 'accepted':
+        return 'Accepted';
+      case 'rejected':
+        return 'Rejected';
+      default:
+        return status[0].toUpperCase() + status.substring(1);
+    }
+  }
+
+  Color get statusColor {
+    switch (status) {
+      case 'draft':
+        return const Color(0xFF8B949E);
+      case 'sent':
+        return const Color(0xFF6366F1);
+      case 'accepted':
+        return const Color(0xFF238636);
+      case 'rejected':
+        return const Color(0xFFDA3633);
+      default:
+        return const Color(0xFF8B949E);
+    }
+  }
 }

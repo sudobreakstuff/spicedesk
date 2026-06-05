@@ -10,6 +10,7 @@ import '../../../sales/data/sales_provider.dart';
 import '../../../products/data/products_provider.dart';
 import '../../../customers/data/customers_provider.dart';
 import '../../../inventory/data/inventory_provider.dart';
+import '../../../pos/data/quote_service.dart';
 import '../../../auth/domain/auth_state.dart';
 import '../../../workspace/domain/workspace_state.dart';
 
@@ -35,17 +36,17 @@ class HomeScreen extends ConsumerWidget {
     final weeklySales = ref.watch(weeklySalesProvider);
     final productsAsync = ref.watch(productsProvider);
     final customerCount = ref.watch(customerCountProvider);
-    final salesAsync = ref.watch(salesProvider);
     final inventoryAsync = ref.watch(inventoryProvider);
 
     final format = NumberFormat.currency(symbol: 'R ');
-    final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
 
-    final recentSales = salesAsync.valueOrNull?.take(5).toList() ?? [];
     final lowStockItems = inventoryAsync.valueOrNull
             ?.where((i) => i.quantityOnHand <= i.reorderPoint && i.reorderPoint > 0)
             .toList() ??
         [];
+
+    final dailySummary = ref.watch(dailySalesProvider);
+    final pendingQuotes = ref.watch(pendingQuotesProvider);
 
     return Scaffold(
       backgroundColor: SpiceColors.surface,
@@ -170,15 +171,197 @@ class HomeScreen extends ConsumerWidget {
 
           const SizedBox(height: 36),
 
-          const Text('Recent Transactions',
+          const Text('Daily Summary',
               style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                   color: SpiceColors.textPrimary)),
           const SizedBox(height: 16),
-          if (salesAsync.isLoading)
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: SpiceColors.surfaceAlt,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: SpiceColors.border),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: SpiceColors.primary.withAlpha(25),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.receipt_long_rounded,
+                            color: SpiceColors.primary, size: 20),
+                      ),
+                      const SizedBox(width: 14),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Sales',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  color: SpiceColors.textSecondary)),
+                          const SizedBox(height: 2),
+                          dailySummary.when(
+                            data: (d) => Text(
+                              d.transactionCount.toString(),
+                              style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w700,
+                                  color: SpiceColors.textPrimary),
+                            ),
+                            loading: () => const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            error: (_, __) => const Text('-',
+                                style: TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w700,
+                                    color: SpiceColors.textPrimary)),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ).animate(delay: 300.ms).fadeIn().slideY(begin: 8),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: SpiceColors.surfaceAlt,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: SpiceColors.border),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: SpiceColors.accent.withAlpha(25),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.payments_rounded,
+                            color: SpiceColors.accent, size: 20),
+                      ),
+                      const SizedBox(width: 14),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Revenue',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  color: SpiceColors.textSecondary)),
+                          const SizedBox(height: 2),
+                          todaySales.when(
+                            data: (v) => Text(
+                              format.format(v),
+                              style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w700,
+                                  color: SpiceColors.textPrimary),
+                            ),
+                            loading: () => const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            error: (_, __) => const Text('-',
+                                style: TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w700,
+                                    color: SpiceColors.textPrimary)),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ).animate(delay: 350.ms).fadeIn().slideY(begin: 8),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: SpiceColors.surfaceAlt,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: SpiceColors.border),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: SpiceColors.warning.withAlpha(25),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.shopping_bag_rounded,
+                            color: SpiceColors.warning, size: 20),
+                      ),
+                      const SizedBox(width: 14),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Items Sold',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  color: SpiceColors.textSecondary)),
+                          const SizedBox(height: 2),
+                          dailySummary.when(
+                            data: (d) => Text(
+                              d.transactionCount > 0
+                                  ? d.transactionCount.toString()
+                                  : '0',
+                              style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w700,
+                                  color: SpiceColors.textPrimary),
+                            ),
+                            loading: () => const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            error: (_, __) => const Text('-',
+                                style: TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w700,
+                                    color: SpiceColors.textPrimary)),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ).animate(delay: 400.ms).fadeIn().slideY(begin: 8),
+            ],
+          ),
+
+          const SizedBox(height: 36),
+
+          const Text('Pending Orders',
+              style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: SpiceColors.textPrimary)),
+          const SizedBox(height: 16),
+          if (pendingQuotes.isLoading)
             _buildShimmerList(5)
-          else if (recentSales.isEmpty)
+          else if (pendingQuotes.valueOrNull?.isEmpty != false)
             Container(
               padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
@@ -188,13 +371,13 @@ class HomeScreen extends ConsumerWidget {
               ),
               child: const Column(
                 children: [
-                  Icon(Icons.hourglass_empty,
+                  Icon(Icons.check_circle_outline,
                       size: 32, color: SpiceColors.textSecondary),
                   SizedBox(height: 12),
-                  Text('No recent activity',
+                  Text('No pending orders',
                       style: TextStyle(color: SpiceColors.textSecondary)),
                   SizedBox(height: 4),
-                  Text('Sales and inventory actions will appear here',
+                  Text('All quotes have been resolved',
                       style: TextStyle(
                           fontSize: 12, color: SpiceColors.textSecondary)),
                 ],
@@ -209,8 +392,8 @@ class HomeScreen extends ConsumerWidget {
                 border: Border.all(color: SpiceColors.border),
               ),
               child: Column(
-                children: recentSales.asMap().entries.map((entry) {
-                  final sale = entry.value;
+                children: pendingQuotes.valueOrNull!.asMap().entries.map((entry) {
+                  final quote = entry.value;
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 6),
                     child: Row(
@@ -219,11 +402,11 @@ class HomeScreen extends ConsumerWidget {
                           width: 36,
                           height: 36,
                           decoration: BoxDecoration(
-                            color: SpiceColors.primary.withAlpha(25),
+                            color: quote.statusColor.withAlpha(25),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(Icons.receipt,
-                              size: 18, color: SpiceColors.primary),
+                          child: Icon(Icons.description_rounded,
+                              size: 18, color: quote.statusColor),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -231,25 +414,44 @@ class HomeScreen extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                sale.transactionNumber,
+                                quote.quoteNumber,
                                 style: const TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
                                   color: SpiceColors.textPrimary,
                                 ),
                               ),
-                              Text(
-                                dateFormat.format(sale.createdAt),
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: SpiceColors.textSecondary,
-                                ),
+                              Row(
+                                children: [
+                                  if (quote.customerName != null)
+                                    Text(
+                                      quote.customerName!,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: SpiceColors.textSecondary,
+                                      ),
+                                    ),
+                                  if (quote.customerName != null)
+                                    const Text(' • ',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: SpiceColors.textSecondary,
+                                        )),
+                                  Text(
+                                    quote.displayStatus,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                      color: quote.statusColor,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
                         ),
                         Text(
-                          format.format(sale.total),
+                          format.format(quote.total),
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
