@@ -192,13 +192,30 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                   if (isRawMaterial && selectedProductId != null) {
                     final qty =
                         double.tryParse(quantityCtrl.text) ?? 0;
-                    if (qty > 0) {
-                      await supabase.rpc(
-                          'update_inventory_quantity', params: {
-                        'p_product_id': selectedProductId,
-                        'p_workspace_id': wsId,
-                        'p_quantity_change': qty,
-                      });
+                    if (qty > 0 && selectedProductId != null) {
+                      final pid = selectedProductId!;
+                      final existing = await supabase
+                          .from('inventory')
+                          .select('id, quantity_on_hand')
+                          .eq('workspace_id', wsId)
+                          .eq('product_id', pid)
+                          .maybeSingle();
+
+                      if (existing != null) {
+                        await supabase
+                            .from('inventory')
+                            .update({
+                              'quantity_on_hand': (existing['quantity_on_hand'] as num).toDouble() + qty,
+                            })
+                            .eq('id', existing['id']);
+                      } else {
+                        await supabase.from('inventory').insert({
+                          'workspace_id': wsId,
+                          'product_id': pid,
+                          'quantity_on_hand': qty,
+                          'reorder_point': 10,
+                        });
+                      }
                     }
                   }
 
