@@ -206,8 +206,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     paymentMethod: 'Test',
                   );
                   if (mounted) {
+                    final errorMsg = ps.lastError;
                     scaffold.showSnackBar(SnackBar(
-                      content: Text(success ? 'Test print sent' : 'Print failed'),
+                      content: Text(success
+                          ? 'Test print sent'
+                          : 'Print failed: ${errorMsg ?? "Unknown error"}'),
                       backgroundColor: success ? SpiceColors.accent : SpiceColors.danger,
                     ));
                   }

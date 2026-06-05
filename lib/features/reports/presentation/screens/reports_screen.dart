@@ -71,6 +71,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(workspaceStateProvider);
     final todaySalesAsync = ref.watch(todaySalesProvider);
     final dailyAsync = ref.watch(dailySalesProvider);
     final weeklyAsync = ref.watch(weeklySalesProvider);
@@ -416,7 +417,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
           children: [
             Icon(Icons.info_outline, color: SpiceColors.textSecondary, size: 18),
             SizedBox(width: 8),
-            Text('No transactions for selected month',
+            Text('No transactions for this period',
                 style: TextStyle(color: SpiceColors.textSecondary)),
           ],
         ),

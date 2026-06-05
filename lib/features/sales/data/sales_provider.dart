@@ -3,6 +3,7 @@ import '../../../../core/network/supabase_client.dart';
 import '../../../features/workspace/domain/workspace_state.dart';
 
 final salesProvider = FutureProvider<List<SaleTransaction>>((ref) async {
+  ref.watch(workspaceStateProvider);
   final wsId = ref.watch(workspaceStateProvider).selectedId;
   if (wsId == null) return [];
 
@@ -31,6 +32,7 @@ final salesProvider = FutureProvider<List<SaleTransaction>>((ref) async {
 });
 
 final todaySalesProvider = FutureProvider<double>((ref) async {
+  ref.watch(workspaceStateProvider);
   final wsId = ref.watch(workspaceStateProvider).selectedId;
   if (wsId == null) return 0;
 
@@ -50,6 +52,7 @@ final todaySalesProvider = FutureProvider<double>((ref) async {
 });
 
 final dailySalesProvider = FutureProvider<DailySalesReport>((ref) async {
+  ref.watch(workspaceStateProvider);
   final wsId = ref.watch(workspaceStateProvider).selectedId;
   if (wsId == null) return DailySalesReport.empty();
 
@@ -103,6 +106,7 @@ final dailySalesProvider = FutureProvider<DailySalesReport>((ref) async {
 });
 
 final weeklySalesProvider = FutureProvider<WeeklySalesReport>((ref) async {
+  ref.watch(workspaceStateProvider);
   final wsId = ref.watch(workspaceStateProvider).selectedId;
   if (wsId == null) return WeeklySalesReport.empty();
 
@@ -174,6 +178,7 @@ final weeklySalesProvider = FutureProvider<WeeklySalesReport>((ref) async {
 });
 
 final monthlySalesProvider = FutureProvider<MonthlySalesReport>((ref) async {
+  ref.watch(workspaceStateProvider);
   final wsId = ref.watch(workspaceStateProvider).selectedId;
   if (wsId == null) return MonthlySalesReport.empty();
 
@@ -237,6 +242,7 @@ final monthlySalesProvider = FutureProvider<MonthlySalesReport>((ref) async {
 });
 
 final totalTransactionsProvider = FutureProvider<int>((ref) async {
+  ref.watch(workspaceStateProvider);
   final wsId = ref.watch(workspaceStateProvider).selectedId;
   if (wsId == null) return 0;
 
@@ -364,6 +370,7 @@ class MonthlySalesReport {
 }
 
 final profitProvider = FutureProvider<ProfitReport>((ref) async {
+  ref.watch(workspaceStateProvider);
   final wsId = ref.watch(workspaceStateProvider).selectedId;
   if (wsId == null) return ProfitReport.zero();
 

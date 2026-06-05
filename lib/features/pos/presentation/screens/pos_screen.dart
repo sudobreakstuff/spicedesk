@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/network/supabase_client.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -95,6 +96,16 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   }
 
   void _showReceiptDialog(SaleResult result, List<_CartItem> items, String paymentMethod) {
+    final workspace = ref.read(workspaceStateProvider);
+    final storeName = workspace.selectedName ?? 'SpiceDesk';
+    final now = DateTime.now();
+    final dateStr = '${now.day}/${now.month}/${now.year} ${now.hour}:${now.minute.toString().padLeft(2, '0')}';
+    final validUntil = DateTime(now.year, now.month, now.day + 7);
+    final validStr = '${validUntil.day}/${validUntil.month}/${validUntil.year}';
+
+    final invoiceText = _buildInvoiceText(storeName, result, items, dateStr, paymentMethod);
+    final quoteText = _buildQuoteText(storeName, items, dateStr, validStr);
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -131,7 +142,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                     _receiptRow('Invoice', result.invoiceNumber),
                     const SizedBox(height: 4),
                     _receiptRow('Paid', paymentMethod),
-                    _receiptRow('Date', '${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year} ${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}'),
+                    _receiptRow('Date', dateStr),
                   ],
                 ),
               ),
@@ -167,11 +178,29 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         actions: [
           TextButton.icon(
             onPressed: () async {
+              final encoded = Uri.encodeComponent(invoiceText);
+              final uri = Uri.parse('https://wa.me/?text=$encoded');
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+            },
+            icon: const Icon(Icons.share, size: 18),
+            label: const Text('WhatsApp'),
+          ),
+          TextButton.icon(
+            onPressed: () async {
+              final encoded = Uri.encodeComponent(quoteText);
+              final uri = Uri.parse('https://wa.me/?text=$encoded');
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+            },
+            icon: const Icon(Icons.description, size: 18),
+            label: const Text('Quote'),
+          ),
+          TextButton.icon(
+            onPressed: () async {
               try {
                 final printing = PrintingService();
                 if (printing.isConnected) {
                   await printing.printReceipt(
-                    storeName: 'SpiceDesk',
+                    storeName: storeName,
                     transactionNumber: result.transactionNumber,
                     date: DateTime.now(),
                     items: items.map((i) => ReceiptLineItem(
@@ -197,6 +226,47 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         ],
       ),
     );
+  }
+
+  String _buildInvoiceText(String storeName, SaleResult result, List<_CartItem> items, String dateStr, String paymentMethod) {
+    final buf = StringBuffer();
+    buf.writeln('*$storeName*');
+    buf.writeln('Date: $dateStr');
+    buf.writeln('Invoice: ${result.invoiceNumber}');
+    buf.writeln('Payment: $paymentMethod');
+    buf.writeln('');
+    buf.writeln('--- Items ---');
+    for (final item in items) {
+      final lineTotal = item.unitPrice * item.quantity;
+      buf.writeln('${item.product.name} x${item.quantity} @ R ${item.unitPrice.toStringAsFixed(2)} = R ${lineTotal.toStringAsFixed(2)}');
+    }
+    buf.writeln('');
+    buf.writeln('*Total: R ${result.total.toStringAsFixed(2)}*');
+    buf.writeln('');
+    buf.writeln('Thank you!');
+    buf.writeln('Txn: ${result.transactionNumber}');
+    return buf.toString();
+  }
+
+  String _buildQuoteText(String storeName, List<_CartItem> items, String dateStr, String validStr) {
+    final total = _total;
+    final buf = StringBuffer();
+    buf.writeln('*QUOTE*');
+    buf.writeln(storeName);
+    buf.writeln('Date: $dateStr');
+    buf.writeln('Valid until: $validStr');
+    buf.writeln('');
+    buf.writeln('--- Items ---');
+    for (final item in items) {
+      final lineTotal = item.unitPrice * item.quantity;
+      buf.writeln('${item.product.name} x${item.quantity} @ R ${item.unitPrice.toStringAsFixed(2)} = R ${lineTotal.toStringAsFixed(2)}');
+    }
+    buf.writeln('');
+    buf.writeln('*Total: R ${total.toStringAsFixed(2)}*');
+    buf.writeln('');
+    buf.writeln('Prices valid until $validStr');
+    buf.writeln('Thank you for your inquiry!');
+    return buf.toString();
   }
 
   Widget _receiptRow(String label, String value) {

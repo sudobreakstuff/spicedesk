@@ -13,10 +13,12 @@ class PrintingService {
   bool _connected = false;
   String? _printerName;
   String? _printerModel;
+  String? _lastError;
 
   bool get isConnected => _connected;
   String? get printerName => _printerName;
   String? get printerModel => _printerModel;
+  String? get lastError => _lastError;
 
   // ── Niimbot B21 ──────────────────────────────────────────
 
@@ -175,6 +177,7 @@ class PrintingService {
 
       return true;
     } catch (e) {
+      _lastError = e.toString();
       debugPrint('Niimbot print error: $e');
       return false;
     }

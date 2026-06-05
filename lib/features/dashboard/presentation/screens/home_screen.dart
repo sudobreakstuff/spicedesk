@@ -11,6 +11,7 @@ import '../../../products/data/products_provider.dart';
 import '../../../customers/data/customers_provider.dart';
 import '../../../inventory/data/inventory_provider.dart';
 import '../../../auth/domain/auth_state.dart';
+import '../../../workspace/domain/workspace_state.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -18,6 +19,7 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authStateProvider);
+    ref.watch(workspaceStateProvider);
     final userName = (authState.user?.userMetadata?['name'] as String?) ??
         authState.user?.email?.split('@').first ??
         'there';
