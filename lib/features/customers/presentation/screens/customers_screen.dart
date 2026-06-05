@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/network/supabase_client.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -17,9 +18,7 @@ class CustomersScreen extends ConsumerStatefulWidget {
 class _CustomersScreenState extends ConsumerState<CustomersScreen> {
   final _searchCtrl = TextEditingController();
   String _searchQuery = '';
-
   final _expandedIds = <String>{};
-  final _customerDetails = <String, _CustomerDetail>{};
 
   @override
   void dispose() {
@@ -27,72 +26,22 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
     super.dispose();
   }
 
-  Future<void> _toggleExpand(Customer customer) async {
-    final wsId = ref.read(workspaceStateProvider).selectedId;
-    if (wsId == null) return;
-
-    if (_expandedIds.contains(customer.id)) {
-      setState(() => _expandedIds.remove(customer.id));
-      return;
-    }
-
+  void _toggleExpand(String id) {
     setState(() {
-      _expandedIds.add(customer.id);
-      _customerDetails[customer.id] = const _CustomerDetail(isLoading: true);
-    });
-
-    try {
-      final txnData = await supabase
-          .from('sales_transactions')
-          .select(
-              'id, transaction_number, grand_total, payment_method, created_at')
-          .eq('customer_id', customer.id)
-          .eq('workspace_id', wsId)
-          .order('created_at', ascending: false)
-          .limit(10);
-
-      double totalSpent = 0;
-      DateTime? lastVisit;
-
-      for (final txn in txnData) {
-        totalSpent += (txn['grand_total'] as num?)?.toDouble() ?? 0;
-        if (lastVisit == null) {
-          final created = txn['created_at'];
-          if (created != null) {
-            lastVisit = DateTime.tryParse(created);
-          }
-        }
+      if (_expandedIds.contains(id)) {
+        _expandedIds.remove(id);
+      } else {
+        _expandedIds.add(id);
       }
-
-      final recentPurchases = txnData
-          .map<Map<String, dynamic>>((t) => {
-                'id': t['id'],
-                'transaction_number': t['transaction_number'] ?? '',
-                'grand_total': (t['grand_total'] as num?)?.toDouble() ?? 0,
-                'payment_method': t['payment_method'] ?? '',
-                'created_at': t['created_at'] ?? '',
-              })
-          .toList();
-
-      setState(() {
-        _customerDetails[customer.id] = _CustomerDetail(
-          totalSpent: totalSpent,
-          lastVisit: lastVisit,
-          recentPurchases: recentPurchases,
-        );
-      });
-    } catch (e) {
-      setState(() {
-        _customerDetails[customer.id] =
-            const _CustomerDetail(isLoading: false);
-      });
-    }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final customersAsync = ref.watch(customersProvider);
+    final allSalesAsync = ref.watch(allCustomerSalesProvider);
     final customers = customersAsync.valueOrNull ?? [];
+    final allSales = allSalesAsync.valueOrNull ?? {};
 
     final filtered = customers.where((c) {
       if (_searchQuery.isEmpty) return true;
@@ -153,8 +102,8 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                   icon: const Icon(Icons.add, size: 18),
                   label: const Text('Add Customer'),
                   style: ElevatedButton.styleFrom(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 14),
                   ),
                 ),
               ],
@@ -185,13 +134,23 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                               ),
                             ),
                             const SizedBox(height: 4),
-                            const Text(
-                              'Customers will appear here after sales are recorded',
-                              style: TextStyle(
+                            Text(
+                              customers.isEmpty
+                                  ? 'Add your first customer to get started.'
+                                  : 'Try a different search query.',
+                              style: const TextStyle(
                                 fontSize: 12,
                                 color: SpiceColors.textSecondary,
                               ),
                             ),
+                            if (customers.isEmpty) ...[
+                              const SizedBox(height: 16),
+                              ElevatedButton.icon(
+                                onPressed: _showAddCustomerDialog,
+                                icon: const Icon(Icons.add, size: 18),
+                                label: const Text('Add Customer'),
+                              ),
+                            ],
                           ],
                         ),
                       )
@@ -202,16 +161,12 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                           final customer = filtered[index];
                           final isExpanded =
                               _expandedIds.contains(customer.id);
-                          final detail =
-                              _customerDetails[customer.id];
-                          final subtitle =
-                              customer.email ?? customer.phone ?? '';
+                          final salesData = allSales[customer.id];
                           final initials = customer.name.isNotEmpty
                               ? customer.name
                                   .split(' ')
-                                  .map((e) => e.isNotEmpty
-                                      ? e[0].toUpperCase()
-                                      : '')
+                                  .where((e) => e.isNotEmpty)
+                                  .map((e) => e[0].toUpperCase())
                                   .take(2)
                                   .join()
                               : '?';
@@ -226,7 +181,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                             child: Column(
                               children: [
                                 GestureDetector(
-                                  onTap: () => _toggleExpand(customer),
+                                  onTap: () => _toggleExpand(customer.id),
                                   onLongPress: () =>
                                       _showCustomerActions(customer),
                                   child: Padding(
@@ -265,55 +220,85 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                                                 style: const TextStyle(
                                                   fontSize: 14,
                                                   fontWeight: FontWeight.w600,
-                                                  color: SpiceColors
-                                                      .textPrimary,
+                                                  color:
+                                                      SpiceColors.textPrimary,
                                                 ),
                                               ),
-                                              if (subtitle.isNotEmpty) ...[
-                                                const SizedBox(height: 2),
+                                              const SizedBox(height: 2),
+                                              if (customer.email != null ||
+                                                  customer.phone != null)
                                                 Text(
-                                                  subtitle,
+                                                  customer.email ??
+                                                      customer.phone ??
+                                                      '',
                                                   style: const TextStyle(
                                                     fontSize: 11,
                                                     color: SpiceColors
                                                         .textSecondary,
                                                   ),
                                                 ),
-                                              ],
                                             ],
                                           ),
                                         ),
-                                        Container(
-                                          padding:
-                                              const EdgeInsets.symmetric(
-                                                  horizontal: 10,
-                                                  vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: SpiceColors.warning
-                                                .withAlpha(20),
-                                            borderRadius:
-                                                BorderRadius.circular(6),
-                                          ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              const Icon(
-                                                Icons.military_tech_rounded,
-                                                size: 14,
-                                                color: SpiceColors.warning,
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                'Loyalty: ${customer.loyaltyPoints}',
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w600,
+                                        if (customer.loyaltyPoints > 0)
+                                          Container(
+                                            margin:
+                                                const EdgeInsets.only(right: 8),
+                                            padding:
+                                                const EdgeInsets.symmetric(
+                                                    horizontal: 10,
+                                                    vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: SpiceColors.warning
+                                                  .withAlpha(20),
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                const Icon(
+                                                  Icons.military_tech_rounded,
+                                                  size: 14,
                                                   color: SpiceColors.warning,
                                                 ),
-                                              ),
-                                            ],
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  '${customer.loyaltyPoints}',
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: SpiceColors.warning,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                           ),
-                                        ),
+                                        if (salesData != null) ...[
+                                          Text(
+                                            'R ${NumberFormat.compact().format(salesData.totalSpent)}',
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                              color: SpiceColors.accent,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            '${salesData.purchaseCount} purchases',
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              color:
+                                                  SpiceColors.textSecondary,
+                                            ),
+                                          ),
+                                        ] else if (allSalesAsync.isLoading)
+                                          const SizedBox(
+                                            width: 14,
+                                            height: 14,
+                                            child: CircularProgressIndicator(
+                                                strokeWidth: 2),
+                                          ),
                                         const SizedBox(width: 8),
                                         Icon(
                                           isExpanded
@@ -326,7 +311,13 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                                   ),
                                 ),
                                 if (isExpanded)
-                                  _buildExpandedPanel(customer, detail),
+                                  _ExpandedPanel(
+                                    customer: customer,
+                                    onEdit: () =>
+                                        _showEditCustomerDialog(customer),
+                                    onDelete: () =>
+                                        _showDeleteCustomerDialog(customer),
+                                  ),
                               ],
                             ),
                           ).animate().fadeIn(delay: (index * 40).ms);
@@ -336,182 +327,6 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
         ],
       ),
     );
-  }
-
-  Widget _buildExpandedPanel(Customer customer, _CustomerDetail? detail) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: SpiceColors.border)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 12),
-          if (detail == null || detail.isLoading)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Center(
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ),
-            )
-          else ...[
-            Row(
-              children: [
-                _detailChip(
-                    Icons.attach_money,
-                    'Total Spent: R ${detail.totalSpent.toStringAsFixed(2)}',
-                    SpiceColors.accent),
-                const SizedBox(width: 12),
-                _detailChip(
-                    Icons.access_time,
-                    detail.lastVisit != null
-                        ? 'Last Visit: ${_formatDate(detail.lastVisit!)}'
-                        : 'No visits yet',
-                    SpiceColors.primary),
-              ],
-            ),
-            const SizedBox(height: 4),
-            if (customer.email != null)
-              _infoRow(Icons.email_outlined, customer.email!),
-            if (customer.phone != null)
-              _infoRow(Icons.phone_outlined, customer.phone!),
-            if (customer.notes != null && customer.notes!.isNotEmpty)
-              _infoRow(Icons.notes_rounded, customer.notes!),
-            if (detail.recentPurchases.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              const Text(
-                'Recent Purchases',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: SpiceColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 6),
-              ...detail.recentPurchases.map((p) => _purchaseRow(p)),
-            ],
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _detailChip(IconData icon, String label, Color color) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
-        decoration: BoxDecoration(
-          color: color.withAlpha(15),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.withAlpha(60)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 14, color: color),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: color,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _infoRow(IconData icon, String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Row(
-        children: [
-          Icon(icon, size: 14, color: SpiceColors.textSecondary),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              text,
-              style: const TextStyle(
-                fontSize: 12,
-                color: SpiceColors.textSecondary,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _purchaseRow(Map<String, dynamic> purchase) {
-    final date = purchase['created_at'] as String?;
-    final parsedDate =
-        date != null && date.isNotEmpty ? DateTime.tryParse(date) : null;
-    final displayDate = parsedDate != null
-        ? '${parsedDate.day}/${parsedDate.month}/${parsedDate.year}'
-        : '---';
-    final total = (purchase['grand_total'] as num?)?.toDouble() ?? 0;
-    final txnNum = purchase['transaction_number'] ?? '';
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: SpiceColors.primary.withAlpha(20),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: const Icon(Icons.receipt,
-                size: 14, color: SpiceColors.primary),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              txnNum,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: SpiceColors.textPrimary,
-              ),
-            ),
-          ),
-          Text(
-            displayDate,
-            style: const TextStyle(
-              fontSize: 11,
-              color: SpiceColors.textSecondary,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            'R ${total.toStringAsFixed(2)}',
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: SpiceColors.accent,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
   }
 
   void _showCustomerActions(Customer customer) {
@@ -560,8 +375,8 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                 },
               ),
               ListTile(
-                leading:
-                    const Icon(Icons.delete_outline, color: SpiceColors.danger),
+                leading: const Icon(Icons.delete_outline,
+                    color: SpiceColors.danger),
                 title: const Text('Delete Customer'),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8)),
@@ -582,6 +397,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
     final nameCtrl = TextEditingController(text: customer.name);
     final emailCtrl = TextEditingController(text: customer.email ?? '');
     final phoneCtrl = TextEditingController(text: customer.phone ?? '');
+    final addressCtrl = TextEditingController(text: customer.address ?? '');
     final notesCtrl = TextEditingController(text: customer.notes ?? '');
 
     showDialog(
@@ -593,32 +409,39 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
           side: BorderSide(color: SpiceColors.border),
         ),
         title: const Text('Edit Customer'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameCtrl,
-              decoration: const InputDecoration(labelText: 'Name'),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: emailCtrl,
-              keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(labelText: 'Email'),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: phoneCtrl,
-              keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(labelText: 'Phone'),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: notesCtrl,
-              maxLines: 2,
-              decoration: const InputDecoration(labelText: 'Notes'),
-            ),
-          ],
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameCtrl,
+                decoration: const InputDecoration(labelText: 'Name'),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: emailCtrl,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(labelText: 'Email'),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: phoneCtrl,
+                keyboardType: TextInputType.phone,
+                decoration: const InputDecoration(labelText: 'Phone'),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: addressCtrl,
+                decoration: const InputDecoration(labelText: 'Address'),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: notesCtrl,
+                maxLines: 2,
+                decoration: const InputDecoration(labelText: 'Notes'),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -634,21 +457,49 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                 );
                 return;
               }
-              final wsId = ref.read(workspaceStateProvider).selectedId;
-              if (wsId == null) return;
+              try {
+                final wsId = ref.read(workspaceStateProvider).selectedId;
+                if (wsId == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content:
+                          Text('Please select or create a workspace first'),
+                      backgroundColor: SpiceColors.danger,
+                    ),
+                  );
+                  return;
+                }
 
-              await supabase.from('customers').update({
-                'name': name,
-                'email':
-                    emailCtrl.text.trim().isEmpty ? null : emailCtrl.text.trim(),
-                'phone':
-                    phoneCtrl.text.trim().isEmpty ? null : phoneCtrl.text.trim(),
-                'notes':
-                    notesCtrl.text.trim().isEmpty ? null : notesCtrl.text.trim(),
-              }).eq('id', customer.id);
+                await supabase.from('customers').update({
+                  'name': name,
+                  'email': emailCtrl.text.trim().isEmpty
+                      ? null
+                      : emailCtrl.text.trim(),
+                  'phone': phoneCtrl.text.trim().isEmpty
+                      ? null
+                      : phoneCtrl.text.trim(),
+                  'address': addressCtrl.text.trim().isEmpty
+                      ? null
+                      : addressCtrl.text.trim(),
+                  'notes': notesCtrl.text.trim().isEmpty
+                      ? null
+                      : notesCtrl.text.trim(),
+                }).eq('id', customer.id);
 
-              ref.invalidate(customersProvider);
-              if (ctx.mounted) Navigator.pop(ctx);
+                ref.invalidate(customersProvider);
+                ref.invalidate(allCustomerSalesProvider);
+                ref.invalidate(customerSalesProvider(customer.id));
+                if (ctx.mounted) Navigator.pop(ctx);
+              } catch (e) {
+                if (ctx.mounted) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    SnackBar(
+                      content: Text('Error updating customer: $e'),
+                      backgroundColor: SpiceColors.danger,
+                    ),
+                  );
+                }
+              }
             },
             child: const Text('Save'),
           ),
@@ -678,13 +529,28 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
           ),
           ElevatedButton(
             onPressed: () async {
-              await supabase.from('customers').delete().eq('id', customer.id);
-              ref.invalidate(customersProvider);
-              setState(() {
-                _expandedIds.remove(customer.id);
-                _customerDetails.remove(customer.id);
-              });
-              if (ctx.mounted) Navigator.pop(ctx);
+              try {
+                await supabase
+                    .from('customers')
+                    .delete()
+                    .eq('id', customer.id);
+                ref.invalidate(customersProvider);
+                ref.invalidate(allCustomerSalesProvider);
+                ref.invalidate(customerSalesProvider(customer.id));
+                setState(() {
+                  _expandedIds.remove(customer.id);
+                });
+                if (ctx.mounted) Navigator.pop(ctx);
+              } catch (e) {
+                if (ctx.mounted) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    SnackBar(
+                      content: Text('Error deleting customer: $e'),
+                      backgroundColor: SpiceColors.danger,
+                    ),
+                  );
+                }
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: SpiceColors.danger,
@@ -700,6 +566,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
     final nameCtrl = TextEditingController();
     final emailCtrl = TextEditingController();
     final phoneCtrl = TextEditingController();
+    final addressCtrl = TextEditingController();
     final notesCtrl = TextEditingController();
 
     showDialog(
@@ -711,32 +578,39 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
           side: BorderSide(color: SpiceColors.border),
         ),
         title: const Text('Add Customer'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameCtrl,
-              decoration: const InputDecoration(labelText: 'Name'),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: emailCtrl,
-              keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(labelText: 'Email'),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: phoneCtrl,
-              keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(labelText: 'Phone'),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: notesCtrl,
-              maxLines: 2,
-              decoration: const InputDecoration(labelText: 'Notes'),
-            ),
-          ],
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameCtrl,
+                decoration: const InputDecoration(labelText: 'Name'),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: emailCtrl,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(labelText: 'Email'),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: phoneCtrl,
+                keyboardType: TextInputType.phone,
+                decoration: const InputDecoration(labelText: 'Phone'),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: addressCtrl,
+                decoration: const InputDecoration(labelText: 'Address'),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: notesCtrl,
+                maxLines: 2,
+                decoration: const InputDecoration(labelText: 'Notes'),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -752,22 +626,48 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                 );
                 return;
               }
-              final wsId = ref.read(workspaceStateProvider).selectedId;
-              if (wsId == null) return;
+              try {
+                final wsId = ref.read(workspaceStateProvider).selectedId;
+                if (wsId == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content:
+                          Text('Please select or create a workspace first'),
+                      backgroundColor: SpiceColors.danger,
+                    ),
+                  );
+                  return;
+                }
 
-              await supabase.from('customers').insert({
-                'workspace_id': wsId,
-                'name': name,
-                'email':
-                    emailCtrl.text.trim().isEmpty ? null : emailCtrl.text.trim(),
-                'phone':
-                    phoneCtrl.text.trim().isEmpty ? null : phoneCtrl.text.trim(),
-                'notes':
-                    notesCtrl.text.trim().isEmpty ? null : notesCtrl.text.trim(),
-              });
+                await supabase.from('customers').insert({
+                  'workspace_id': wsId,
+                  'name': name,
+                  'email': emailCtrl.text.trim().isEmpty
+                      ? null
+                      : emailCtrl.text.trim(),
+                  'phone': phoneCtrl.text.trim().isEmpty
+                      ? null
+                      : phoneCtrl.text.trim(),
+                  'address': addressCtrl.text.trim().isEmpty
+                      ? null
+                      : addressCtrl.text.trim(),
+                  'notes': notesCtrl.text.trim().isEmpty
+                      ? null
+                      : notesCtrl.text.trim(),
+                });
 
-              ref.invalidate(customersProvider);
-              if (ctx.mounted) Navigator.pop(ctx);
+                ref.invalidate(customersProvider);
+                if (ctx.mounted) Navigator.pop(ctx);
+              } catch (e) {
+                if (ctx.mounted) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    SnackBar(
+                      content: Text('Error adding customer: $e'),
+                      backgroundColor: SpiceColors.danger,
+                    ),
+                  );
+                }
+              }
             },
             child: const Text('Save'),
           ),
@@ -777,16 +677,258 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
   }
 }
 
-class _CustomerDetail {
-  final double totalSpent;
-  final DateTime? lastVisit;
-  final List<Map<String, dynamic>> recentPurchases;
-  final bool isLoading;
+class _ExpandedPanel extends ConsumerWidget {
+  final Customer customer;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
-  const _CustomerDetail({
-    this.totalSpent = 0,
-    this.lastVisit,
-    this.recentPurchases = const [],
-    this.isLoading = false,
+  const _ExpandedPanel({
+    required this.customer,
+    required this.onEdit,
+    required this.onDelete,
   });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final salesAsync = ref.watch(customerSalesProvider(customer.id));
+    final salesData = salesAsync.valueOrNull;
+    final isLoading = salesAsync.isLoading;
+    final dateFormat = DateFormat('dd/MM/yyyy');
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: SpiceColors.border)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 12),
+          if (customer.email != null)
+            _InfoRow(Icons.email_outlined, customer.email!),
+          if (customer.phone != null)
+            _InfoRow(Icons.phone_outlined, customer.phone!),
+          if (customer.address != null && customer.address!.isNotEmpty)
+            _InfoRow(Icons.location_on_outlined, customer.address!),
+          if (customer.notes != null && customer.notes!.isNotEmpty)
+            _InfoRow(Icons.notes_rounded, customer.notes!),
+          if (customer.email != null ||
+              customer.phone != null ||
+              customer.address != null)
+            const SizedBox(height: 10),
+          Row(
+            children: [
+              _DetailChip(
+                icon: Icons.attach_money,
+                label: isLoading
+                    ? 'Loading...'
+                    : 'Spent: R ${(salesData?.totalSpent ?? 0).toStringAsFixed(2)}',
+                color: SpiceColors.accent,
+              ),
+              const SizedBox(width: 12),
+              _DetailChip(
+                icon: Icons.shopping_cart_outlined,
+                label: isLoading
+                    ? '...'
+                    : '${salesData?.purchaseCount ?? 0} purchases',
+                color: SpiceColors.primary,
+              ),
+              const SizedBox(width: 12),
+              _DetailChip(
+                icon: Icons.access_time,
+                label: isLoading
+                    ? '...'
+                    : salesData?.lastVisit != null
+                        ? 'Last: ${dateFormat.format(salesData!.lastVisit!)}'
+                        : 'No visits yet',
+                color: SpiceColors.warning,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (isLoading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            )
+          else if (salesData != null &&
+              salesData.recentPurchases.isNotEmpty) ...[
+            const Text(
+              'Purchase History',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: SpiceColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 6),
+            ...salesData.recentPurchases.map((p) {
+              final date = p['created_at'] as String?;
+              final parsedDate = date != null && date.isNotEmpty
+                  ? DateTime.tryParse(date)
+                  : null;
+              final displayDate = parsedDate != null
+                  ? dateFormat.format(parsedDate)
+                  : '---';
+              final total =
+                  (p['grand_total'] as num?)?.toDouble() ?? 0;
+              final txnNum = p['transaction_number'] ?? '';
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: SpiceColors.primary.withAlpha(20),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(Icons.receipt,
+                          size: 14, color: SpiceColors.primary),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        txnNum,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: SpiceColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      displayDate,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: SpiceColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'R ${total.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: SpiceColors.accent,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onEdit,
+                  icon: const Icon(Icons.edit, size: 16),
+                  label: const Text('Edit'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: SpiceColors.primary,
+                    side: const BorderSide(color: SpiceColors.border),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onDelete,
+                  icon: const Icon(Icons.delete_outline, size: 16),
+                  label: const Text('Delete'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: SpiceColors.danger,
+                    side: const BorderSide(color: SpiceColors.border),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DetailChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _DetailChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+        decoration: BoxDecoration(
+          color: color.withAlpha(15),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withAlpha(60)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: color,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _InfoRow(this.icon, this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: SpiceColors.textSecondary),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 13,
+                color: SpiceColors.textSecondary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

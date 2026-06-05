@@ -54,7 +54,7 @@ class WorkspaceNotifier extends StateNotifier<WorkspaceState> {
   }
 
   Future<void> updateWorkspaceName(String name) async {
-    if (state.selectedId == null) return;
+    if (state.selectedId == null) throw Exception('No workspace selected');
     await supabase
         .from('workspaces')
         .update({'name': name}).eq('id', state.selectedId!);

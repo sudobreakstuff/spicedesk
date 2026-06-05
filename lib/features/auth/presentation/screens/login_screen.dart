@@ -42,7 +42,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           .read(authStateProvider.notifier)
           .login(_emailCtrl.text.trim(), _passwordCtrl.text.trim());
     } catch (e) {
-      setState(() => _error = 'Invalid email or password');
+      final message = e.toString().replaceFirst('AuthException: ', '');
+      if (mounted) setState(() => _error = message);
     }
     if (mounted) setState(() => _loading = false);
   }

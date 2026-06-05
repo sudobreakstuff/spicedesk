@@ -44,7 +44,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> logout() async {
     await supabase.auth.signOut();
-    state = AuthState.initial();
   }
 }
 

@@ -318,18 +318,37 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           ElevatedButton(
             onPressed: () async {
               final wsId = ref.read(workspaceStateProvider).selectedId;
-              if (wsId == null) return;
+              if (wsId == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Please select or create a workspace first'),
+                    backgroundColor: SpiceColors.danger,
+                  ),
+                );
+                return;
+              }
               final qty = double.tryParse(quantityCtrl.text);
               final reorder = double.tryParse(reorderCtrl.text);
               if (qty == null || reorder == null) return;
 
-              await supabase.from('inventory').update({
-                'quantity_on_hand': qty,
-                'reorder_point': reorder,
-              }).eq('id', item.id);
+              try {
+                await supabase.from('inventory').update({
+                  'quantity_on_hand': qty,
+                  'reorder_point': reorder,
+                }).eq('id', item.id);
 
-              ref.invalidate(inventoryProvider);
-              if (ctx.mounted) Navigator.pop(ctx);
+                ref.invalidate(inventoryProvider);
+                if (ctx.mounted) Navigator.pop(ctx);
+              } catch (e) {
+                if (ctx.mounted) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    SnackBar(
+                      content: Text('Error updating stock: $e'),
+                      backgroundColor: SpiceColors.danger,
+                    ),
+                  );
+                }
+              }
             },
             child: const Text('Save'),
           ),
@@ -359,9 +378,20 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           ),
           ElevatedButton(
             onPressed: () async {
-              await supabase.from('inventory').delete().eq('id', item.id);
-              ref.invalidate(inventoryProvider);
-              if (ctx.mounted) Navigator.pop(ctx);
+              try {
+                await supabase.from('inventory').delete().eq('id', item.id);
+                ref.invalidate(inventoryProvider);
+                if (ctx.mounted) Navigator.pop(ctx);
+              } catch (e) {
+                if (ctx.mounted) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    SnackBar(
+                      content: Text('Error deleting inventory: $e'),
+                      backgroundColor: SpiceColors.danger,
+                    ),
+                  );
+                }
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: SpiceColors.danger,
@@ -436,19 +466,38 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               ElevatedButton(
                 onPressed: () async {
                   final wsId = ref.read(workspaceStateProvider).selectedId;
-                  if (wsId == null) return;
+                  if (wsId == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please select or create a workspace first'),
+                        backgroundColor: SpiceColors.danger,
+                      ),
+                    );
+                    return;
+                  }
                   final qty = double.tryParse(quantityCtrl.text) ?? 0;
                   final reorder = double.tryParse(reorderPointCtrl.text) ?? 0;
 
-                  await supabase.from('inventory').insert({
-                    'workspace_id': wsId,
-                    'product_id': selectedProductId,
-                    'quantity_on_hand': qty,
-                    'reorder_point': reorder,
-                  });
+                  try {
+                    await supabase.from('inventory').insert({
+                      'workspace_id': wsId,
+                      'product_id': selectedProductId,
+                      'quantity_on_hand': qty,
+                      'reorder_point': reorder,
+                    });
 
-                  ref.invalidate(inventoryProvider);
-                  if (ctx.mounted) Navigator.pop(ctx);
+                    ref.invalidate(inventoryProvider);
+                    if (ctx.mounted) Navigator.pop(ctx);
+                  } catch (e) {
+                    if (ctx.mounted) {
+                      ScaffoldMessenger.of(ctx).showSnackBar(
+                        SnackBar(
+                          content: Text('Error adding stock: $e'),
+                          backgroundColor: SpiceColors.danger,
+                        ),
+                      );
+                    }
+                  }
                 },
                 child: const Text('Save'),
               ),

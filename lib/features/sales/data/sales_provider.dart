@@ -8,7 +8,8 @@ final salesProvider = FutureProvider<List<SaleTransaction>>((ref) async {
 
   final data = await supabase
       .from('sales_transactions')
-      .select('id, transaction_number, grand_total, payment_method, created_at, customers(name)')
+      .select(
+          'id, transaction_number, invoice_number, grand_total, payment_method, created_at, customers(name)')
       .eq('workspace_id', wsId)
       .order('created_at', ascending: false)
       .limit(50);
@@ -18,6 +19,7 @@ final salesProvider = FutureProvider<List<SaleTransaction>>((ref) async {
     return SaleTransaction(
       id: row['id'],
       transactionNumber: row['transaction_number'] ?? '',
+      invoiceNumber: row['invoice_number'],
       total: (row['grand_total'] as num?)?.toDouble() ?? 0,
       paymentMethod: row['payment_method'] ?? '',
       customerName: customer?['name'],
@@ -47,9 +49,156 @@ final todaySalesProvider = FutureProvider<double>((ref) async {
   return total;
 });
 
+final dailySalesProvider = FutureProvider<DailySalesReport>((ref) async {
+  final wsId = ref.watch(workspaceStateProvider).selectedId;
+  if (wsId == null) return DailySalesReport.empty();
+
+  final today = DateTime.now().toIso8601String().split('T')[0];
+  final data = await supabase
+      .from('sales_transactions')
+      .select('grand_total, created_at')
+      .eq('workspace_id', wsId)
+      .gte('created_at', '$today 00:00:00')
+      .order('created_at');
+
+  final hourlyMap = <int, double>{};
+  for (int i = 0; i < 24; i++) {
+    hourlyMap[i] = 0;
+  }
+
+  double totalSales = 0;
+  for (final row in data) {
+    final total = (row['grand_total'] as num?)?.toDouble() ?? 0;
+    totalSales += total;
+    final dt = row['created_at'] != null
+        ? DateTime.tryParse(row['created_at'] ?? '')
+        : null;
+    if (dt != null) {
+      hourlyMap[dt.hour] = (hourlyMap[dt.hour] ?? 0) + total;
+    }
+  }
+
+  return DailySalesReport(
+    totalSales: totalSales,
+    transactionCount: data.length,
+    hourlyBreakdown: hourlyMap,
+  );
+});
+
+final weeklySalesProvider = FutureProvider<WeeklySalesReport>((ref) async {
+  final wsId = ref.watch(workspaceStateProvider).selectedId;
+  if (wsId == null) return WeeklySalesReport.empty();
+
+  final now = DateTime.now();
+  final startOfRange =
+      DateTime(now.year, now.month, now.day).subtract(const Duration(days: 6));
+  final startStr = startOfRange.toIso8601String().split('T')[0];
+
+  final data = await supabase
+      .from('sales_transactions')
+      .select('grand_total, created_at')
+      .eq('workspace_id', wsId)
+      .gte('created_at', '$startStr 00:00:00')
+      .order('created_at');
+
+  const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  final dailyMap = <String, double>{};
+  for (final label in dayLabels) {
+    dailyMap[label] = 0;
+  }
+
+  double totalSales = 0;
+  for (final row in data) {
+    final total = (row['grand_total'] as num?)?.toDouble() ?? 0;
+    totalSales += total;
+    final dt = row['created_at'] != null
+        ? DateTime.tryParse(row['created_at'] ?? '')
+        : null;
+    if (dt != null) {
+      dailyMap[dayLabels[dt.weekday - 1]] =
+          (dailyMap[dayLabels[dt.weekday - 1]] ?? 0) + total;
+    }
+  }
+
+  String bestDay = 'Mon';
+  double bestTotal = 0;
+  for (final entry in dailyMap.entries) {
+    if (entry.value > bestTotal) {
+      bestTotal = entry.value;
+      bestDay = entry.key;
+    }
+  }
+
+  return WeeklySalesReport(
+    totalSales: totalSales,
+    avgPerDay: totalSales / 7,
+    bestDay: bestDay,
+    transactionCount: data.length,
+    dailyBreakdown: dailyMap,
+  );
+});
+
+final monthlySalesProvider = FutureProvider<MonthlySalesReport>((ref) async {
+  final wsId = ref.watch(workspaceStateProvider).selectedId;
+  if (wsId == null) return MonthlySalesReport.empty();
+
+  final now = DateTime.now();
+  final startOfMonth = DateTime(now.year, now.month, 1);
+  final startStr = startOfMonth.toIso8601String().split('T')[0];
+
+  final data = await supabase
+      .from('sales_transactions')
+      .select('grand_total, created_at')
+      .eq('workspace_id', wsId)
+      .gte('created_at', '$startStr 00:00:00')
+      .order('created_at');
+
+  final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
+  final numWeeks = (daysInMonth / 7).ceil();
+  final weeklyMap = <String, double>{};
+  for (int w = 1; w <= numWeeks; w++) {
+    weeklyMap['Week $w'] = 0;
+  }
+
+  double totalSales = 0;
+  for (final row in data) {
+    final total = (row['grand_total'] as num?)?.toDouble() ?? 0;
+    totalSales += total;
+    final dt = row['created_at'] != null
+        ? DateTime.tryParse(row['created_at'] ?? '')
+        : null;
+    if (dt != null) {
+      final weekNum = ((dt.day - 1) ~/ 7) + 1;
+      final key = 'Week $weekNum';
+      weeklyMap[key] = (weeklyMap[key] ?? 0) + total;
+    }
+  }
+
+  return MonthlySalesReport(
+    totalSales: totalSales,
+    avgPerWeek: numWeeks > 0 ? totalSales / numWeeks : 0,
+    dailyAverage: daysInMonth > 0 ? totalSales / daysInMonth : 0,
+    transactionCount: data.length,
+    weeklyBreakdown: weeklyMap,
+  );
+});
+
+final totalTransactionsProvider = FutureProvider<int>((ref) async {
+  final wsId = ref.watch(workspaceStateProvider).selectedId;
+  if (wsId == null) return 0;
+
+  final data = await supabase
+      .from('sales_transactions')
+      .select('id')
+      .eq('workspace_id', wsId);
+
+  return data.length;
+});
+
 class SaleTransaction {
   final String id;
   final String transactionNumber;
+  final String? invoiceNumber;
   final double total;
   final String paymentMethod;
   final String? customerName;
@@ -58,9 +207,84 @@ class SaleTransaction {
   const SaleTransaction({
     required this.id,
     required this.transactionNumber,
+    this.invoiceNumber,
     required this.total,
     required this.paymentMethod,
     this.customerName,
     required this.createdAt,
   });
+}
+
+class DailySalesReport {
+  final double totalSales;
+  final int transactionCount;
+  final Map<int, double> hourlyBreakdown;
+
+  DailySalesReport({
+    required this.totalSales,
+    required this.transactionCount,
+    required this.hourlyBreakdown,
+  });
+
+  factory DailySalesReport.empty() => DailySalesReport(
+        totalSales: 0,
+        transactionCount: 0,
+        hourlyBreakdown: {for (int i = 0; i < 24; i++) i: 0.0},
+      );
+
+  double get averageOrderValue =>
+      transactionCount > 0 ? totalSales / transactionCount : 0;
+
+  int get topHour => (hourlyBreakdown.entries.toList()
+        ..sort((a, b) => b.value.compareTo(a.value)))
+      .first
+      .key;
+}
+
+class WeeklySalesReport {
+  final double totalSales;
+  final double avgPerDay;
+  final String bestDay;
+  final int transactionCount;
+  final Map<String, double> dailyBreakdown;
+
+  const WeeklySalesReport({
+    required this.totalSales,
+    required this.avgPerDay,
+    required this.bestDay,
+    required this.transactionCount,
+    required this.dailyBreakdown,
+  });
+
+  factory WeeklySalesReport.empty() => const WeeklySalesReport(
+        totalSales: 0,
+        avgPerDay: 0,
+        bestDay: 'Mon',
+        transactionCount: 0,
+        dailyBreakdown: {},
+      );
+}
+
+class MonthlySalesReport {
+  final double totalSales;
+  final double avgPerWeek;
+  final double dailyAverage;
+  final int transactionCount;
+  final Map<String, double> weeklyBreakdown;
+
+  const MonthlySalesReport({
+    required this.totalSales,
+    required this.avgPerWeek,
+    required this.dailyAverage,
+    required this.transactionCount,
+    required this.weeklyBreakdown,
+  });
+
+  factory MonthlySalesReport.empty() => const MonthlySalesReport(
+        totalSales: 0,
+        avgPerWeek: 0,
+        dailyAverage: 0,
+        transactionCount: 0,
+        weeklyBreakdown: {},
+      );
 }

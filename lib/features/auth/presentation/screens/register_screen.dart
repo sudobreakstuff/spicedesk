@@ -57,7 +57,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         context.go('/login');
       }
     } catch (e) {
-      setState(() => _error = e.toString().replaceFirst('AuthException: ', ''));
+      final message = e.toString().replaceFirst('AuthException: ', '');
+      if (mounted) setState(() => _error = message);
     }
     if (mounted) setState(() => _loading = false);
   }

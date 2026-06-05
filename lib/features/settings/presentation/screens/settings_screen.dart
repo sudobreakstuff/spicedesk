@@ -50,7 +50,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Future<void> _saveSetting(String key, String value) async {
     final wsId = ref.read(workspaceStateProvider).selectedId;
-    if (wsId == null) return;
+    if (wsId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Please select or create a workspace first'),
+          backgroundColor: SpiceColors.danger,
+        ));
+      }
+      return;
+    }
 
     try {
       final data = await supabase
@@ -391,7 +399,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ? null
                 : (v) async {
                     setDialogState(() => saving = true);
-                    await onSave(v);
+                    try {
+                      await onSave(v);
+                    } catch (_) {}
                     if (ctx.mounted) Navigator.pop(ctx);
                   },
           ),
@@ -405,7 +415,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ? null
                   : () async {
                       setDialogState(() => saving = true);
-                      await onSave(ctrl.text.trim());
+                      try {
+                        await onSave(ctrl.text.trim());
+                      } catch (_) {}
                       if (ctx.mounted) Navigator.pop(ctx);
                     },
               child: saving

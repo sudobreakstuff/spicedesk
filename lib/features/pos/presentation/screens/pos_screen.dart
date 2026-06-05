@@ -384,7 +384,15 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
                 try {
                   final wsId = ref.read(workspaceStateProvider).selectedId;
-                  if (wsId == null) return;
+                  if (wsId == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please select or create a workspace first'),
+                        backgroundColor: SpiceColors.danger,
+                      ),
+                    );
+                    return;
+                  }
 
                   await supabase
                       .from('products')
@@ -424,9 +432,12 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                     Navigator.pop(ctx);
                   }
                 } catch (e) {
-                  if (mounted && ctx.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error: $e')),
+                  if (ctx.mounted) {
+                    ScaffoldMessenger.of(ctx).showSnackBar(
+                      SnackBar(
+                        content: Text('Error updating product: $e'),
+                        backgroundColor: SpiceColors.danger,
+                      ),
                     );
                   }
                 }
@@ -462,7 +473,15 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             onPressed: () async {
               try {
                 final wsId = ref.read(workspaceStateProvider).selectedId;
-                if (wsId == null) return;
+                if (wsId == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Please select or create a workspace first'),
+                      backgroundColor: SpiceColors.danger,
+                    ),
+                  );
+                  return;
+                }
 
                 await supabase
                     .from('inventory')
@@ -490,8 +509,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   ));
                 }
               } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                if (ctx.mounted) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
                     content: Text('Error deleting product: $e'),
                     backgroundColor: SpiceColors.danger,
                   ));
@@ -616,7 +635,15 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
                 try {
                   final wsId = ref.read(workspaceStateProvider).selectedId;
-                  if (wsId == null) return;
+                  if (wsId == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please select or create a workspace first'),
+                        backgroundColor: SpiceColors.danger,
+                      ),
+                    );
+                    return;
+                  }
 
                   final result = await supabase
                       .from('products')
@@ -669,7 +696,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 } catch (e) {
                   if (ctx.mounted) {
                     ScaffoldMessenger.of(ctx).showSnackBar(
-                      SnackBar(content: Text('Error: $e')),
+                      SnackBar(
+                        content: Text('Error adding product: $e'),
+                        backgroundColor: SpiceColors.danger,
+                      ),
                     );
                   }
                 }

@@ -3,17 +3,25 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../sales/data/sales_provider.dart';
 import '../../../products/data/products_provider.dart';
 import '../../../customers/data/customers_provider.dart';
+import '../../../inventory/data/inventory_provider.dart';
+import '../../../auth/domain/auth_state.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authStateProvider);
+    final userName = (authState.user?.userMetadata?['name'] as String?) ??
+        authState.user?.email?.split('@').first ??
+        'there';
+
     final hour = DateTime.now().hour;
     final greeting = hour < 12
         ? 'Good morning'
@@ -22,16 +30,20 @@ class HomeScreen extends ConsumerWidget {
             : 'Good evening';
 
     final todaySales = ref.watch(todaySalesProvider);
+    final weeklySales = ref.watch(weeklySalesProvider);
     final productsAsync = ref.watch(productsProvider);
     final customerCount = ref.watch(customerCountProvider);
     final salesAsync = ref.watch(salesProvider);
+    final inventoryAsync = ref.watch(inventoryProvider);
 
     final format = NumberFormat.currency(symbol: 'R ');
+    final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
 
-    final productsCount =
-        productsAsync.valueOrNull?.length.toString() ?? '...';
-    final salesCount = salesAsync.valueOrNull?.length.toString() ?? '...';
     final recentSales = salesAsync.valueOrNull?.take(5).toList() ?? [];
+    final lowStockItems = inventoryAsync.valueOrNull
+            ?.where((i) => i.quantityOnHand <= i.reorderPoint && i.reorderPoint > 0)
+            .toList() ??
+        [];
 
     return Scaffold(
       backgroundColor: SpiceColors.surface,
@@ -39,20 +51,19 @@ class HomeScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(32),
         children: [
           Text(
-            '$greeting,',
+            '$greeting, $userName',
             style: const TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.w700,
               color: SpiceColors.textPrimary,
               letterSpacing: -0.5,
             ),
-          ),
+          ).animate().fadeIn().slideY(begin: -8),
           const SizedBox(height: 4),
           const Text(
             'Here\'s what\'s happening with your business today.',
-            style:
-                TextStyle(fontSize: 14, color: SpiceColors.textSecondary),
-          ),
+            style: TextStyle(fontSize: 14, color: SpiceColors.textSecondary),
+          ).animate(delay: 100.ms).fadeIn(),
 
           const SizedBox(height: 32),
 
@@ -69,36 +80,43 @@ class HomeScreen extends ConsumerWidget {
                 label: 'Today\'s Sales',
                 value: todaySales.when(
                   data: (v) => format.format(v),
-                  loading: () => '...',
+                  loading: () => null,
                   error: (_, __) => 'R 0.00',
                 ),
                 accent: SpiceColors.accent,
                 isLoading: todaySales.isLoading,
+                onTap: () => context.go('/pos'),
+              ),
+              _StatCard(
+                icon: Icons.calendar_view_week_rounded,
+                label: 'Weekly Sales',
+                value: weeklySales.when(
+                  data: (v) => format.format(v.totalSales),
+                  loading: () => null,
+                  error: (_, __) => 'R 0.00',
+                ),
+                accent: const Color(0xFF8B5CF6),
+                isLoading: weeklySales.isLoading,
                 onTap: () => context.go('/reports'),
               ),
               _StatCard(
                 icon: Icons.shopping_bag,
-                label: 'Products',
-                value: productsCount,
+                label: 'Total Products',
+                value: productsAsync.maybeWhen(
+                  data: (v) => v.length.toString(),
+                  orElse: () => null,
+                ),
                 accent: SpiceColors.primary,
                 isLoading: productsAsync.isLoading,
                 onTap: () => context.go('/inventory'),
               ),
               _StatCard(
                 icon: Icons.people,
-                label: 'Customers',
+                label: 'Total Customers',
                 value: customerCount.toString(),
-                accent: const Color(0xFF8B5CF6),
+                accent: SpiceColors.warning,
                 isLoading: false,
                 onTap: () => context.go('/customers'),
-              ),
-              _StatCard(
-                icon: Icons.receipt_long,
-                label: 'Transactions',
-                value: salesCount,
-                accent: SpiceColors.warning,
-                isLoading: salesAsync.isLoading,
-                onTap: () => context.go('/reports'),
               ),
             ].animate(interval: 80.ms).fadeIn().slideY(begin: 12),
           ),
@@ -150,22 +168,14 @@ class HomeScreen extends ConsumerWidget {
 
           const SizedBox(height: 36),
 
-          const Text('Recent Activity',
+          const Text('Recent Transactions',
               style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                   color: SpiceColors.textPrimary)),
           const SizedBox(height: 16),
           if (salesAsync.isLoading)
-            Container(
-              padding: const EdgeInsets.all(32),
-              decoration: BoxDecoration(
-                color: SpiceColors.surfaceAlt,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: SpiceColors.border),
-              ),
-              child: const Center(child: CircularProgressIndicator()),
-            )
+            _buildShimmerList(5)
           else if (recentSales.isEmpty)
             Container(
               padding: const EdgeInsets.all(32),
@@ -182,11 +192,9 @@ class HomeScreen extends ConsumerWidget {
                   Text('No recent activity',
                       style: TextStyle(color: SpiceColors.textSecondary)),
                   SizedBox(height: 4),
-                  Text(
-                      'Sales and inventory actions will appear here',
+                  Text('Sales and inventory actions will appear here',
                       style: TextStyle(
-                          fontSize: 12,
-                          color: SpiceColors.textSecondary)),
+                          fontSize: 12, color: SpiceColors.textSecondary)),
                 ],
               ),
             ).animate(delay: 400.ms).fadeIn()
@@ -202,44 +210,37 @@ class HomeScreen extends ConsumerWidget {
                 children: recentSales.asMap().entries.map((entry) {
                   final sale = entry.value;
                   return Padding(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 6),
+                    padding: const EdgeInsets.symmetric(vertical: 6),
                     child: Row(
                       children: [
                         Container(
                           width: 36,
                           height: 36,
                           decoration: BoxDecoration(
-                            color: SpiceColors.primary
-                                .withAlpha(25),
-                            borderRadius:
-                                BorderRadius.circular(8),
+                            color: SpiceColors.primary.withAlpha(25),
+                            borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Icon(Icons.receipt,
-                              size: 18,
-                              color: SpiceColors.primary),
+                              size: 18, color: SpiceColors.primary),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 sale.transactionNumber,
                                 style: const TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
-                                  color:
-                                      SpiceColors.textPrimary,
+                                  color: SpiceColors.textPrimary,
                                 ),
                               ),
                               Text(
-                                sale.paymentMethod,
+                                dateFormat.format(sale.createdAt),
                                 style: const TextStyle(
                                   fontSize: 11,
-                                  color: SpiceColors
-                                      .textSecondary,
+                                  color: SpiceColors.textSecondary,
                                 ),
                               ),
                             ],
@@ -260,15 +261,159 @@ class HomeScreen extends ConsumerWidget {
               ),
             ).animate(delay: 400.ms).fadeIn(),
 
+          if (lowStockItems.isNotEmpty) ...[
+            const SizedBox(height: 36),
+            const Text('Low Stock Alert',
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: SpiceColors.textPrimary)),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: SpiceColors.surfaceAlt,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: SpiceColors.border),
+              ),
+              child: Column(
+                children: lowStockItems.map((item) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: SpiceColors.danger.withAlpha(25),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.inventory_2_outlined,
+                              size: 18, color: SpiceColors.danger),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item.productName,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: SpiceColors.textPrimary,
+                                ),
+                              ),
+                              Text(
+                                'Reorder point: ${item.reorderPoint.toStringAsFixed(0)} | On hand: ${item.quantityOnHand.toStringAsFixed(0)}',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: SpiceColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: SpiceColors.danger.withAlpha(20),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            '${item.quantityOnHand.toStringAsFixed(0)} left',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: SpiceColors.danger,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ).animate(delay: 500.ms).fadeIn().slideY(begin: 8),
+          ],
+
           const SizedBox(height: 48),
           const Center(
             child: Text('Made by Shahid Singh',
-                style: TextStyle(
-                    fontSize: 11,
-                    color: SpiceColors.textSecondary)),
+                style:
+                    TextStyle(fontSize: 11, color: SpiceColors.textSecondary)),
           ),
           const SizedBox(height: 32),
         ],
+      ),
+    );
+  }
+
+  Widget _buildShimmerList(int count) {
+    return Shimmer.fromColors(
+      baseColor: SpiceColors.surfaceAlt,
+      highlightColor: SpiceColors.border,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: SpiceColors.surfaceAlt,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: SpiceColors.border),
+        ),
+        child: Column(
+          children: List.generate(count, (i) {
+            return Padding(
+              padding: EdgeInsets.only(top: i > 0 ? 12 : 0),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          height: 12,
+                          width: 140,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          height: 10,
+                          width: 90,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    height: 12,
+                    width: 60,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ),
       ),
     );
   }
@@ -277,7 +422,7 @@ class HomeScreen extends ConsumerWidget {
 class _StatCard extends StatelessWidget {
   final IconData icon;
   final String label;
-  final String value;
+  final String? value;
   final Color accent;
   final VoidCallback? onTap;
   final bool isLoading;
@@ -321,37 +466,56 @@ class _StatCard extends StatelessWidget {
                     child: Icon(icon, color: accent, size: 18),
                   ),
                   const Spacer(),
-                  if (!isLoading)
-                    Icon(Icons.trending_up,
-                        size: 14,
-                        color: SpiceColors.accent.withAlpha(100))
-                  else
+                  if (isLoading)
                     const SizedBox(
                       width: 14,
                       height: 14,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2),
-                    ),
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  else
+                    Icon(Icons.trending_up,
+                        size: 14, color: SpiceColors.accent.withAlpha(100)),
                 ],
               ),
               const SizedBox(height: 16),
               if (isLoading)
-                const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                Shimmer.fromColors(
+                  baseColor: SpiceColors.surfaceAlt,
+                  highlightColor: SpiceColors.border,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        height: 26,
+                        width: 120,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        height: 12,
+                        width: 80,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ],
+                  ),
                 )
-              else
-                Text(value,
+              else ...[
+                Text(value ?? '-',
                     style: const TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w700,
                         color: SpiceColors.textPrimary)),
-              const SizedBox(height: 2),
-              Text(label,
-                  style: const TextStyle(
-                      fontSize: 12,
-                      color: SpiceColors.textSecondary)),
+                const SizedBox(height: 2),
+                Text(label,
+                    style: const TextStyle(
+                        fontSize: 12, color: SpiceColors.textSecondary)),
+              ],
             ],
           ),
         ),
