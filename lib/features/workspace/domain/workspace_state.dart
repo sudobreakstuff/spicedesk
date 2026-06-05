@@ -29,10 +29,12 @@ class WorkspaceNotifier extends StateNotifier<WorkspaceState> {
     final user = supabase.auth.currentUser;
     if (user == null) return;
 
+    // Get user's workspaces, ordered by most recent activity
     final data = await supabase
         .from('workspace_members')
         .select('workspace_id, workspaces(name)')
         .eq('user_id', user.id)
+        .order('joined_at', ascending: false)
         .limit(1)
         .maybeSingle();
 
