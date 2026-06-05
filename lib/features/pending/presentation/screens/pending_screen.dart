@@ -53,8 +53,7 @@ class _PendingOrdersScreenState extends ConsumerState<PendingOrdersScreen> {
     }
   }
 
-  void _showStatusDialog(Map<String, dynamic> quote) {
-    final quoteId = quote['id'] as String;
+  void _showQuoteActions(Map<String, dynamic> quote) {
     showModalBottomSheet(
       context: context,
       backgroundColor: SpiceColors.surfaceAlt,
@@ -68,45 +67,31 @@ class _PendingOrdersScreenState extends ConsumerState<PendingOrdersScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: SpiceColors.border,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+              Container(width: 40, height: 4, decoration: BoxDecoration(color: SpiceColors.border, borderRadius: BorderRadius.circular(2))),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(quote['quote_number'] ?? 'Quote', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
               ),
+              const SizedBox(height: 16),
               if (quote['status'] == 'accepted')
                 ListTile(
                   leading: const Icon(Icons.shopping_cart, color: SpiceColors.accent),
                   title: const Text('Convert to Sale'),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    _convertQuoteToSale(quote);
-                  },
+                  onTap: () { Navigator.pop(ctx); _convertQuoteToSale(quote); },
                 ),
               ListTile(
-                leading:
-                    const Icon(Icons.edit, color: SpiceColors.primary),
+                leading: const Icon(Icons.edit, color: SpiceColors.primary),
                 title: const Text('Edit Status'),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _showStatusDialog(quote);
-                },
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                onTap: () { Navigator.pop(ctx); _editStatusDialog(quote); },
               ),
               ListTile(
-                leading:
-                    const Icon(Icons.delete_outline, color: SpiceColors.danger),
+                leading: const Icon(Icons.delete_outline, color: SpiceColors.danger),
                 title: const Text('Delete'),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _deleteQuote(quote);
-                },
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                onTap: () { Navigator.pop(ctx); _deleteQuote(quote); },
               ),
               const SizedBox(height: 8),
             ],
@@ -114,6 +99,49 @@ class _PendingOrdersScreenState extends ConsumerState<PendingOrdersScreen> {
         ),
       ),
     );
+  }
+
+  void _editStatusDialog(Map<String, dynamic> quote) {
+    String selectedStatus = quote['status'] ?? 'draft';
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: SpiceColors.surfaceAlt,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: SpiceColors.border)),
+        title: const Text('Change Status'),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          const SizedBox(height: 8),
+          ...['draft', 'sent', 'accepted', 'rejected'].map((status) => RadioListTile<String>(
+            title: Text(status[0].toUpperCase() + status.substring(1)),
+            value: status,
+            groupValue: selectedStatus,
+            activeColor: status == 'accepted' ? SpiceColors.accent : status == 'rejected' ? SpiceColors.danger : SpiceColors.primary,
+            onChanged: (v) {
+              Navigator.pop(ctx);
+              selectedStatus = v!;
+              _updateQuoteStatus(quote, selectedStatus);
+            },
+          )),
+        ]),
+        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel'))],
+      ),
+    );
+  }
+
+  Future<void> _updateQuoteStatus(Map<String, dynamic> quote, String status) async {
+    try {
+      await supabase.from('quotes').update({'status': status}).eq('id', quote['id']);
+      _loadQuotes();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Status updated to $status'), backgroundColor: SpiceColors.accent),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
   }
 
   Color _statusColor(String status) {
@@ -212,7 +240,7 @@ class _PendingOrdersScreenState extends ConsumerState<PendingOrdersScreen> {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: GestureDetector(
-                    onLongPress: () => _showStatusDialog(quote),
+                    onLongPress: () => _showQuoteActions(quote),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 20, vertical: 14),
