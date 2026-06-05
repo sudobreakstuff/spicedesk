@@ -12,11 +12,13 @@ final createSaleAction = Provider<Future<SaleResult> Function({
   required List<SaleItemInput> items,
   required String paymentMethod,
   String? customerId,
+  String? orderType,
 })>((ref) {
   return ({
     required List<SaleItemInput> items,
     required String paymentMethod,
     String? customerId,
+    String? orderType,
   }) async {
     final wsId = ref.read(workspaceStateProvider).selectedId;
     if (wsId == null) throw Exception('No workspace selected');
@@ -33,6 +35,7 @@ final createSaleAction = Provider<Future<SaleResult> Function({
       'p_customer_id': customerId,
       'p_payment_method': paymentMethod,
       'p_items': itemsJson,
+      'p_order_type': orderType,
     });
 
     if (customerId != null) {

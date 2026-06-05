@@ -479,12 +479,12 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                   final reorder = double.tryParse(reorderPointCtrl.text) ?? 0;
 
                   try {
-                    await supabase.from('inventory').insert({
+                    await supabase.from('inventory').upsert({
                       'workspace_id': wsId,
                       'product_id': selectedProductId,
                       'quantity_on_hand': qty,
                       'reorder_point': reorder,
-                    });
+                    }, onConflict: 'workspace_id, product_id');
 
                     ref.invalidate(inventoryProvider);
                     if (ctx.mounted) Navigator.pop(ctx);

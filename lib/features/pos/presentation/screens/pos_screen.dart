@@ -66,6 +66,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     if (result == null) return;
 
     final paymentMethod = result['paymentMethod'] as String;
+    final orderType = result['orderType'] as String?;
     final customerId = result['customerId'] as String?;
 
     try {
@@ -81,6 +82,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             .toList(),
         paymentMethod: paymentMethod,
         customerId: customerId,
+        orderType: orderType,
       );
 
       if (mounted) {
@@ -1365,7 +1367,8 @@ class _CheckoutDialogState extends State<_CheckoutDialog> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8)),
                   onTap: () => Navigator.pop(context, {
-                    'paymentMethod': '$m ($_serviceType)',
+                    'paymentMethod': m.toLowerCase(),
+                    'orderType': _serviceType,
                     'customerId': _selectedCustomerId,
                   }),
                 )),
