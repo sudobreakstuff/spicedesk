@@ -14,34 +14,57 @@ final createQuoteAction = Provider<Future<QuoteResult> Function({
     final wsId = ref.read(workspaceStateProvider).selectedId;
     if (wsId == null) throw Exception('No workspace selected');
 
-    final itemsJson = items.map((item) => {
-      'product_id': item.productId,
-      'product_name': item.productName,
-      'quantity': item.quantity,
-      'unit_price': item.unitPrice,
-    }).toList();
+    final user = supabase.auth.currentUser;
+    final subtotal = items.fold<double>(0, (sum, i) => sum + (i.unitPrice * i.quantity));
+    final taxTotal = 0.0;
 
-    final total = items.fold<double>(0, (sum, i) => sum + (i.unitPrice * i.quantity));
+    final existing = await supabase
+        .from('quotes')
+        .select('quote_number')
+        .eq('workspace_id', wsId)
+        .order('created_at', ascending: false)
+        .limit(1);
+
+    int nextNum = 1;
+    if (existing.isNotEmpty) {
+      final lastNum = existing.first['quote_number'] as String?;
+      if (lastNum != null && lastNum.startsWith('QTE-')) {
+        final numPart = int.tryParse(lastNum.substring(4));
+        if (numPart != null) nextNum = numPart + 1;
+      }
+    }
+    final quoteNumber = 'QTE-${nextNum.toString().padLeft(4, '0')}';
 
     final result = await supabase.from('quotes').insert({
       'workspace_id': wsId,
+      'quote_number': quoteNumber,
       'customer_id': customerId,
-      'items': itemsJson,
-      'total': total,
+      'subtotal': subtotal,
+      'tax_total': taxTotal,
+      'total': subtotal + taxTotal,
       'status': 'draft',
       'valid_until': DateTime.now().add(const Duration(days: 30)).toIso8601String(),
+      'notes': null,
+      'created_by': user?.id,
     }).select().single();
 
     final quoteId = result['id'] as String;
-    final quoteNumber = 'QTE-${quoteId.substring(0, 8).toUpperCase()}';
 
-    await supabase.from('quotes').update({
-      'quote_number': quoteNumber,
-    }).eq('id', quoteId);
+    for (final item in items) {
+      final lineTotal = item.unitPrice * item.quantity;
+      await supabase.from('quote_items').insert({
+        'quote_id': quoteId,
+        'product_id': item.productId,
+        'product_name': item.productName,
+        'quantity': item.quantity,
+        'unit_price': item.unitPrice,
+        'line_total': lineTotal,
+      });
+    }
 
     return QuoteResult(
       quoteNumber: quoteNumber,
-      total: total,
+      total: subtotal + taxTotal,
       validUntil: DateTime.now().add(const Duration(days: 30)),
     );
   };

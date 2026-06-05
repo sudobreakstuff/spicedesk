@@ -428,3 +428,56 @@ class ProfitReport {
         totalItemsSold: 0,
       );
 }
+
+final bestSellersProvider = FutureProvider<List<BestSeller>>((ref) async {
+  ref.watch(workspaceStateProvider);
+  final wsId = ref.watch(workspaceStateProvider).selectedId;
+  if (wsId == null) return [];
+
+  final data = await supabase
+      .from('sale_items')
+      .select('product_id, product_name, quantity, line_total')
+      .eq('workspace_id', wsId);
+
+  final Map<String, BestSeller> grouped = {};
+  for (final row in data) {
+    final pid = row['product_id'] as String;
+    final qty = (row['quantity'] as num?)?.toDouble() ?? 0;
+    final revenue = (row['line_total'] as num?)?.toDouble() ?? 0;
+
+    if (grouped.containsKey(pid)) {
+      grouped[pid] = BestSeller(
+        productId: pid,
+        productName: row['product_name'] ?? grouped[pid]!.productName,
+        totalQuantity: grouped[pid]!.totalQuantity + qty,
+        totalRevenue: grouped[pid]!.totalRevenue + revenue,
+      );
+    } else {
+      grouped[pid] = BestSeller(
+        productId: pid,
+        productName: row['product_name'] ?? 'Unknown',
+        totalQuantity: qty,
+        totalRevenue: revenue,
+      );
+    }
+  }
+
+  final sorted = grouped.values.toList()
+    ..sort((a, b) => b.totalQuantity.compareTo(a.totalQuantity));
+
+  return sorted.take(5).toList();
+});
+
+class BestSeller {
+  final String productId;
+  final String productName;
+  final double totalQuantity;
+  final double totalRevenue;
+
+  const BestSeller({
+    required this.productId,
+    required this.productName,
+    required this.totalQuantity,
+    required this.totalRevenue,
+  });
+}

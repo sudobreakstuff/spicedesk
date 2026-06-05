@@ -22,6 +22,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
 
   int _selectedReportMonth = DateTime.now().month;
   int _selectedReportYear = DateTime.now().year;
+  bool _invoiceFilter = false;
   List<Map<String, dynamic>> _monthlyTransactions = [];
   bool _loadingMonthly = false;
 
@@ -81,6 +82,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     final profitAsync = ref.watch(profitProvider);
 
     final sales = salesAsync.valueOrNull ?? [];
+    final bestSellersAsync = ref.watch(bestSellersProvider);
     final format = NumberFormat.currency(symbol: 'R ', decimalDigits: 2);
     final compactFormat = NumberFormat.compactCurrency(symbol: 'R ', decimalDigits: 1);
 
@@ -302,12 +304,48 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
           ).animate().fadeIn(delay: 100.ms),
           const SizedBox(height: 36),
           const Text(
-            'Recent Transactions',
+            'Best Sellers',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: SpiceColors.textPrimary,
             ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Top 5 products by units sold',
+            style: TextStyle(fontSize: 13, color: SpiceColors.textSecondary),
+          ),
+          const SizedBox(height: 12),
+          _buildBestSellersList(bestSellersAsync),
+          const SizedBox(height: 36),
+          Row(
+            children: [
+              const Text(
+                'Recent Transactions',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: SpiceColors.textPrimary,
+                ),
+              ),
+              const Spacer(),
+              FilterChip(
+                label: const Text('Invoices Only', style: TextStyle(fontSize: 12)),
+                selected: _invoiceFilter,
+                onSelected: (v) => setState(() => _invoiceFilter = v),
+                backgroundColor: SpiceColors.surfaceAlt,
+                selectedColor: SpiceColors.primary.withAlpha(30),
+                checkmarkColor: SpiceColors.primary,
+                labelStyle: TextStyle(
+                  color: _invoiceFilter ? SpiceColors.primary : SpiceColors.textSecondary,
+                  fontSize: 12,
+                ),
+                side: BorderSide(
+                  color: _invoiceFilter ? SpiceColors.primary : SpiceColors.border,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           _buildTransactionsList(salesAsync, sales, format),
@@ -737,12 +775,155 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     }
   }
 
+  Widget _buildBestSellersList(AsyncValue<List<BestSeller>> bestSellersAsync) {
+    return bestSellersAsync.when(
+      data: (list) {
+        if (list.isEmpty) {
+          return Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: SpiceColors.surfaceAlt,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: SpiceColors.border),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.info_outline, color: SpiceColors.textSecondary, size: 18),
+                SizedBox(width: 8),
+                Text('No sales data yet',
+                    style: TextStyle(color: SpiceColors.textSecondary)),
+              ],
+            ),
+          );
+        }
+
+        final maxQty = list.map((b) => b.totalQuantity).reduce((a, b) => a > b ? a : b);
+        final revenueFormat = NumberFormat.currency(symbol: 'R ', decimalDigits: 2);
+
+        return Container(
+          decoration: BoxDecoration(
+            color: SpiceColors.surfaceAlt,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: SpiceColors.border),
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: List.generate(list.length, (index) {
+              final item = list[index];
+              final fraction = maxQty > 0 ? item.totalQuantity / maxQty : 0.0;
+              final colors = [
+                SpiceColors.primary,
+                SpiceColors.accent,
+                SpiceColors.warning,
+                const Color(0xFF8B5CF6),
+                const Color(0xFFEC4899),
+              ];
+
+              return Padding(
+                padding: EdgeInsets.only(bottom: index < list.length - 1 ? 12 : 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: colors[index % colors.length].withAlpha(25),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Center(
+                            child: Text(
+                              '${index + 1}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: colors[index % colors.length],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            item.productName,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: SpiceColors.textPrimary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Text(
+                          '${item.totalQuantity.toInt()} sold',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: SpiceColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          revenueFormat.format(item.totalRevenue),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: SpiceColors.accent,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(3),
+                      child: LinearProgressIndicator(
+                        value: fraction,
+                        backgroundColor: SpiceColors.border.withAlpha(60),
+                        color: colors[index % colors.length],
+                        minHeight: 6,
+                      ),
+                    ),
+                  ],
+                ),
+              ).animate().fadeIn(delay: (index * 80).ms).slideX(begin: -0.05);
+            }),
+          ),
+        );
+      },
+      loading: () => Container(
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: SpiceColors.surfaceAlt,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: SpiceColors.border),
+        ),
+        child: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (_, __) => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: SpiceColors.surfaceAlt,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: SpiceColors.border),
+        ),
+        child: const Text('Failed to load best sellers',
+            style: TextStyle(color: SpiceColors.textSecondary)),
+      ),
+    );
+  }
+
   Widget _buildTransactionsList(
     AsyncValue<List<SaleTransaction>> salesAsync,
     List<SaleTransaction> sales,
     NumberFormat format,
   ) {
-    final recentTxns = sales.take(20).toList();
+    final recentTxns = (_invoiceFilter
+            ? sales.where((s) => s.invoiceNumber != null && s.invoiceNumber!.isNotEmpty)
+            : sales)
+        .take(20)
+        .toList();
 
     if (salesAsync.isLoading) {
       return Container(

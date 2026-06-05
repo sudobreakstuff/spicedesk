@@ -6,7 +6,11 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/supabase_client.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/domain/auth_state.dart';
+import '../../../customers/data/customers_provider.dart';
+import '../../../inventory/data/inventory_provider.dart';
 import '../../../printing/data/printing_service.dart';
+import '../../../products/data/products_provider.dart';
+import '../../../sales/data/sales_provider.dart';
 import '../../../workspace/domain/workspace_state.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -384,54 +388,116 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   void _showResetAllDataDialog(BuildContext context, String? workspaceId) {
+    bool deleting = false;
+    String? progress;
+
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: SpiceColors.surfaceAlt,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: SpiceColors.danger),
-        ),
-        title: const Text('Reset All Data', style: TextStyle(color: SpiceColors.danger)),
-        content: const Text(
-          'This will permanently delete all sales, products, inventory, and customers for this workspace. This cannot be undone.',
-          style: TextStyle(color: SpiceColors.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: SpiceColors.surfaceAlt,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: SpiceColors.danger),
           ),
-          ElevatedButton(
-            onPressed: () async {
-              if (workspaceId == null) return;
-              try {
-                await supabase.from('stock_movements').delete().eq('workspace_id', workspaceId);
-                await supabase.from('sales_transactions').delete().eq('workspace_id', workspaceId);
-                await supabase.from('inventory').delete().eq('workspace_id', workspaceId);
-                await supabase.from('products').delete().eq('workspace_id', workspaceId);
-                await supabase.from('customers').delete().eq('workspace_id', workspaceId);
-                await supabase.from('quotes').delete().eq('workspace_id', workspaceId);
-                if (ctx.mounted) Navigator.pop(ctx);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content: Text('All data has been reset for this workspace'),
-                    backgroundColor: SpiceColors.accent,
-                  ));
-                }
-              } catch (e) {
-                if (ctx.mounted) {
-                  ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-                    content: Text('Failed to reset data: $e'),
-                    backgroundColor: SpiceColors.danger,
-                  ));
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: SpiceColors.danger),
-            child: const Text('Delete Everything'),
+          title: const Text('Reset All Data', style: TextStyle(color: SpiceColors.danger)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'This will permanently delete all sales, products, inventory, and customers for this workspace. This cannot be undone.',
+                style: TextStyle(color: SpiceColors.textSecondary),
+              ),
+              if (progress != null) ...[
+                const SizedBox(height: 16),
+                LinearProgressIndicator(
+                  backgroundColor: SpiceColors.border,
+                  color: SpiceColors.danger,
+                ),
+                const SizedBox(height: 8),
+                Text(progress!, style: const TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
+              ],
+            ],
           ),
-        ],
+          actions: [
+            TextButton(
+              onPressed: deleting ? null : () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: deleting
+                  ? null
+                  : () async {
+                      if (workspaceId == null) return;
+                      try {
+                        setDialogState(() {
+                          deleting = true;
+                          progress = 'Deleting sale items...';
+                        });
+                        await supabase.from('sale_items').delete().eq('workspace_id', workspaceId);
+
+                        setDialogState(() => progress = 'Deleting quote items...');
+                        await supabase.from('quote_items').delete().eq('workspace_id', workspaceId);
+
+                        setDialogState(() => progress = 'Deleting sales transactions...');
+                        await supabase.from('sales_transactions').delete().eq('workspace_id', workspaceId);
+
+                        setDialogState(() => progress = 'Deleting stock movements...');
+                        await supabase.from('stock_movements').delete().eq('workspace_id', workspaceId);
+
+                        setDialogState(() => progress = 'Deleting quotes...');
+                        await supabase.from('quotes').delete().eq('workspace_id', workspaceId);
+
+                        setDialogState(() => progress = 'Deleting inventory...');
+                        await supabase.from('inventory').delete().eq('workspace_id', workspaceId);
+
+                        setDialogState(() => progress = 'Deleting products...');
+                        await supabase.from('products').delete().eq('workspace_id', workspaceId);
+
+                        setDialogState(() => progress = 'Deleting customers...');
+                        await supabase.from('customers').delete().eq('workspace_id', workspaceId);
+
+                        setDialogState(() => progress = 'Invalidating providers...');
+                        ref.invalidate(productsProvider);
+                        ref.invalidate(inventoryProvider);
+                        ref.invalidate(productsNeedingInventoryProvider);
+                        ref.invalidate(customersProvider);
+                        ref.invalidate(customerCountProvider);
+                        ref.invalidate(salesProvider);
+                        ref.invalidate(todaySalesProvider);
+                        ref.invalidate(dailySalesProvider);
+                        ref.invalidate(weeklySalesProvider);
+                        ref.invalidate(monthlySalesProvider);
+                        ref.invalidate(totalTransactionsProvider);
+                        ref.invalidate(profitProvider);
+                        ref.invalidate(allCustomerSalesProvider);
+                        ref.invalidate(workspacesProvider);
+
+                        if (ctx.mounted) Navigator.pop(ctx);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                            content: Text('All data has been reset for this workspace'),
+                            backgroundColor: SpiceColors.accent,
+                          ));
+                        }
+                      } catch (e) {
+                        if (ctx.mounted) {
+                          ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                            content: Text('Failed to reset data: $e'),
+                            backgroundColor: SpiceColors.danger,
+                          ));
+                          Navigator.pop(ctx);
+                        }
+                      }
+                    },
+              style: ElevatedButton.styleFrom(backgroundColor: SpiceColors.danger),
+              child: deleting
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Text('Delete Everything'),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -38,6 +38,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(workspaceStateProvider);
     final customersAsync = ref.watch(customersProvider);
     final allSalesAsync = ref.watch(allCustomerSalesProvider);
     final customers = customersAsync.valueOrNull ?? [];
@@ -97,6 +98,15 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                   ),
                 ),
                 const SizedBox(width: 12),
+                IconButton(
+                  icon: const Icon(Icons.refresh, size: 20),
+                  tooltip: 'Refresh',
+                  onPressed: () {
+                    ref.invalidate(customersProvider);
+                    ref.invalidate(allCustomerSalesProvider);
+                  },
+                ),
+                const SizedBox(width: 8),
                 ElevatedButton.icon(
                   onPressed: _showAddCustomerDialog,
                   icon: const Icon(Icons.add, size: 18),

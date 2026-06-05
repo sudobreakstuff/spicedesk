@@ -45,7 +45,13 @@ final createSaleAction = Provider<Future<SaleResult> Function({
     ref.invalidate(inventoryProvider);
     ref.invalidate(salesProvider);
     ref.invalidate(todaySalesProvider);
+    ref.invalidate(dailySalesProvider);
+    ref.invalidate(weeklySalesProvider);
+    ref.invalidate(monthlySalesProvider);
+    ref.invalidate(totalTransactionsProvider);
+    ref.invalidate(profitProvider);
     ref.invalidate(customersProvider);
+    ref.invalidate(allCustomerSalesProvider);
     ref.invalidate(productsProvider);
 
     return SaleResult.fromJson(result);

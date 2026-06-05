@@ -88,6 +88,7 @@ final workspaceStateProvider =
 
 final workspacesProvider =
     FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  ref.watch(workspaceStateProvider);
   final user = supabase.auth.currentUser;
   if (user == null) return [];
 
