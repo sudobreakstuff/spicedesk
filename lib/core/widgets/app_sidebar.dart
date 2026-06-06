@@ -48,33 +48,42 @@ class AppSidebar extends ConsumerWidget {
                 ),
                 SizedBox(width: 10),
                 Expanded(
-                  child: Tooltip(
-                    message: workspace.selectedId != null
-                        ? 'Switch workspace'
-                        : 'Select a workspace',
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'SpiceDesk',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: SpiceColors.textPrimary,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-                Text(
-                  workspace.selectedName ?? 'My Store',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: SpiceColors.textSecondary,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
+                  child: PopupMenuButton<String>(
+                    offset: Offset(0, 40),
+                    padding: EdgeInsets.zero,
+                    color: SpiceColors.surfaceAlt,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: SpiceColors.border)),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('SpiceDesk', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary, letterSpacing: -0.3)),
+                        Text(workspace.selectedName ?? 'My Store', style: TextStyle(fontSize: 11, color: SpiceColors.textSecondary), overflow: TextOverflow.ellipsis),
+                      ],
+                    ),
+                    itemBuilder: (_) {
+                      final workspaces = ref.watch(workspacesProvider).valueOrNull ?? [];
+                      return [
+                        PopupMenuItem<String>(enabled: false, height: 24, child: Text('Switch Workspace', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: SpiceColors.textSecondary))),
+                        PopupMenuDivider(height: 4),
+                        ...workspaces.map((ws) => PopupMenuItem<String>(
+                          value: ws['workspace_id'],
+                          child: Row(children: [
+                            Container(width: 28, height: 28, decoration: BoxDecoration(gradient: LinearGradient(colors: [SpiceColors.primary, Color(0xFF818CF8)]), borderRadius: BorderRadius.circular(6)), child: Icon(Icons.store, color: Colors.white, size: 14)),
+                            SizedBox(width: 8),
+                            Expanded(child: Text(ws['name'] ?? '', style: TextStyle(fontSize: 13, color: SpiceColors.textPrimary))),
+                            if (ws['workspace_id'] == workspace.selectedId) Icon(Icons.check, size: 16, color: SpiceColors.accent),
+                          ]),
+                          onTap: () => ref.read(workspaceStateProvider.notifier).selectWorkspace(ws),
+                        )),
+                        PopupMenuDivider(height: 4),
+                        if (workspaces.length < 3)
+                          PopupMenuItem<String>(
+                            child: Row(children: [Icon(Icons.add, size: 16, color: SpiceColors.primary), SizedBox(width: 8), Text('New Workspace', style: TextStyle(fontSize: 13, color: SpiceColors.primary))]),
+                            onTap: () => context.go('/workspace'),
+                          ),
+                      ];
+                    },
                   ),
                 ),
               ],
