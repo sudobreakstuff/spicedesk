@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>The open-source business suite — POS, inventory, CRM, reports, and expenses.</strong>
+  <strong>Business management suite for bakeries, delis, and savoury shops. Built by Shahid Singh.</strong>
 </p>
 
 <p align="center">
@@ -16,15 +16,22 @@
 
 ---
 
-> *"Your data stays yours. We never access or share your business information."*
+> *"Run your shop, not a spreadsheet. Everything you need to sell, track, and grow — in one place."*
 
 ---
 
 ## About
 
-Business management suite for savories shops. Built by Shahid Singh.
+SpiceDesk is an open-source business management suite purpose-built for bakeries, delis, and savoury food shops. Point of sale, inventory, customer management, expenses, and reporting — all connected in real-time via your own Supabase database. No subscriptions. No vendor lock-in. Your data, your control.
+
+Built by Shahid Singh. Made in South Africa.
 
 ## Resources
+
+- [Releases](https://github.com/sudobreakstuff/spicedesk/releases) — Download the latest build
+- [Issues](https://github.com/sudobreakstuff/spicedesk/issues) — Report bugs or request features
+- [Discussions](https://github.com/sudobreakstuff/spicedesk/discussions) — Ask questions
+- [Supabase Dashboard](https://supabase.com/dashboard) — Manage your database
 
 ---
 
