@@ -78,13 +78,13 @@ class SaleResult {
 }
 
 class SaleItemInput {
-  final String productId;
+  final String? productId;
   final String productName;
   final int quantity;
   final double unitPrice;
 
   const SaleItemInput({
-    required this.productId,
+    this.productId,
     required this.productName,
     required this.quantity,
     required this.unitPrice,

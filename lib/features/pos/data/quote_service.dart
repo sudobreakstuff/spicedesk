@@ -57,7 +57,7 @@ final createQuoteAction = Provider<Future<QuoteResult> Function({
       await supabase.from('quote_items').insert({
         'workspace_id': wsId,
         'quote_id': quoteId,
-        'product_id': item.productId.isNotEmpty ? item.productId : null,
+        'product_id': (item.productId != null && item.productId!.isNotEmpty) ? item.productId : null,
         'product_name': item.productName,
         'quantity': item.quantity,
         'unit_price': item.unitPrice,

@@ -108,7 +108,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       // Add delivery fee if applicable
       if (orderType == 'Delivery') {
         saleItems.add(const SaleItemInput(
-          productId: '00000000-0000-0000-0000-000000000000',
           productName: 'Delivery Fee',
           quantity: 1,
           unitPrice: 20.0,

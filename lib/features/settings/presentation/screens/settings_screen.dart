@@ -23,6 +23,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   String _contactNumber = '';
   String _address = '';
   String _receiptHeader = '';
+  String _deliveryCharge = '20.00';
+  String _taxRate = '0';
+  String _invoiceFooter = '';
   @override
   void initState() {
     super.initState();
@@ -44,6 +47,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             _contactNumber = settings['contact_number']?.toString() ?? '';
             _address = settings['address']?.toString() ?? '';
             _receiptHeader = settings['receipt_header']?.toString() ?? '';
+            _deliveryCharge = settings['delivery_charge']?.toString() ?? '20.00';
+            _taxRate = settings['tax_rate']?.toString() ?? '0';
+            _invoiceFooter = settings['invoice_footer']?.toString() ?? '';
           });
         }
       } catch (_) {}
@@ -183,6 +189,47 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ]),
 
           const SizedBox(height: 24),
+
+          _section('POS Settings', [
+            _tile(Icons.local_shipping, 'Delivery Charge', 'R${_deliveryCharge.isEmpty ? '20.00' : _deliveryCharge}',
+                onTap: () {
+                  _showEditDialog(
+                    context,
+                    'Delivery Charge',
+                    _deliveryCharge.isEmpty ? '20.00' : _deliveryCharge,
+                    onSave: (v) async {
+                      setState(() => _deliveryCharge = v);
+                      await _saveSetting('delivery_charge', v.isEmpty ? '20.00' : v);
+                    },
+                  );
+                }),
+            _tile(Icons.percent, 'Tax Rate', '${_taxRate.isEmpty ? '0' : _taxRate}%',
+                onTap: () {
+                  _showEditDialog(
+                    context,
+                    'Tax Rate (%)',
+                    _taxRate.isEmpty ? '0' : _taxRate,
+                    onSave: (v) async {
+                      setState(() => _taxRate = v);
+                      await _saveSetting('tax_rate', v.isEmpty ? '0' : v);
+                    },
+                  );
+                }),
+            _tile(Icons.attach_money, 'Currency', 'R (South African Rand)',
+                onTap: () {}),
+            _tile(Icons.description, 'Invoice Footer', _invoiceFooter.isNotEmpty ? _invoiceFooter : 'Custom footer text for invoices',
+                onTap: () {
+                  _showEditDialog(
+                    context,
+                    'Invoice Footer',
+                    _invoiceFooter,
+                    onSave: (v) async {
+                      setState(() => _invoiceFooter = v);
+                      await _saveSetting('invoice_footer', v);
+                    },
+                  );
+                }),
+          ]),
 
           _section('Account', [
             _tile(Icons.person, 'Profile', user?.email ?? 'Not signed in',

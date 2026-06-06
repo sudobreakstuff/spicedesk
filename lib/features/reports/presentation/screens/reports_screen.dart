@@ -19,6 +19,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   String? _error;
   String? _expandedTxn;
   Map<String, List<Map<String, dynamic>>> _txnItems = {};
+  String _mostActiveCustomer = '';
+  double _averageSpendPerCustomer = 0;
+  String _bestDay = '';
 
   final currency = NumberFormat.currency(symbol: 'R ', decimalDigits: 2);
 
@@ -37,16 +40,19 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     setState(() { _loading = true; _error = null; });
 
     try {
-      final results = await Future.wait([
-        supabase.from('sales_transactions').select('id,transaction_number,grand_total,payment_method,created_at,customers(name),invoices(invoice_number,status)').eq('workspace_id',wsId).order('created_at',ascending:false).limit(500),
-        supabase.from('expenses').select('id,description,category,amount,expense_date').eq('workspace_id',wsId).order('created_at',ascending:false).limit(200),
-        supabase.from('sale_items').select('product_name,quantity').eq('workspace_id',wsId).limit(500),
-      ]);
+      final salesQuery = supabase.from('sales_transactions').select('id,transaction_number,grand_total,payment_method,created_at,customers(name),invoices(invoice_number,status)').eq('workspace_id',wsId).order('created_at',ascending:false).limit(500);
+      final expensesQuery = supabase.from('expenses').select('id,description,category,amount,expense_date').eq('workspace_id',wsId).order('created_at',ascending:false).limit(200);
+      final itemsQuery = supabase.from('sale_items').select('product_name,quantity').eq('workspace_id',wsId).limit(500);
+      final analyticsSales = supabase.from('sales_transactions').select('id,customer_id,created_at,grand_total').eq('workspace_id',wsId).limit(2000);
+      final customersQuery = supabase.from('customers').select('id,name').eq('workspace_id',wsId).limit(2000);
+
+      final results = await Future.wait([salesQuery, expensesQuery, itemsQuery, analyticsSales, customersQuery]);
       if (mounted) {
         setState(() {
           _sales = results[0].cast<Map<String, dynamic>>();
           _expenses = results[1].cast<Map<String, dynamic>>();
           _topProducts = _aggregateProducts(results[2].cast<Map<String, dynamic>>());
+          _computeAnalytics(results[3].cast<Map<String, dynamic>>(), results[4].cast<Map<String, dynamic>>());
           _loading = false;
         });
       }
@@ -64,6 +70,55 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     final list = totals.entries.map((e) => <String, dynamic>{'name': e.key, 'total': e.value}).toList();
     list.sort((a, b) => (b['total'] as double).compareTo(a['total'] as double));
     return list;
+  }
+
+  void _computeAnalytics(List<Map<String, dynamic>> allSales, List<Map<String, dynamic>> allCustomers) {
+    final customerMap = <String, String>{};
+    for (final c in allCustomers) {
+      customerMap[c['id']] = c['name'] as String? ?? 'Unknown';
+    }
+
+    final customerCounts = <String, int>{};
+    double totalRev = 0;
+    final dayCounts = <int, int>{0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0};
+    const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+    for (final s in allSales) {
+      final cid = s['customer_id'] as String?;
+      if (cid != null && cid.isNotEmpty) {
+        customerCounts[cid] = (customerCounts[cid] ?? 0) + 1;
+      }
+      totalRev += (s['grand_total'] as num?)?.toDouble() ?? 0;
+      final dt = DateTime.tryParse(s['created_at'] ?? '');
+      if (dt != null) {
+        dayCounts[dt.weekday - 1] = (dayCounts[dt.weekday - 1] ?? 0) + 1;
+      }
+    }
+
+    String topCustName = '';
+    int topCustCount = 0;
+    for (final entry in customerCounts.entries) {
+      if (entry.value > topCustCount) {
+        topCustCount = entry.value;
+        topCustName = customerMap[entry.key] ?? 'Unknown';
+      }
+    }
+
+    final uniqueCustomers = customerCounts.keys.length;
+    final avgSpend = uniqueCustomers > 0 ? totalRev / uniqueCustomers : 0.0;
+
+    String bestDayName = 'N/A';
+    int bestDayCount = 0;
+    for (final entry in dayCounts.entries) {
+      if (entry.value > bestDayCount) {
+        bestDayCount = entry.value;
+        bestDayName = dayNames[entry.key];
+      }
+    }
+
+    _mostActiveCustomer = topCustName.isNotEmpty ? '$topCustName ($topCustCount)' : 'N/A';
+    _averageSpendPerCustomer = avgSpend;
+    _bestDay = '$bestDayName ($bestDayCount)';
   }
 
   double get _revenue => _sales.fold(0, (s, t) => s + ((t['grand_total'] as num?)?.toDouble() ?? 0));
@@ -114,6 +169,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                 _card('Expenses', currency.format(_costs), SpiceColors.danger, Icons.money_off),
                 _card('Profit', currency.format(_revenue - _costs), (_revenue - _costs) >= 0 ? SpiceColors.accent : SpiceColors.danger, Icons.account_balance),
                 _card('Transactions', '${_sales.length}', SpiceColors.primary, Icons.receipt_long),
+              ]),
+              const SizedBox(height: 24),
+              Wrap(spacing: 16, runSpacing: 16, children: [
+                _card('Most Active Customer', _mostActiveCustomer, SpiceColors.primary, Icons.person),
+                _card('Avg Spend / Customer', currency.format(_averageSpendPerCustomer), SpiceColors.accent, Icons.shopping_cart),
+                _card('Best Day', _bestDay, SpiceColors.primary, Icons.calendar_today),
               ]),
               const SizedBox(height: 36),
               // Top products
@@ -287,6 +348,17 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
             ]),
           ),
           actions: [
+            TextButton(
+              onPressed: () {
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  const SnackBar(
+                    content: Text('Invoice can be printed from this dialog'),
+                    backgroundColor: SpiceColors.accent,
+                  ),
+                );
+              },
+              child: const Text('Print/Save'),
+            ),
             TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
           ],
         ),
