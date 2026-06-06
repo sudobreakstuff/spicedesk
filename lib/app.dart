@@ -11,7 +11,6 @@ class SpiceDeskApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
-    final theme = ref.watch(appThemeProvider);
 
     return MaterialApp.router(
       theme: appTheme,

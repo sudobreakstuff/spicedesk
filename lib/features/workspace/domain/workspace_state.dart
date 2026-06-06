@@ -87,6 +87,26 @@ class WorkspaceNotifier extends StateNotifier<WorkspaceState> {
     state = WorkspaceState(selectedId: state.selectedId, selectedName: name);
   }
 
+  Future<void> renameWorkspace(String wsId, String newName) async {
+    await supabase.from('workspaces').update({'name': newName}).eq('id', wsId);
+    if (state.selectedId == wsId) {
+      await prefs.setString('workspace_name', newName);
+      state = WorkspaceState(selectedId: wsId, selectedName: newName);
+    }
+  }
+
+  Future<void> deleteWorkspace(String wsId) async {
+    // Delete member and workspace
+    await supabase.from('workspace_members').delete().eq('workspace_id', wsId);
+    await supabase.from('workspaces').delete().eq('id', wsId);
+    if (state.selectedId == wsId) {
+      await prefs.remove('workspace_id');
+      await prefs.remove('workspace_name');
+      state = WorkspaceState.initial();
+      _autoSelectFirst();
+    }
+  }
+
   Future<void> joinWorkspace(String inviteCode) async {
     final user = supabase.auth.currentUser;
     if (user == null) return;

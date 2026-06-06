@@ -81,6 +81,48 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     ref.invalidate(todaySalesProvider);
   }
 
+  Future<void> _showRenameDialog(String wsId, String currentName) async {
+    final ctrl = TextEditingController(text: currentName);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: SpiceColors.surfaceAlt,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: SpiceColors.border)),
+        title: Text('Rename Workspace', style: TextStyle(color: SpiceColors.textPrimary)),
+        content: TextField(controller: ctrl, autofocus: true),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel')),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, ctrl.text), child: Text('Save')),
+        ],
+      ),
+    );
+    if (result != null && result.isNotEmpty && result != currentName) {
+      await ref.read(workspaceStateProvider.notifier).renameWorkspace(wsId, result);
+      _invalidateWorkspaceProviders();
+    }
+  }
+
+  Future<void> _showDeleteDialog(String wsId, String name) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: SpiceColors.surfaceAlt,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: SpiceColors.border)),
+        title: Text('Delete "$name"?', style: TextStyle(color: SpiceColors.textPrimary)),
+        content: Text('This will permanently delete the workspace and all its data. This cannot be undone.', style: TextStyle(color: SpiceColors.textSecondary)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancel')),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: Text('Delete'), style: ElevatedButton.styleFrom(backgroundColor: SpiceColors.danger)),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await ref.read(workspaceStateProvider.notifier).deleteWorkspace(wsId);
+      _invalidateWorkspaceProviders();
+      ref.invalidate(workspacesProvider);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final workspaces = ref.watch(workspacesProvider);
@@ -149,46 +191,42 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                         final ws = list[index];
                         return Material(
                           color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () => _handleSelectWorkspace(ws),
-                            borderRadius: BorderRadius.circular(16),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: SpiceColors.surfaceAlt,
-                                borderRadius: BorderRadius.circular(16),
-                                border:
-                                    Border.all(color: SpiceColors.border),
-                              ),
-                              child: ListTile(
-                                leading: Container(
-                                  width: 44,
-                                  height: 44,
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        SpiceColors.primary,
-                                        Color(0xFF818CF8)
-                                      ],
-                                    ),
-                                    borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: SpiceColors.surfaceAlt,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: SpiceColors.border),
+                            ),
+                            child: ListTile(
+                              onTap: () => _handleSelectWorkspace(ws),
+                              leading: Container(
+                                width: 44, height: 44,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [SpiceColors.primary, Color(0xFF818CF8)],
                                   ),
-                                  child: Icon(Icons.store,
-                                      color: Colors.white, size: 22),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                                title: Text(
-                                  ws['name'] ?? '',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium,
-                                ),
-                                subtitle: Text(
-                                  ws['role'] ?? 'member',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .labelMedium,
-                                ),
-                                trailing: Icon(Icons.arrow_forward_ios,
-                                    size: 16),
+                                child: Icon(Icons.store, color: Colors.white, size: 22),
+                              ),
+                              title: Text(ws['name'] ?? '', style: Theme.of(context).textTheme.titleMedium),
+                              subtitle: Text(ws['role'] ?? 'member', style: Theme.of(context).textTheme.labelMedium),
+                              trailing: PopupMenuButton<String>(
+                                icon: Icon(Icons.more_vert, color: SpiceColors.textSecondary),
+                                color: SpiceColors.surfaceAlt,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: SpiceColors.border)),
+                                onSelected: (action) async {
+                                  final wsId = ws['workspace_id'] as String;
+                                  if (action == 'edit') {
+                                    _showRenameDialog(wsId, ws['name'] ?? '');
+                                  } else if (action == 'delete') {
+                                    _showDeleteDialog(wsId, ws['name'] ?? '');
+                                  }
+                                },
+                                itemBuilder: (_) => [
+                                  PopupMenuItem(value: 'edit', child: Row(children: [Icon(Icons.edit, size: 16, color: SpiceColors.primary), SizedBox(width: 8), Text('Rename', style: TextStyle(color: SpiceColors.primary))])),
+                                  PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete, size: 16, color: SpiceColors.danger), SizedBox(width: 8), Text('Delete', style: TextStyle(color: SpiceColors.danger))])),
+                                ],
                               ),
                             ),
                           ),

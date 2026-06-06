@@ -82,6 +82,11 @@ class AppSidebar extends ConsumerWidget {
                             child: Row(children: [Icon(Icons.add, size: 16, color: SpiceColors.primary), SizedBox(width: 8), Text('New Workspace', style: TextStyle(fontSize: 13, color: SpiceColors.primary))]),
                             onTap: () => context.go('/workspace'),
                           ),
+                        PopupMenuDivider(height: 4),
+                        PopupMenuItem<String>(
+                          child: Row(children: [Icon(Icons.settings, size: 16, color: SpiceColors.textSecondary), SizedBox(width: 8), Text('Manage Workspaces', style: TextStyle(fontSize: 13, color: SpiceColors.textSecondary))]),
+                          onTap: () => context.go('/workspace'),
+                        ),
                       ];
                     },
                   ),
