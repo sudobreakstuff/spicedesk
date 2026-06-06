@@ -23,9 +23,33 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   String _contactNumber = '';
   String _address = '';
   String _receiptHeader = '';
-  String _deliveryCharge = '20.00';
-  String _taxRate = '0';
-  String _invoiceFooter = '';
+  Map<String, dynamic> _settings = {};
+
+  String _getSetting(String key, String fallback) {
+    final val = _settings[key];
+    return val?.toString() ?? fallback;
+  }
+
+  Future<void> _editSetting(String key, String title, String current) async {
+    final ctrl = TextEditingController(text: _getSetting(key, current));
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: SpiceColors.surfaceAlt,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: SpiceColors.border)),
+        title: Text(title),
+        content: TextField(controller: ctrl, autofocus: true),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, ctrl.text), child: const Text('Save')),
+        ],
+      ),
+    );
+    if (result != null) {
+      await _saveSetting(key, result);
+      setState(() => _settings[key] = result);
+    }
+  }
   @override
   void initState() {
     super.initState();
@@ -33,28 +57,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _loadSettings() async {
-    final ws = ref.read(workspaceStateProvider);
-    if (ws.selectedId != null) {
-      try {
-        final data = await supabase
-            .from('workspaces')
-            .select('settings')
-            .eq('id', ws.selectedId!)
-            .maybeSingle();
-        if (data != null && data['settings'] != null) {
-          final settings = data['settings'] as Map<String, dynamic>;
-          setState(() {
-            _contactNumber = settings['contact_number']?.toString() ?? '';
-            _address = settings['address']?.toString() ?? '';
-            _receiptHeader = settings['receipt_header']?.toString() ?? '';
-            _deliveryCharge = settings['delivery_charge']?.toString() ?? '20.00';
-            _taxRate = settings['tax_rate']?.toString() ?? '0';
-            _invoiceFooter = settings['invoice_footer']?.toString() ?? '';
-          });
-        }
-      } catch (_) {}
-    }
-    if (mounted) setState(() {});
+    final wsId = ref.read(workspaceStateProvider).selectedId;
+    if (wsId == null) return;
+    final data = await supabase.from('workspaces').select('settings').eq('id', wsId).maybeSingle();
+    final settings = (data?['settings'] as Map<String, dynamic>?) ?? {};
+    if (mounted) setState(() => _settings = settings);
   }
 
   Future<void> _saveSetting(String key, String value) async {
@@ -191,44 +198,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 24),
 
           _section('POS Settings', [
-            _tile(Icons.local_shipping, 'Delivery Charge', 'R${_deliveryCharge.isEmpty ? '20.00' : _deliveryCharge}',
-                onTap: () {
-                  _showEditDialog(
-                    context,
-                    'Delivery Charge',
-                    _deliveryCharge.isEmpty ? '20.00' : _deliveryCharge,
-                    onSave: (v) async {
-                      setState(() => _deliveryCharge = v);
-                      await _saveSetting('delivery_charge', v.isEmpty ? '20.00' : v);
-                    },
-                  );
-                }),
-            _tile(Icons.percent, 'Tax Rate', '${_taxRate.isEmpty ? '0' : _taxRate}%',
-                onTap: () {
-                  _showEditDialog(
-                    context,
-                    'Tax Rate (%)',
-                    _taxRate.isEmpty ? '0' : _taxRate,
-                    onSave: (v) async {
-                      setState(() => _taxRate = v);
-                      await _saveSetting('tax_rate', v.isEmpty ? '0' : v);
-                    },
-                  );
-                }),
-            _tile(Icons.attach_money, 'Currency', 'R (South African Rand)',
-                onTap: () {}),
-            _tile(Icons.description, 'Invoice Footer', _invoiceFooter.isNotEmpty ? _invoiceFooter : 'Custom footer text for invoices',
-                onTap: () {
-                  _showEditDialog(
-                    context,
-                    'Invoice Footer',
-                    _invoiceFooter,
-                    onSave: (v) async {
-                      setState(() => _invoiceFooter = v);
-                      await _saveSetting('invoice_footer', v);
-                    },
-                  );
-                }),
+            _tile(Icons.local_shipping, 'Delivery Charge', 'R${_getSetting('delivery_charge', '20.00')}',
+                onTap: () => _editSetting('delivery_charge', 'Delivery Charge (R)', '20.00')),
+            _tile(Icons.percent, 'Tax Rate', '${_getSetting('tax_rate', '0')}%',
+                onTap: () => _editSetting('tax_rate', 'Tax Rate (%)', '0')),
+            _tile(Icons.receipt_long, 'Invoice Footer', _getSetting('invoice_footer', 'Thank you for your business'),
+                onTap: () => _editSetting('invoice_footer', 'Invoice Footer', 'Thank you for your business')),
+          ]),
+          const SizedBox(height: 20),
+          _section('Invoice Settings', [
+            _tile(Icons.business, 'Company Name', _getSetting('company_name', 'SpiceDesk'),
+                onTap: () => _editSetting('company_name', 'Company Name', 'SpiceDesk')),
+            _tile(Icons.location_on, 'Address', _getSetting('company_address', ''),
+                onTap: () => _editSetting('company_address', 'Company Address', '')),
+            _tile(Icons.phone, 'Phone', _getSetting('company_phone', ''),
+                onTap: () => _editSetting('company_phone', 'Company Phone', '')),
+            _tile(Icons.email, 'Email', _getSetting('company_email', ''),
+                onTap: () => _editSetting('company_email', 'Company Email', '')),
+            _tile(Icons.tag, 'Invoice Prefix', _getSetting('invoice_prefix', 'INV-'),
+                onTap: () => _editSetting('invoice_prefix', 'Invoice Prefix', 'INV-')),
+            _tile(Icons.article, 'Terms & Conditions', _getSetting('invoice_terms', 'Payment due within 30 days'),
+                onTap: () => _editSetting('invoice_terms', 'Terms & Conditions', 'Payment due within 30 days')),
           ]),
 
           _section('Account', [

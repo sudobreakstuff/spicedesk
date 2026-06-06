@@ -31,7 +31,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   Future<double> get _getDeliveryCharge async {
     try {
       final settings = await ref.read(workspaceSettingsProvider.future);
-      return (settings['delivery_charge'] as num?)?.toDouble() ?? 20.0;
+      final val = settings['delivery_charge'];
+      if (val is num) return val.toDouble();
+      if (val is String) return double.tryParse(val) ?? 20.0;
+      return 20.0;
     } catch (_) {
       return 20.0;
     }
@@ -120,7 +123,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       // Add delivery fee if applicable, read from settings
       if (orderType == 'Delivery') {
         final settings = await ref.read(workspaceSettingsProvider.future);
-        final deliveryCharge = (settings['delivery_charge'] as num?)?.toDouble() ?? 20.0;
+        final val = settings['delivery_charge'];
+        final deliveryCharge = val is num ? val.toDouble() : (val is String ? double.tryParse(val) ?? 20.0 : 20.0);
         saleItems.add(SaleItemInput(
           productName: 'Delivery Fee',
           quantity: 1,
