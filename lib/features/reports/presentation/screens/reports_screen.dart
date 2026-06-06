@@ -38,7 +38,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
 
     try {
       final results = await Future.wait([
-        supabase.from('sales_transactions').select('id,transaction_number,invoice_number,grand_total,payment_method,created_at,customers(name)').eq('workspace_id',wsId).order('created_at',ascending:false).limit(500),
+        supabase.from('sales_transactions').select('id,transaction_number,grand_total,payment_method,created_at,customers(name),invoices(invoice_number)').eq('workspace_id',wsId).order('created_at',ascending:false).limit(500),
         supabase.from('expenses').select('id,description,category,amount,expense_date').eq('workspace_id',wsId).order('created_at',ascending:false).limit(200),
         supabase.from('sale_items').select('product_name,quantity').eq('workspace_id',wsId).limit(500),
       ]);
@@ -179,6 +179,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                        final total = (s['grand_total'] as num?)?.toDouble() ?? 0;
                        final isExpanded = _expandedTxn == txnId;
                        final items = _txnItems[txnId] ?? [];
+                       final invoices = s['invoices'] as List<dynamic>?;
+                       final invoiceNum = invoices != null && invoices.isNotEmpty ? (invoices[0] as Map<String, dynamic>)['invoice_number'] as String? : null;
                        return [
                          GestureDetector(
                            onTap: () => _toggleExpand(txnId),
@@ -201,12 +203,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                              padding: const EdgeInsets.fromLTRB(40, 4, 16, 10),
                              decoration: BoxDecoration(color: SpiceColors.surfaceAlt.withAlpha(40), border: const Border(top: BorderSide(color: SpiceColors.border))),
                               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                if (s['invoice_number'] != null && (s['invoice_number'] as String).isNotEmpty)
+                                if (invoiceNum != null && invoiceNum.isNotEmpty)
                                   Padding(
                                     padding: const EdgeInsets.only(bottom: 6),
                                     child: Row(children: [
                                       const Text('Invoice: ', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.textSecondary)),
-                                      Text(s['invoice_number'] as String, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.primary)),
+                                      Text(invoiceNum!, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.primary)),
                                     ]),
                                   ),
                                 if (items.isEmpty)
