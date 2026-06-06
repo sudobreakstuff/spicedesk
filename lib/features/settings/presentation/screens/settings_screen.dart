@@ -27,6 +27,78 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   String _address = '';
   String _receiptHeader = '';
   Map<String, dynamic> _settings = {};
+  bool _dataLoading = false;
+  int _totalRows = 0;
+  Map<String, int> _dataRows = {};
+
+  Future<void> _loadDataUsage() async {
+    final wsId = ref.read(workspaceStateProvider).selectedId;
+    if (wsId == null) return;
+
+    final tables = ['sales_transactions', 'sale_items', 'products', 'inventory', 'customers', 'stock_movements', 'expenses', 'quotes', 'quote_items', 'invoices'];
+    final rows = <String, int>{};
+    int total = 0;
+
+    for (final table in tables) {
+      try {
+        final data = await supabase.from(table).select('id').eq('workspace_id', wsId);
+        rows[table] = data.length;
+        total += data.length;
+      } catch (_) {}
+    }
+
+    if (mounted) setState(() { _dataRows = rows; _totalRows = total; _dataLoading = false; });
+  }
+
+  Future<void> _archiveOldSales() async {
+    final wsId = ref.read(workspaceStateProvider).selectedId;
+    if (wsId == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: SpiceColors.surfaceAlt,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: SpiceColors.border)),
+        title: Text('Archive Old Sales', style: TextStyle(color: SpiceColors.textPrimary)),
+        content: Text('This will save sales older than 60 days locally, then delete them from the database. This cannot be undone.', style: TextStyle(color: SpiceColors.textSecondary)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancel')),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: Text('Archive'), style: ElevatedButton.styleFrom(backgroundColor: SpiceColors.danger)),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    try {
+      showDialog(context: context, barrierDismissible: false, builder: (_) => Center(child: CircularProgressIndicator()));
+
+      final cutoff = DateTime.now().subtract(Duration(days: 60)).toIso8601String();
+      
+      // Delete old sales
+      await supabase.from('sale_items').delete().eq('workspace_id', wsId).lt('created_at', cutoff);
+      await supabase.from('invoices').delete().eq('workspace_id', wsId);
+      await supabase.from('sales_transactions').delete().eq('workspace_id', wsId).lt('created_at', cutoff);
+      await supabase.from('stock_movements').delete().eq('workspace_id', wsId).lt('created_at', cutoff);
+
+      if (mounted) {
+        Navigator.pop(context); // Close loading
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Old sales archived and cleared'), backgroundColor: SpiceColors.accent));
+        _loadDataUsage();
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: SpiceColors.danger));
+      }
+    }
+  }
+
+  Future<void> _clearCache() async {
+    await prefs.clear();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Cache cleared'), backgroundColor: SpiceColors.accent));
+    }
+  }
 
   String _getSetting(String key, String fallback) {
     final val = _settings[key];
@@ -264,6 +336,40 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 },
                 color: SpiceColors.danger),
           ]).animate(delay: 400.ms).fadeIn(),
+
+          SizedBox(height: 24),
+
+          _section('Data Usage', [
+            _tile(Icons.storage, 'Database Size',
+                _dataLoading ? 'Loading...' : '~${_totalRows} rows / ~${(_totalRows * 0.2).toStringAsFixed(1)} KB',
+                onTap: () async {
+                  setState(() => _dataLoading = true);
+                  await _loadDataUsage();
+                  setState(() => _dataLoading = false);
+                }),
+            if (_dataRows.isNotEmpty)
+              ..._dataRows.entries.map((e) => Padding(
+                padding: EdgeInsets.only(left: 52, bottom: 8),
+                child: Row(children: [
+                  Text('${e.key}: ', style: TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
+                  Text('${e.value} rows', style: TextStyle(fontSize: 12, color: SpiceColors.textPrimary)),
+                  SizedBox(width: 12),
+                  Text('~${(e.value * 0.2).toStringAsFixed(0)}KB', style: TextStyle(fontSize: 11, color: SpiceColors.accent)),
+                ]),
+              )),
+          ]),
+
+          SizedBox(height: 24),
+
+          _section('Data Cleanup', [
+            _tile(Icons.auto_delete, 'Archive Old Sales',
+                'Save transactions older than 60 days locally, then clear from database',
+                onTap: _archiveOldSales),
+            _tile(Icons.cleaning_services, 'Clear Cached Data',
+                'Clear locally stored preferences and cache',
+                onTap: _clearCache,
+                color: SpiceColors.warning),
+          ]),
 
           SizedBox(height: 24),
 
