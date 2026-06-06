@@ -20,15 +20,11 @@
 
 ---
 
-## Our Mission
+## About
 
-**Every small business deserves powerful tools without the price tag.**
+Business management suite for savories shops. Built by Shahid Singh.
 
-Most POS and business management software is expensive, locked behind subscriptions, and stores your data on servers you don't control. SpiceDesk is different.
-
-We built SpiceDesk so businesses like your mum's store can have a professional POS, inventory tracking, customer management, and reporting — completely open source, with your data in your own Supabase database that only you control.
-
-Built with Flutter + Supabase. MIT licensed. Free forever.
+## Resources
 
 ---
 
