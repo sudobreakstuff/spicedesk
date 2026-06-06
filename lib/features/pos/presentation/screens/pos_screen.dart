@@ -29,8 +29,12 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   String _searchQuery = '';
 
   Future<double> get _getDeliveryCharge async {
-    final settings = await ref.read(workspaceSettingsProvider.future);
-    return (settings['delivery_charge'] as num?)?.toDouble() ?? 20.0;
+    try {
+      final settings = await ref.read(workspaceSettingsProvider.future);
+      return (settings['delivery_charge'] as num?)?.toDouble() ?? 20.0;
+    } catch (_) {
+      return 20.0;
+    }
   }
 
   double get _total => _cart.fold(0.0, (sum, i) => sum + (i.unitPrice * i.quantity));
