@@ -276,6 +276,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           SizedBox(height: 24),
 
           _section('Workspace', [
+            _tile(Icons.web_stories, 'Manage Workspaces', 'Rename, delete, or switch workspaces',
+                onTap: () => context.go('/workspace')),
             _tile(Icons.group, 'Members', 'Manage team access',
                 onTap: () => _showComingSoon(context)),
             _tile(Icons.link, 'Invite Code', 'Share to invite members',
