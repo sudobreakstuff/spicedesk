@@ -17,6 +17,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   List<Map<String, dynamic>> _topProducts = [];
   bool _loading = true;
   String? _error;
+  String? _expandedTxn;
+  Map<String, List<Map<String, dynamic>>> _txnItems = {};
 
   final currency = NumberFormat.currency(symbol: 'R ', decimalDigits: 2);
 
@@ -66,6 +68,16 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
 
   double get _revenue => _sales.fold(0, (s, t) => s + ((t['grand_total'] as num?)?.toDouble() ?? 0));
   double get _costs => _expenses.fold(0, (s, e) => s + ((e['amount'] as num?)?.toDouble() ?? 0));
+
+  Future<void> _toggleExpand(String txnId) async {
+    if (_expandedTxn == txnId) { setState(() => _expandedTxn = null); return; }
+    setState(() => _expandedTxn = txnId);
+    if (!_txnItems.containsKey(txnId)) {
+      final wsId = ref.read(workspaceStateProvider).selectedId;
+      final items = await supabase.from('sale_items').select('product_name,quantity,unit_price,line_total').eq('transaction_id',txnId).eq('workspace_id',wsId??'');
+      if (mounted) setState(() => _txnItems[txnId] = items.cast<Map<String,dynamic>>());
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -159,23 +171,50 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                         Expanded(flex: 1, child: Text('Total', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: SpiceColors.textSecondary))),
                       ]),
                     ),
-                    ..._sales.asMap().entries.map((e) {
-                      final s = e.value;
-                      final cust = s['customers'] as Map<String, dynamic>?;
-                      final dt = DateTime.tryParse(s['created_at'] ?? '') ?? DateTime.now();
-                      final total = (s['grand_total'] as num?)?.toDouble() ?? 0;
-                      return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        decoration: BoxDecoration(color: e.key % 2 == 0 ? SpiceColors.surfaceAlt.withAlpha(60) : Colors.transparent, border: const Border(top: BorderSide(color: SpiceColors.border))),
-                        child: Row(children: [
-                          Expanded(flex: 3, child: Text(DateFormat('dd/MM/yy HH:mm').format(dt), style: const TextStyle(fontSize: 12, color: SpiceColors.textSecondary))),
-                          Expanded(flex: 2, child: Text(s['transaction_number'] ?? '', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: SpiceColors.textPrimary))),
-                          Expanded(flex: 2, child: Text(cust?['name'] ?? 'Walk-in', style: const TextStyle(fontSize: 12, color: SpiceColors.textSecondary))),
-                          Expanded(flex: 1, child: Text((s['payment_method']??'').toString().substring(0,4), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: SpiceColors.accent))),
-                          Expanded(flex: 1, child: Text(currency.format(total), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.accent))),
-                        ]),
-                      );
-                    }),
+                     ..._sales.asMap().entries.expand((e) {
+                       final s = e.value;
+                       final txnId = s['id'] as String? ?? '';
+                       final cust = s['customers'] as Map<String, dynamic>?;
+                       final dt = DateTime.tryParse(s['created_at'] ?? '') ?? DateTime.now();
+                       final total = (s['grand_total'] as num?)?.toDouble() ?? 0;
+                       final isExpanded = _expandedTxn == txnId;
+                       final items = _txnItems[txnId] ?? [];
+                       return [
+                         GestureDetector(
+                           onTap: () => _toggleExpand(txnId),
+                           child: Container(
+                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                             decoration: BoxDecoration(color: e.key % 2 == 0 ? SpiceColors.surfaceAlt.withAlpha(60) : Colors.transparent, border: const Border(top: BorderSide(color: SpiceColors.border))),
+                             child: Row(children: [
+                               Expanded(flex: 3, child: Text(DateFormat('dd/MM/yy HH:mm').format(dt), style: const TextStyle(fontSize: 12, color: SpiceColors.textSecondary))),
+                               Expanded(flex: 2, child: Text(s['transaction_number'] ?? '', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: SpiceColors.primary))),
+                               Expanded(flex: 2, child: Text(cust?['name'] ?? 'Walk-in', style: const TextStyle(fontSize: 12, color: SpiceColors.textSecondary))),
+                               Expanded(flex: 1, child: Text((s['payment_method']??'').toString().substring(0,4), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: SpiceColors.accent))),
+                               Expanded(flex: 1, child: Text(currency.format(total), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.accent))),
+                               const SizedBox(width: 4),
+                               Icon(isExpanded ? Icons.expand_less : Icons.expand_more, size: 16, color: SpiceColors.textSecondary),
+                             ]),
+                           ),
+                         ),
+                         if (isExpanded)
+                           Container(
+                             padding: const EdgeInsets.fromLTRB(40, 4, 16, 10),
+                             decoration: BoxDecoration(color: SpiceColors.surfaceAlt.withAlpha(40), border: const Border(top: BorderSide(color: SpiceColors.border))),
+                             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                               if (items.isEmpty)
+                                 const Padding(padding: EdgeInsets.all(12), child: SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)))
+                               else
+                                 ...items.map((item) => Padding(
+                                   padding: const EdgeInsets.only(bottom: 4),
+                                   child: Row(children: [
+                                     Expanded(child: Text('${(item['quantity'] as num?)?.toInt() ?? 0}x ${item['product_name'] ?? ''}', style: const TextStyle(fontSize: 12, color: SpiceColors.textPrimary))),
+                                     Text(currency.format((item['line_total'] as num?)?.toDouble() ?? 0), style: const TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
+                                   ]),
+                                 )),
+                             ]),
+                           ),
+                       ];
+                     }),
                   ]),
                 ),
             ],

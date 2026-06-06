@@ -36,6 +36,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           item.productName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           item.sku.toLowerCase().contains(_searchQuery.toLowerCase());
       final matchesFilter = _filter == 'all' ||
+          (_filter == 'finished' && item.productType == 'finished') ||
+          (_filter == 'raw' && item.productType == 'raw_material') ||
           (_filter == 'low' && item.quantityOnHand <= item.reorderPoint && item.quantityOnHand > 0) ||
           (_filter == 'out' && item.quantityOnHand == 0);
       return matchesSearch && matchesFilter;
@@ -84,6 +86,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             child: Row(
               children: [
                 _filterChip('All', 'all'),
+                _filterChip('Finished', 'finished'),
+                _filterChip('Raw Materials', 'raw'),
                 _filterChip('Low Stock', 'low'),
                 _filterChip('Out of Stock', 'out'),
               ],
