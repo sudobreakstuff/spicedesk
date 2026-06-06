@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -365,95 +364,91 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   }
 
   Future<void> _printInvoice(Map<String, dynamic> invoice, Map<String, dynamic> sale, Map<String, dynamic>? cust, DateTime dt, double total, List<Map<String, dynamic>> items) async {
-    final wsId = ref.read(workspaceStateProvider).selectedId;
-    Map<String, dynamic> settings = {};
-    if (wsId != null) {
-      final data = await supabase.from('workspaces').select('settings').eq('id', wsId).maybeSingle();
-      settings = (data?['settings'] as Map<String, dynamic>?) ?? {};
-    }
+    try {
+      final wsId = ref.read(workspaceStateProvider).selectedId;
+      Map<String, dynamic> settings = {};
+      if (wsId != null) {
+        final data = await supabase.from('workspaces').select('settings').eq('id', wsId).maybeSingle();
+        settings = (data?['settings'] as Map<String, dynamic>?) ?? {};
+      }
 
-    final companyName = settings['company_name']?.toString() ?? 'SpiceDesk';
-    final companyAddress = settings['company_address']?.toString();
-    final companyPhone = settings['company_phone']?.toString();
-    final companyEmail = settings['company_email']?.toString();
-    final taxNumber = settings['tax_number']?.toString();
-    final bankName = settings['bank_name']?.toString();
-    final accountHolder = settings['account_holder']?.toString();
-    final accountNumber = settings['account_number']?.toString();
-    final invoicePrefix = settings['invoice_prefix']?.toString() ?? 'INV-';
-    final invoiceTerms = settings['invoice_terms']?.toString() ?? 'Payment due within 30 days';
-    final companyLogo = settings['company_logo']?.toString();
+      final companyName = settings['company_name']?.toString() ?? 'SpiceDesk';
+      final companyAddress = settings['company_address']?.toString();
+      final companyPhone = settings['company_phone']?.toString();
+      final companyEmail = settings['company_email']?.toString();
+      final taxNumber = settings['tax_number']?.toString();
+      final bankName = settings['bank_name']?.toString();
+      final accountHolder = settings['account_holder']?.toString();
+      final accountNumber = settings['account_number']?.toString();
+      final invoicePrefix = settings['invoice_prefix']?.toString() ?? 'INV-';
+      final invoiceTerms = settings['invoice_terms']?.toString() ?? 'Payment due within 30 days';
 
-    final doc = pw.Document();
-    final invNum = invoice['invoice_number'] ?? sale['transaction_number'] ?? '';
-    
-    doc.addPage(pw.MultiPage(
-      pageFormat: PdfPageFormat.a4,
-      margin: pw.EdgeInsets.all(40),
-      header: (context) => pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
-        if (companyLogo != null && companyLogo.isNotEmpty)
-          pw.Container(width: 100, height: 60, child: pw.Image(pw.MemoryImage(base64Decode(companyLogo.split(',').last))))
-        else
-          pw.Text(companyName, style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
-      ]),
-      build: (context) => [
-        pw.SizedBox(height: 16),
-        pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
-          pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-            if (companyLogo == null || companyLogo.isEmpty)
+      final doc = pw.Document();
+      final invNum = invoice['invoice_number'] ?? sale['transaction_number'] ?? '';
+      
+      doc.addPage(pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(40),
+        build: (context) => [
+          pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
+            pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
               pw.Text(companyName, style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
-            if (companyAddress != null && companyAddress.isNotEmpty) pw.Text(companyAddress, style: pw.TextStyle(fontSize: 10)),
-            if (companyPhone != null && companyPhone.isNotEmpty) pw.Text('Tel: $companyPhone', style: pw.TextStyle(fontSize: 10)),
-            if (companyEmail != null && companyEmail.isNotEmpty) pw.Text('Email: $companyEmail', style: pw.TextStyle(fontSize: 10)),
-            if (taxNumber != null && taxNumber.isNotEmpty) pw.Text('VAT: $taxNumber', style: pw.TextStyle(fontSize: 10)),
+              if (companyAddress != null && companyAddress.isNotEmpty) pw.Text(companyAddress, style: const pw.TextStyle(fontSize: 10)),
+              if (companyPhone != null && companyPhone.isNotEmpty) pw.Text('Tel: $companyPhone', style: const pw.TextStyle(fontSize: 10)),
+              if (companyEmail != null && companyEmail.isNotEmpty) pw.Text('Email: $companyEmail', style: const pw.TextStyle(fontSize: 10)),
+              if (taxNumber != null && taxNumber.isNotEmpty) pw.Text('VAT: $taxNumber', style: const pw.TextStyle(fontSize: 10)),
+            ]),
+            pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.end, children: [
+              pw.Text('$invoicePrefix$invNum', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 4),
+              pw.Text('Date: ${DateFormat('dd MMM yyyy').format(dt)}', style: const pw.TextStyle(fontSize: 10)),
+              pw.Text('Customer: ${cust?['name'] ?? 'Walk-in'}', style: const pw.TextStyle(fontSize: 10)),
+              pw.Text('Payment: ${sale['payment_method'] ?? ''}', style: const pw.TextStyle(fontSize: 10)),
+            ]),
           ]),
-          pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.end, children: [
-            pw.Text('$invoicePrefix$invNum', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
-            pw.SizedBox(height: 4),
-            pw.Text('Date: ${DateFormat('dd MMM yyyy').format(dt)}', style: pw.TextStyle(fontSize: 10)),
-            pw.Text('Customer: ${cust?['name'] ?? 'Walk-in'}', style: pw.TextStyle(fontSize: 10)),
-            pw.Text('Payment: ${sale['payment_method'] ?? ''}', style: pw.TextStyle(fontSize: 10)),
-          ]),
-        ]),
-        pw.SizedBox(height: 24),
-        // Items
-        pw.Row(children: [
-          pw.Expanded(flex: 3, child: pw.Text('Item', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
-          pw.Expanded(flex: 1, child: pw.Text('Qty', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
-          pw.Expanded(flex: 2, child: pw.Text('Price', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
-          pw.Expanded(flex: 2, child: pw.Text('Total', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
-        ]),
-        pw.Divider(),
-        ...items.expand((i) => [
+          pw.SizedBox(height: 24),
           pw.Row(children: [
-            pw.Expanded(flex: 3, child: pw.Text(i['product_name'] ?? '', style: pw.TextStyle(fontSize: 10))),
-            pw.Expanded(flex: 1, child: pw.Text('${(i['quantity'] as num?)?.toInt() ?? 0}', style: pw.TextStyle(fontSize: 10))),
-            pw.Expanded(flex: 2, child: pw.Text('R ${((i['unit_price'] as num?)?.toDouble() ?? 0).toStringAsFixed(2)}', style: pw.TextStyle(fontSize: 10))),
-            pw.Expanded(flex: 2, child: pw.Text('R ${((i['line_total'] as num?)?.toDouble() ?? 0).toStringAsFixed(2)}', style: pw.TextStyle(fontSize: 10))),
+            pw.Expanded(flex: 3, child: pw.Text('Item', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+            pw.Expanded(flex: 1, child: pw.Text('Qty', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+            pw.Expanded(flex: 2, child: pw.Text('Price', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+            pw.Expanded(flex: 2, child: pw.Text('Total', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
           ]),
-        ]),
-        pw.SizedBox(height: 16),
-        pw.Container(
-          alignment: pw.Alignment.centerRight,
-          child: pw.Text('TOTAL: R ${total.toStringAsFixed(2)}', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
-        ),
-        pw.SizedBox(height: 24),
-        // Bank details
-        if (bankName != null && bankName.isNotEmpty) ...[
-          pw.Text('Banking Details', style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold)),
-          pw.SizedBox(height: 4),
-          pw.Text('Bank: $bankName', style: pw.TextStyle(fontSize: 10)),
-          if (accountHolder != null && accountHolder.isNotEmpty) pw.Text('Account Holder: $accountHolder', style: pw.TextStyle(fontSize: 10)),
-          if (accountNumber != null && accountNumber.isNotEmpty) pw.Text('Account: $accountNumber', style: pw.TextStyle(fontSize: 10)),
-          pw.SizedBox(height: 12),
+          pw.Divider(),
+          ...items.expand((i) => [
+            pw.Row(children: [
+              pw.Expanded(flex: 3, child: pw.Text(i['product_name'] ?? '', style: const pw.TextStyle(fontSize: 10))),
+              pw.Expanded(flex: 1, child: pw.Text('${(i['quantity'] as num?)?.toInt() ?? 0}', style: const pw.TextStyle(fontSize: 10))),
+              pw.Expanded(flex: 2, child: pw.Text('R ${((i['unit_price'] as num?)?.toDouble() ?? 0).toStringAsFixed(2)}', style: const pw.TextStyle(fontSize: 10))),
+              pw.Expanded(flex: 2, child: pw.Text('R ${((i['line_total'] as num?)?.toDouble() ?? 0).toStringAsFixed(2)}', style: const pw.TextStyle(fontSize: 10))),
+            ]),
+          ]),
+          pw.SizedBox(height: 16),
+          pw.Container(
+            alignment: pw.Alignment.centerRight,
+            child: pw.Text('TOTAL: R ${total.toStringAsFixed(2)}', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+          ),
+          pw.SizedBox(height: 24),
+          if (bankName != null && bankName.isNotEmpty) ...[
+            pw.Text('Banking Details', style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold)),
+            pw.SizedBox(height: 4),
+            pw.Text('Bank: $bankName', style: const pw.TextStyle(fontSize: 10)),
+            if (accountHolder != null && accountHolder.isNotEmpty) pw.Text('Account Holder: $accountHolder', style: const pw.TextStyle(fontSize: 10)),
+            if (accountNumber != null && accountNumber.isNotEmpty) pw.Text('Account: $accountNumber', style: const pw.TextStyle(fontSize: 10)),
+            pw.SizedBox(height: 12),
+          ],
+          pw.Divider(),
+          pw.SizedBox(height: 8),
+          pw.Text(invoiceTerms, style: pw.TextStyle(fontSize: 9, fontStyle: pw.FontStyle.italic)),
         ],
-        pw.Divider(),
-        pw.SizedBox(height: 8),
-        pw.Text(invoiceTerms, style: pw.TextStyle(fontSize: 9, fontStyle: pw.FontStyle.italic)),
-      ],
-    ));
+      ));
 
-    await Printing.layoutPdf(onLayout: (format) async => await doc.save());
+      await Printing.layoutPdf(onLayout: (format) async => await doc.save());
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('PDF error: $e'), backgroundColor: SpiceColors.danger));
+      }
+      debugPrint('PDF error: $e');
+    }
   }
 
   Widget _invRow(String label, String value) {
