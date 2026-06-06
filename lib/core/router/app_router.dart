@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -16,7 +15,7 @@ import '../../features/customers/presentation/screens/customers_screen.dart';
 import '../../features/expenses/presentation/screens/expenses_screen.dart';
 import '../../features/marketing/presentation/screens/marketing_screen.dart';
 import '../../features/about/presentation/screens/about_screen.dart';
-import '../../core/widgets/app_sidebar.dart';
+import '../../core/widgets/responsive_shell.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
@@ -41,12 +40,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
       GoRoute(path: '/register', builder: (_, __) => const RegisterScreen()),
       ShellRoute(
-        builder: (_, __, child) => Row(
-          children: [
-            const AppSidebar(),
-            Expanded(child: child),
-          ],
-        ),
+        builder: (_, __, child) => ResponsiveShell(child: child),
         routes: [
           GoRoute(
               path: '/dashboard',
