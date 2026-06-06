@@ -12,7 +12,7 @@ class ResponsiveShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final width = MediaQuery.of(context).size.width;
-    final isWide = width > 700;
+    final isWide = width > 850;
 
     if (isWide) {
       return Row(children: [const AppSidebar(), Expanded(child: child)]);
