@@ -30,23 +30,41 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _dataLoading = false;
   int _totalRows = 0;
   Map<String, int> _dataRows = {};
+  bool _appLockEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+    _loadSecuritySettings();
+  }
+
+  Future<void> _loadSecuritySettings() async {
+    final appLock = prefs.getBool('app_lock') ?? false;
+    if (mounted) setState(() => _appLockEnabled = appLock);
+  }
+
+  Future<void> _toggleAppLock() async {
+    final newValue = !_appLockEnabled;
+    await prefs.setBool('app_lock', newValue);
+    if (mounted) setState(() => _appLockEnabled = newValue);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(newValue ? 'App lock enabled' : 'App lock disabled'),
+        backgroundColor: SpiceColors.accent,
+      ));
+    }
+  }
 
   Future<void> _loadDataUsage() async {
     final wsId = ref.read(workspaceStateProvider).selectedId;
     if (wsId == null) return;
-
     final tables = ['sales_transactions', 'sale_items', 'products', 'inventory', 'customers', 'stock_movements', 'expenses', 'quotes', 'quote_items', 'invoices'];
     final rows = <String, int>{};
     int total = 0;
-
     for (final table in tables) {
-      try {
-        final data = await supabase.from(table).select('id').eq('workspace_id', wsId);
-        rows[table] = data.length;
-        total += data.length;
-      } catch (_) {}
+      try { final data = await supabase.from(table).select('id').eq('workspace_id', wsId); rows[table] = data.length; total += data.length; } catch (_) {}
     }
-
     if (mounted) setState(() { _dataRows = rows; _totalRows = total; _dataLoading = false; });
   }
 
@@ -135,11 +153,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       await _saveSetting(key, result);
       setState(() => _settings[key] = result);
     }
-  }
-  @override
-  void initState() {
-    super.initState();
-    _loadSettings();
   }
 
   Future<void> _loadSettings() async {
@@ -323,6 +336,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             _tile(Icons.article, 'Terms & Conditions', _getSetting('invoice_terms', 'Payment due within 30 days'),
                 onTap: () => _editSetting('invoice_terms', 'Terms & Conditions', 'Payment due within 30 days')),
           ]),
+
+          _section('Security', [
+            _tile(Icons.fingerprint, 'App Lock',
+                _appLockEnabled ? 'Requires biometric/PIN to open' : 'Disabled',
+                onTap: _toggleAppLock),
+          ]),
+
+          SizedBox(height: 24),
 
           _section('Account', [
             _tile(Icons.person, 'Profile', user?.email ?? 'Not signed in',

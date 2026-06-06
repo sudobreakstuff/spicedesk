@@ -242,12 +242,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             textInputAction: TextInputAction.done,
                             onFieldSubmitted: (_) => _register(),
                             validator: (v) {
-                              if (v?.isEmpty == true) {
-                                return 'Enter a password';
-                              }
-                              if (v != null && v.length < 6) {
-                                return 'Min 6 characters';
-                              }
+                              if (v?.isEmpty == true) return 'Enter a password';
+                              if (v != null && v.length < 8) return 'Min 8 characters';
+                              if (v != null && !v.contains(RegExp(r'[A-Z]'))) return 'Include an uppercase letter';
+                              if (v != null && !v.contains(RegExp(r'[0-9]'))) return 'Include a number';
                               return null;
                             },
                           ),
