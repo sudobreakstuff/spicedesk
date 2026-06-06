@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/network/supabase_client.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../customers/data/customers_provider.dart';
+import '../../../marketing/data/segments_provider.dart';
 import '../../../workspace/domain/workspace_state.dart';
 
 class CustomersScreen extends ConsumerStatefulWidget {
@@ -98,6 +99,12 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                   ),
                 ),
                 SizedBox(width: 12),
+                IconButton(
+                  icon: Icon(Icons.segment, size: 20),
+                  tooltip: 'Save as Segment',
+                  onPressed: () => _showSaveAsSegmentDialog(context, ref, filtered),
+                ),
+                SizedBox(width: 4),
                 IconButton(
                   icon: Icon(Icons.refresh, size: 20),
                   tooltip: 'Refresh',
@@ -566,6 +573,48 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
               backgroundColor: SpiceColors.danger,
             ),
             child: Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSaveAsSegmentDialog(BuildContext context, WidgetRef ref, List<Customer> filtered) {
+    final nameCtrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: SpiceColors.surfaceAlt,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: SpiceColors.border),
+        ),
+        title: Text('Save as Segment'),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text('${filtered.length} customers match current filter.',
+              style: TextStyle(color: SpiceColors.textSecondary, fontSize: 13)),
+          SizedBox(height: 16),
+          TextField(
+            controller: nameCtrl,
+            decoration: InputDecoration(
+              labelText: 'Segment Name',
+              hintText: 'e.g. ${filtered.length > 5 ? 'Top Customers' : 'Recent Leads'}',
+            ),
+          ),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel')),
+          ElevatedButton(
+            onPressed: () {
+              final name = nameCtrl.text.trim();
+              if (name.isEmpty) return;
+              ref.read(createSegmentAction)(
+                name: name,
+                filters: {'has_phone': true},
+              );
+              Navigator.pop(ctx);
+            },
+            child: Text('Save'),
           ),
         ],
       ),
