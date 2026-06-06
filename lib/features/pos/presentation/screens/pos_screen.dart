@@ -96,15 +96,27 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
     try {
       final createSale = ref.read(createSaleAction);
+      final saleItems = _cart
+          .map((c) => SaleItemInput(
+                productId: c.product.id,
+                productName: c.product.name,
+                quantity: c.quantity,
+                unitPrice: c.unitPrice,
+              ))
+          .toList();
+
+      // Add delivery fee if applicable
+      if (orderType == 'Delivery') {
+        saleItems.add(const SaleItemInput(
+          productId: '',
+          productName: 'Delivery Fee',
+          quantity: 1,
+          unitPrice: 20.0,
+        ));
+      }
+
       final saleResult = await createSale(
-        items: _cart
-            .map((c) => SaleItemInput(
-                  productId: c.product.id,
-                  productName: c.product.name,
-                  quantity: c.quantity,
-                  unitPrice: c.unitPrice,
-                ))
-            .toList(),
+        items: saleItems,
         paymentMethod: paymentMethod,
         customerId: customerId,
         orderType: orderType,
@@ -1469,6 +1481,17 @@ class _CheckoutDialogState extends State<_CheckoutDialog> {
                     fontSize: 28,
                     fontWeight: FontWeight.w700,
                     color: SpiceColors.accent)),
+            if (_serviceType == 'Delivery') ...[
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(color: SpiceColors.warning.withAlpha(20), borderRadius: BorderRadius.circular(6)),
+                child: const Text('+ R20.00 delivery fee', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.warning)),
+              ),
+              const SizedBox(height: 2),
+              Text('Grand Total: R ${(widget.total + 20).toStringAsFixed(2)}',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: SpiceColors.accent)),
+            ],
             const SizedBox(height: 20),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
