@@ -26,14 +26,14 @@ final appTheme = buildAppTheme(
 );
 
 ThemeData buildAppTheme(ColorScheme colorScheme) {
-  final isLight = colorScheme.brightness == Brightness.light;
-  final surfaceColor = isLight ? Color(0xFFF6F8FA) : _surface;
-  final surfaceAltColor = isLight ? Colors.white : _surfaceAlt;
-  final borderColor = isLight ? Color(0xFFD0D7DE) : _border;
-  final textPri = isLight ? Color(0xFF1F2328) : _textPrimary;
-  final textSec = isLight ? Color(0xFF656D76) : _textSecondary;
+  // Always use dark surface colors — no white backgrounds
+  final surfaceColor = _surface;
+  final surfaceAltColor = _surfaceAlt;
+  final borderColor = _border;
+  final textPri = _textPrimary;
+  final textSec = _textSecondary;
 
-  SpiceColors.applyTheme(colorScheme, isLight);
+  SpiceColors.applyTheme(colorScheme, false); // Always dark mode
 
   return ThemeData(
     useMaterial3: true,

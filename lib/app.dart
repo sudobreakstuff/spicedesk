@@ -69,8 +69,8 @@ class _SpiceDeskAppState extends ConsumerState<SpiceDeskApp> with WidgetsBinding
   @override
   Widget build(BuildContext context) {
     final router = ref.watch(appRouterProvider);
-    final theme = ref.watch(appThemeProvider);
     final mode = ref.watch(themeModeProvider);
+    final theme = ref.watch(appThemeProvider);
 
     if (_locked) {
       return MaterialApp(
@@ -99,12 +99,19 @@ class _SpiceDeskAppState extends ConsumerState<SpiceDeskApp> with WidgetsBinding
     }
 
     return MaterialApp.router(
-      theme: theme,
+      theme: appTheme,
       darkTheme: appTheme,
-      themeMode: mode == AppTheme.paperLight ? ThemeMode.light : ThemeMode.dark,
+      themeMode: ThemeMode.dark,
       debugShowCheckedModeBanner: false,
       routerConfig: router,
       title: 'SpiceDesk',
+      builder: (context, child) {
+        // Force dark background to prevent white flash
+        return ColoredBox(
+          color: SpiceColors.surface,
+          child: child ?? SizedBox.shrink(),
+        );
+      },
     );
   }
 }
