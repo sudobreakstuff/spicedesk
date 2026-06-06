@@ -54,76 +54,95 @@ class HomeScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(32),
         children: [
-          Text(
-            '$greeting, $userName',
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w700,
-              color: SpiceColors.textPrimary,
-              letterSpacing: -0.5,
-            ),
-          ).animate().fadeIn().slideY(begin: -8),
-          const SizedBox(height: 4),
-          const Text(
-            'Here\'s what\'s happening with your business today.',
-            style: TextStyle(fontSize: 14, color: SpiceColors.textSecondary),
-          ).animate(delay: 100.ms).fadeIn(),
+          LayoutBuilder(builder: (context, constraints) {
+            final narrow = constraints.maxWidth < 600;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '$greeting, $userName',
+                  style: TextStyle(
+                    fontSize: narrow ? 22 : 28,
+                    fontWeight: FontWeight.w700,
+                    color: SpiceColors.textPrimary,
+                    letterSpacing: -0.5,
+                  ),
+                ).animate().fadeIn().slideY(begin: -8),
+                const SizedBox(height: 4),
+                Text(
+                  'Here\'s what\'s happening with your business today.',
+                  style: TextStyle(
+                    fontSize: narrow ? 12 : 14,
+                    color: SpiceColors.textSecondary,
+                  ),
+                ).animate(delay: 100.ms).fadeIn(),
+              ],
+            );
+          }),
 
           const SizedBox(height: 32),
 
-          GridView.count(
-            crossAxisCount: 4,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            childAspectRatio: 1.6,
-            children: [
-              _StatCard(
-                icon: Icons.trending_up,
-                label: 'Today\'s Sales',
-                value: todaySales.when(
-                  data: (v) => format.format(v),
-                  loading: () => null,
-                  error: (_, __) => 'R 0.00',
+          LayoutBuilder(builder: (context, constraints) {
+            final colCount = constraints.maxWidth < 600
+                ? 2
+                : constraints.maxWidth <= 900
+                    ? 3
+                    : 4;
+            return GridView.count(
+              crossAxisCount: colCount,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              childAspectRatio: 1.6,
+              children: [
+                _StatCard(
+                  icon: Icons.trending_up,
+                  label: 'Today\'s Sales',
+                  value: todaySales.when(
+                    data: (v) => format.format(v),
+                    loading: () => null,
+                    error: (_, __) => 'R 0.00',
+                  ),
+                  accent: SpiceColors.accent,
+                  isLoading: todaySales.isLoading,
+                  onTap: () => context.go('/pos'),
                 ),
-                accent: SpiceColors.accent,
-                isLoading: todaySales.isLoading,
-                onTap: () => context.go('/pos'),
-              ),
-              _StatCard(
-                icon: Icons.calendar_view_week_rounded,
-                label: 'Weekly Sales',
-                value: weeklySales.when(
-                  data: (v) => format.format(v.totalSales),
-                  loading: () => null,
-                  error: (_, __) => 'R 0.00',
+                _StatCard(
+                  icon: Icons.calendar_view_week_rounded,
+                  label: 'Weekly Sales',
+                  value: weeklySales.when(
+                    data: (v) => format.format(v.totalSales),
+                    loading: () => null,
+                    error: (_, __) => 'R 0.00',
+                  ),
+                  accent: const Color(0xFF8B5CF6),
+                  isLoading: weeklySales.isLoading,
+                  onTap: () => context.go('/reports'),
                 ),
-                accent: const Color(0xFF8B5CF6),
-                isLoading: weeklySales.isLoading,
-                onTap: () => context.go('/reports'),
-              ),
-              _StatCard(
-                icon: Icons.shopping_bag,
-                label: 'Total Products',
-                value: productsAsync.maybeWhen(
-                  data: (v) => v.length.toString(),
-                  orElse: () => null,
+                _StatCard(
+                  icon: Icons.shopping_bag,
+                  label: 'Total Products',
+                  value: productsAsync.maybeWhen(
+                    data: (v) => v.length.toString(),
+                    orElse: () => null,
+                  ),
+                  accent: SpiceColors.primary,
+                  isLoading: productsAsync.isLoading,
+                  onTap: () => context.go('/inventory'),
                 ),
-                accent: SpiceColors.primary,
-                isLoading: productsAsync.isLoading,
-                onTap: () => context.go('/inventory'),
-              ),
-              _StatCard(
-                icon: Icons.people,
-                label: 'Total Customers',
-                value: customerCount.toString(),
-                accent: SpiceColors.warning,
-                isLoading: false,
-                onTap: () => context.go('/customers'),
-              ),
-            ].animate(interval: 80.ms).fadeIn().slideY(begin: 12),
-          ),
+                _StatCard(
+                  icon: Icons.people,
+                  label: 'Total Customers',
+                  value: customerCount.toString(),
+                  accent: SpiceColors.warning,
+                  isLoading: false,
+                  onTap: () => context.go('/customers'),
+                ),
+              ].animate(interval: 80.ms).fadeIn().slideY(begin: 12),
+            );
+          }),
 
           const SizedBox(height: 36),
 
@@ -133,42 +152,50 @@ class HomeScreen extends ConsumerWidget {
                   fontWeight: FontWeight.w600,
                   color: SpiceColors.textPrimary)),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _ActionCard(
-                  icon: Icons.point_of_sale_rounded,
-                  label: 'New Sale',
-                  subtitle: 'Start a transaction',
-                  onTap: () => context.go('/pos'),
-                  color: SpiceColors.accent,
-                ),
+          LayoutBuilder(builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 700;
+            final cards = [
+              _ActionCard(
+                icon: Icons.point_of_sale_rounded,
+                label: 'New Sale',
+                subtitle: 'Start a transaction',
+                onTap: () => context.go('/pos'),
+                color: SpiceColors.accent,
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _ActionCard(
-                  icon: Icons.add_box_rounded,
-                  label: 'Add Product',
-                  subtitle: 'Add to inventory',
-                  onTap: () => context.go('/inventory'),
-                  color: SpiceColors.primary,
-                ),
+              _ActionCard(
+                icon: Icons.add_box_rounded,
+                label: 'Add Product',
+                subtitle: 'Add to inventory',
+                onTap: () => context.go('/inventory'),
+                color: SpiceColors.primary,
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _ActionCard(
-                  icon: Icons.analytics_rounded,
-                  label: 'View Reports',
-                  subtitle: 'See your analytics',
-                  onTap: () => context.go('/reports'),
-                  color: SpiceColors.warning,
-                ),
+              _ActionCard(
+                icon: Icons.analytics_rounded,
+                label: 'View Reports',
+                subtitle: 'See your analytics',
+                onTap: () => context.go('/reports'),
+                color: SpiceColors.warning,
               ),
-            ]
-                .animate(interval: 100.ms, delay: 200.ms)
-                .fadeIn()
-                .slideY(begin: 12),
-          ),
+            ];
+            if (isWide) {
+              return Row(
+                children: [
+                  for (int i = 0; i < cards.length; i++) ...[
+                    if (i > 0) const SizedBox(width: 16),
+                    Expanded(child: cards[i]),
+                  ],
+                ].animate(interval: 100.ms, delay: 200.ms).fadeIn().slideY(begin: 12),
+              );
+            }
+            return Column(
+              children: [
+                for (int i = 0; i < cards.length; i++) ...[
+                  if (i > 0) const SizedBox(height: 12),
+                  cards[i],
+                ],
+              ].animate(interval: 100.ms, delay: 200.ms).fadeIn().slideY(begin: 12),
+            );
+          }),
 
           const SizedBox(height: 36),
 
@@ -178,8 +205,12 @@ class HomeScreen extends ConsumerWidget {
                   fontWeight: FontWeight.w600,
                   color: SpiceColors.textPrimary)),
           const SizedBox(height: 16),
-          Row(
-            children: [
+          LayoutBuilder(builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 700;
+            final spacer = isWide
+                ? const SizedBox(width: 16)
+                : const SizedBox(height: 12);
+            final widgets = [
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.all(20),
@@ -235,7 +266,7 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
               ).animate(delay: 300.ms).fadeIn().slideY(begin: 8),
-              const SizedBox(width: 16),
+              spacer,
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.all(20),
@@ -291,7 +322,7 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
               ).animate(delay: 350.ms).fadeIn().slideY(begin: 8),
-              const SizedBox(width: 16),
+              spacer,
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.all(20),
@@ -349,8 +380,12 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
               ).animate(delay: 400.ms).fadeIn().slideY(begin: 8),
-            ],
-          ),
+            ];
+            if (isWide) {
+              return Row(children: widgets);
+            }
+            return Column(children: widgets);
+          }),
 
           const SizedBox(height: 36),
 

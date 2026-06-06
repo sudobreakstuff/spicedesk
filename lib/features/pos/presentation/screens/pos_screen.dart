@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -208,7 +207,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     final dateStr = '${now.day}/${now.month}/${now.year} ${now.hour}:${now.minute.toString().padLeft(2, '0')}';
     final validStr = '${result.validUntil.day}/${result.validUntil.month}/${result.validUntil.year}';
 
-    final quoteText = _buildQuoteText(storeName, items, dateStr, validStr, result.total);
 
     showDialog(
       context: context,
@@ -280,19 +278,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         actions: [
           TextButton.icon(
             onPressed: () async {
-              final encoded = Uri.encodeComponent(quoteText);
-              final uri = Uri.parse('https://wa.me/?text=$encoded');
-              await launchUrl(uri, mode: LaunchMode.externalApplication);
-            },
-            icon: const Icon(Icons.share, size: 18),
-            label: const Text('WhatsApp'),
-          ),
-          TextButton.icon(
-            onPressed: () async {
               await _generateQuotePdf(storeName, result, items, dateStr);
             },
-            icon: const Icon(Icons.picture_as_pdf, size: 18),
-            label: const Text('PDF'),
+            icon: const Icon(Icons.share, size: 18),
+            label: const Text('Share PDF'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx),
@@ -311,8 +300,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     final validUntil = DateTime(now.year, now.month, now.day + 7);
     final validStr = '${validUntil.day}/${validUntil.month}/${validUntil.year}';
 
-    final invoiceText = _buildInvoiceText(storeName, result, items, dateStr, paymentMethod);
-    final quoteText = _buildQuoteText(storeName, items, dateStr, validStr, result.total);
 
     showDialog(
       context: context,
@@ -386,28 +373,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         actions: [
           TextButton.icon(
             onPressed: () async {
-              final encoded = Uri.encodeComponent(invoiceText);
-              final uri = Uri.parse('https://wa.me/?text=$encoded');
-              await launchUrl(uri, mode: LaunchMode.externalApplication);
-            },
-            icon: const Icon(Icons.share, size: 18),
-            label: const Text('WhatsApp'),
-          ),
-          TextButton.icon(
-            onPressed: () async {
-              final encoded = Uri.encodeComponent(quoteText);
-              final uri = Uri.parse('https://wa.me/?text=$encoded');
-              await launchUrl(uri, mode: LaunchMode.externalApplication);
-            },
-            icon: const Icon(Icons.description, size: 18),
-            label: const Text('Quote'),
-          ),
-          TextButton.icon(
-            onPressed: () async {
               await _generatePdfInvoice(storeName, result, items, dateStr, paymentMethod);
             },
-            icon: const Icon(Icons.picture_as_pdf, size: 18),
-            label: const Text('PDF'),
+            icon: const Icon(Icons.share, size: 18),
+            label: const Text('Share PDF'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx),
@@ -1101,386 +1070,336 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
     return Scaffold(
       backgroundColor: SpiceColors.surface,
-      body: Row(
-        children: [
-          Expanded(
-            flex: 3,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(32, 32, 32, 0),
-                  child: Row(
-                    children: [
-                      const Text('Point of Sale',
-                          style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w700,
-                              color: SpiceColors.textPrimary)),
-                      const Spacer(),
-                      SizedBox(
-                        width: 280,
-                        child: TextField(
-                          controller: _searchCtrl,
-                          decoration: const InputDecoration(
-                            hintText: 'Search products...',
-                            prefixIcon: Icon(Icons.search, size: 20),
-                            isDense: true,
-                            contentPadding:
-                                EdgeInsets.symmetric(vertical: 10),
-                          ),
-                          onChanged: (v) =>
-                              setState(() => _searchQuery = v),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      IconButton(
-                        icon: const Icon(Icons.add_circle,
-                            color: SpiceColors.primary, size: 32),
-                        tooltip: 'Add Product',
-                        onPressed: _showAddProductDialog,
-                      ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth < 600) {
+            return DefaultTabController(
+              length: 2,
+              child: Column(
+                children: [
+                  _buildHeaderRow(),
+                  const SizedBox(height: 8),
+                  const TabBar(
+                    tabs: [
+                      Tab(text: 'Products'),
+                      Tab(text: 'Cart'),
                     ],
+                    labelColor: SpiceColors.primary,
+                    unselectedLabelColor: SpiceColors.textSecondary,
+                    indicatorColor: SpiceColors.primary,
                   ),
+                  Expanded(
+                    child: TabBarView(
+                      children: [
+                        Column(
+                          children: [
+                            const SizedBox(height: 12),
+                            Expanded(child: _buildProductGrid(filtered, inventoryMap, productsAsync.isLoading)),
+                          ],
+                        ),
+                        _buildCartPanel(),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+          return Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeaderRow(),
+                    const SizedBox(height: 20),
+                    Expanded(child: _buildProductGrid(filtered, inventoryMap, productsAsync.isLoading)),
+                  ],
                 ),
-            const SizedBox(height: 20),
-                Expanded(
-                  child: productsAsync.isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : filtered.isEmpty
-                          ? const Center(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.inventory_2_outlined,
-                                      size: 48,
-                                      color: SpiceColors.textSecondary),
-                                  SizedBox(height: 12),
-                                  Text('No products yet',
-                                      style: TextStyle(
-                                          color:
-                                              SpiceColors.textSecondary)),
-                                ],
-                              ),
-                            )
-                          : GridView.builder(
-                              padding: const EdgeInsets.fromLTRB(
-                                  32, 0, 32, 32),
-                              gridDelegate:
-                                  const SliverGridDelegateWithMaxCrossAxisExtent(
-                                maxCrossAxisExtent: 180,
-                                mainAxisSpacing: 12,
-                                crossAxisSpacing: 12,
-                                childAspectRatio: 0.85,
-                              ),
-                              itemCount: filtered.length,
-                              itemBuilder: (context, index) {
-                                final p = filtered[index];
-                                final hasCategory =
-                                    p.category.isNotEmpty;
-                                final stockQty = inventoryMap[p.id] ?? 0;
-                                final isOutOfStock = stockQty <= 0;
-                                return Opacity(
-                                  opacity: isOutOfStock ? 0.4 : 1.0,
-                                  child: GestureDetector(
-                                  onTap: isOutOfStock ? null : () => _addToCart(p),
-                                  onLongPress: () =>
-                                      _showProductActions(p),
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: SpiceColors.surfaceAlt,
-                                      borderRadius:
-                                          BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: hasCategory
-                                            ? SpiceColors.primary
-                                                .withAlpha(50)
-                                            : SpiceColors.warning
-                                                .withAlpha(50),
-                                      ),
-                                    ),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.inventory_2_rounded,
-                                          size: 36,
-                                          color: hasCategory
-                                              ? SpiceColors.primary
-                                              : SpiceColors.warning,
-                                        ),
-                                        const SizedBox(height: 10),
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.symmetric(
-                                                  horizontal: 8),
-                                          child: Text(p.name,
-                                              textAlign:
-                                                  TextAlign.center,
-                                              maxLines: 2,
-                                              overflow:
-                                                  TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                  fontSize: 13,
-                                                  fontWeight:
-                                                      FontWeight.w500,
-                                                  color: SpiceColors
-                                                      .textPrimary)),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Container(
-                                          padding:
-                                              const EdgeInsets.symmetric(
-                                                  horizontal: 10,
-                                                  vertical: 3),
-                                          decoration: BoxDecoration(
-                                            color: SpiceColors.accent
-                                                .withAlpha(20),
-                                            borderRadius:
-                                                BorderRadius.circular(6),
-                                          ),
-                                          child: Text(
-                                            'R ${p.unitPrice.toStringAsFixed(2)}',
-                                            style: const TextStyle(
-                                                fontSize: 12,
-                                                fontWeight:
-                                                    FontWeight.w600,
-                                                color:
-                                                    SpiceColors.accent),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          isOutOfStock
-                                              ? 'Out of stock'
-                                              : 'In stock: ${stockQty.toInt()}',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w500,
-                                            color: isOutOfStock
-                                                ? SpiceColors.danger
-                                                : SpiceColors.textSecondary,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                ).animate().fadeIn(
-                                    delay: (index * 40).ms);
-                              },
-                            ),
+              ),
+              Container(
+                width: 340,
+                decoration: BoxDecoration(
+                  color: SpiceColors.surfaceAlt,
+                  border: Border(left: BorderSide(color: SpiceColors.border)),
                 ),
-              ],
+                child: _buildCartPanel(),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildHeaderRow() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(32, 32, 32, 0),
+      child: Row(
+        children: [
+          const Text('Point of Sale',
+              style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
+                  color: SpiceColors.textPrimary)),
+          const Spacer(),
+          SizedBox(
+            width: 280,
+            child: TextField(
+              controller: _searchCtrl,
+              decoration: const InputDecoration(
+                hintText: 'Search products...',
+                prefixIcon: Icon(Icons.search, size: 20),
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(vertical: 10),
+              ),
+              onChanged: (v) => setState(() => _searchQuery = v),
             ),
           ),
-          Container(
-            width: 340,
-            decoration: BoxDecoration(
-              color: SpiceColors.surfaceAlt,
-              border: Border(left: BorderSide(color: SpiceColors.border)),
-            ),
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    border: Border(
-                        bottom: BorderSide(color: SpiceColors.border)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.shopping_cart_outlined,
-                          color: SpiceColors.textPrimary, size: 20),
-                      const SizedBox(width: 10),
-                      const Text('Cart',
-                          style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: SpiceColors.textPrimary)),
-                      const Spacer(),
-                      if (_cart.isNotEmpty)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: SpiceColors.primary.withAlpha(30),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text('${_cart.length}',
-                              style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: SpiceColors.primary)),
-                        ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: _cart.isEmpty
-                      ? const Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.shopping_cart_outlined,
-                                  size: 40,
-                                  color: SpiceColors.textSecondary),
-                              SizedBox(height: 8),
-                              Text('Cart is empty',
-                                  style: TextStyle(
-                                      color:
-                                          SpiceColors.textSecondary)),
-                            ],
-                          ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: _cart.length,
-                          itemBuilder: (context, index) {
-                            final item = _cart[index];
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: SpiceColors.surface,
-                                  borderRadius:
-                                      BorderRadius.circular(10),
-                                  border: Border.all(
-                                      color: SpiceColors.border),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(item.product.name,
-                                              style: const TextStyle(
-                                                  fontSize: 13,
-                                                  fontWeight:
-                                                      FontWeight.w500,
-                                                  color: SpiceColors
-                                                      .textPrimary)),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                              'R ${(item.unitPrice * item.quantity).toStringAsFixed(2)}',
-                                              style: const TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight:
-                                                      FontWeight.w600,
-                                                  color: SpiceColors
-                                                      .accent)),
-                                        ],
-                                      ),
-                                    ),
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        color: SpiceColors.surfaceAlt,
-                                        borderRadius:
-                                            BorderRadius.circular(8),
-                                        border: Border.all(
-                                            color: SpiceColors.border),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          _qtyBtn(Icons.remove,
-                                              () => _removeFromCart(index)),
-                                          Padding(
-                                            padding:
-                                                const EdgeInsets.symmetric(
-                                                    horizontal: 12),
-                                            child: Text('${item.quantity}',
-                                                style: const TextStyle(
-                                                    fontWeight:
-                                                        FontWeight.w600)),
-                                          ),
-                                          _qtyBtn(Icons.add,
-                                              () => _addToCart(item.product)),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                ),
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: SpiceColors.surface,
-                    border: Border(
-                        top: BorderSide(color: SpiceColors.border)),
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Total',
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  color: SpiceColors.textSecondary)),
-                          Text('R ${_total.toStringAsFixed(2)}',
-                              style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w700,
-                                  color: SpiceColors.accent)),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: SizedBox(
-                              height: 48,
-                              child: OutlinedButton(
-                                onPressed: _cart.isEmpty ? null : _createQuote,
-                                style: OutlinedButton.styleFrom(
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10)),
-                                ),
-                                child: const Text('Quote',
-                                    style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600)),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: SizedBox(
-                              height: 48,
-                              child: ElevatedButton(
-                                onPressed: _cart.isEmpty ? null : _checkout,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: SpiceColors.accent,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10)),
-                                ),
-                                child: const Text('Checkout',
-                                    style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w600)),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+          const SizedBox(width: 12),
+          IconButton(
+            icon: const Icon(Icons.add_circle,
+                color: SpiceColors.primary, size: 32),
+            tooltip: 'Add Product',
+            onPressed: _showAddProductDialog,
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildProductGrid(List<Product> filtered, Map<String, double> inventoryMap, bool isLoading) {
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (filtered.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.inventory_2_outlined, size: 48, color: SpiceColors.textSecondary),
+            SizedBox(height: 12),
+            Text('No products yet', style: TextStyle(color: SpiceColors.textSecondary)),
+          ],
+        ),
+      );
+    }
+    return GridView.builder(
+      padding: const EdgeInsets.fromLTRB(32, 0, 32, 32),
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 180,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 0.85,
+      ),
+      itemCount: filtered.length,
+      itemBuilder: (context, index) {
+        final p = filtered[index];
+        final hasCategory = p.category.isNotEmpty;
+        final stockQty = inventoryMap[p.id] ?? 0;
+        final isOutOfStock = stockQty <= 0;
+        return Opacity(
+          opacity: isOutOfStock ? 0.4 : 1.0,
+          child: GestureDetector(
+            onTap: isOutOfStock ? null : () => _addToCart(p),
+            onLongPress: () => _showProductActions(p),
+            child: Container(
+              decoration: BoxDecoration(
+                color: SpiceColors.surfaceAlt,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: hasCategory
+                      ? SpiceColors.primary.withAlpha(50)
+                      : SpiceColors.warning.withAlpha(50),
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.inventory_2_rounded, size: 36,
+                      color: hasCategory ? SpiceColors.primary : SpiceColors.warning),
+                  const SizedBox(height: 10),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Text(p.name,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: SpiceColors.textPrimary)),
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: SpiceColors.accent.withAlpha(20),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text('R ${p.unitPrice.toStringAsFixed(2)}',
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.accent)),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    isOutOfStock ? 'Out of stock' : 'In stock: ${stockQty.toInt()}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: isOutOfStock ? SpiceColors.danger : SpiceColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ).animate().fadeIn(delay: (index * 40).ms),
+        );
+      },
+    );
+  }
+
+  Widget _buildCartPanel() {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: SpiceColors.border)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.shopping_cart_outlined, color: SpiceColors.textPrimary, size: 20),
+              const SizedBox(width: 10),
+              const Text('Cart', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
+              const Spacer(),
+              if (_cart.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: SpiceColors.primary.withAlpha(30),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text('${_cart.length}',
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.primary)),
+                ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: _cart.isEmpty
+              ? const Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.shopping_cart_outlined, size: 40, color: SpiceColors.textSecondary),
+                      SizedBox(height: 8),
+                      Text('Cart is empty', style: TextStyle(color: SpiceColors.textSecondary)),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _cart.length,
+                  itemBuilder: (context, index) {
+                    final item = _cart[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: SpiceColors.surface,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: SpiceColors.border),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(item.product.name,
+                                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: SpiceColors.textPrimary)),
+                                  const SizedBox(height: 4),
+                                  Text('R ${(item.unitPrice * item.quantity).toStringAsFixed(2)}',
+                                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.accent)),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: SpiceColors.surfaceAlt,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: SpiceColors.border),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _qtyBtn(Icons.remove, () => _removeFromCart(index)),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                                    child: Text('${item.quantity}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                                  ),
+                                  _qtyBtn(Icons.add, () => _addToCart(item.product)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+        ),
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: SpiceColors.surface,
+            border: Border(top: BorderSide(color: SpiceColors.border)),
+          ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Total', style: TextStyle(fontSize: 16, color: SpiceColors.textSecondary)),
+                  Text('R ${_total.toStringAsFixed(2)}',
+                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: SpiceColors.accent)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 48,
+                      child: OutlinedButton(
+                        onPressed: _cart.isEmpty ? null : _createQuote,
+                        style: OutlinedButton.styleFrom(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: const Text('Quote', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: SizedBox(
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: _cart.isEmpty ? null : _checkout,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: SpiceColors.accent,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: const Text('Checkout', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
