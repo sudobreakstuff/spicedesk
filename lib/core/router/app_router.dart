@@ -38,40 +38,40 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
-      GoRoute(path: '/register', builder: (_, __) => const RegisterScreen()),
-      GoRoute(path: '/workspace', builder: (_, __) => const WorkspaceScreen()),
+      GoRoute(path: '/login', builder: (_, __) => LoginScreen()),
+      GoRoute(path: '/register', builder: (_, __) => RegisterScreen()),
+      GoRoute(path: '/workspace', builder: (_, __) => WorkspaceScreen()),
       ShellRoute(
         builder: (_, __, child) => ResponsiveShell(child: child),
         routes: [
           GoRoute(
               path: '/dashboard',
-              builder: (_, __) => const HomeScreen()),
-          GoRoute(path: '/pos', builder: (_, __) => const PosScreen()),
+              builder: (_, __) => HomeScreen()),
+          GoRoute(path: '/pos', builder: (_, __) => PosScreen()),
           GoRoute(
               path: '/inventory',
-              builder: (_, __) => const InventoryScreen()),
+              builder: (_, __) => InventoryScreen()),
           GoRoute(
               path: '/reports',
-              builder: (_, __) => const ReportsScreen()),
+              builder: (_, __) => ReportsScreen()),
           GoRoute(
               path: '/pending',
-              builder: (_, __) => const PendingOrdersScreen()),
+              builder: (_, __) => PendingOrdersScreen()),
           GoRoute(
               path: '/settings',
-              builder: (_, __) => const SettingsScreen()),
+              builder: (_, __) => SettingsScreen()),
           GoRoute(
               path: '/customers',
-              builder: (_, __) => const CustomersScreen()),
+              builder: (_, __) => CustomersScreen()),
           GoRoute(
               path: '/expenses',
-              builder: (_, __) => const ExpensesScreen()),
+              builder: (_, __) => ExpensesScreen()),
           GoRoute(
               path: '/marketing',
-              builder: (_, __) => const MarketingScreen()),
+              builder: (_, __) => MarketingScreen()),
           GoRoute(
               path: '/about',
-              builder: (_, __) => const AboutScreen()),
+              builder: (_, __) => AboutScreen()),
         ],
       ),
     ],

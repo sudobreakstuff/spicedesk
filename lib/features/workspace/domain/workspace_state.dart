@@ -5,9 +5,9 @@ class WorkspaceState {
   final String? selectedId;
   final String? selectedName;
 
-  const WorkspaceState({this.selectedId, this.selectedName});
+  WorkspaceState({this.selectedId, this.selectedName});
 
-  factory WorkspaceState.initial() => const WorkspaceState();
+  factory WorkspaceState.initial() => WorkspaceState();
 }
 
 class WorkspaceNotifier extends StateNotifier<WorkspaceState> {

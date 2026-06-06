@@ -16,7 +16,7 @@ import '../../../sales/data/sales_provider.dart';
 import '../../../workspace/domain/workspace_state.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
-  const SettingsScreen({super.key});
+  SettingsScreen({super.key});
 
   @override
   ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
@@ -54,8 +54,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         title: Text(title),
         content: TextField(controller: ctrl, autofocus: true),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          ElevatedButton(onPressed: () => Navigator.pop(ctx, ctrl.text), child: const Text('Save')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel')),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, ctrl.text), child: Text('Save')),
         ],
       ),
     );
@@ -82,7 +82,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final wsId = ref.read(workspaceStateProvider).selectedId;
     if (wsId == null) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Please select or create a workspace first'),
           backgroundColor: SpiceColors.danger,
         ));
@@ -116,7 +116,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     try {
       await ref.read(workspaceStateProvider.notifier).updateWorkspaceName(name);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Business name updated'),
           backgroundColor: SpiceColors.accent,
         ));
@@ -146,13 +146,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(32),
         children: [
-          const Text('Settings',
+          Text('Settings',
               style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
-          const SizedBox(height: 4),
-          const Text('Manage your business preferences',
+          SizedBox(height: 4),
+          Text('Manage your business preferences',
               style: TextStyle(fontSize: 14, color: SpiceColors.textSecondary)),
 
-          const SizedBox(height: 32),
+          SizedBox(height: 32),
 
           _section('Store Profile', [
             _tile(Icons.store, 'Business Name', displayBusinessName,
@@ -200,14 +200,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 }),
           ]),
 
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
 
           _section('App Theme', [
             for (final t in AppTheme.values)
               _themeTile(t),
           ]),
 
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
 
           _section('Workspace', [
             _tile(Icons.group, 'Members', 'Manage team access',
@@ -216,7 +216,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 onTap: () => _showInviteCodeDialog(context, workspace.selectedId)),
           ]),
 
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
 
           _section('POS Settings', [
             _tile(Icons.local_shipping, 'Delivery Charge', 'R${_getSetting('delivery_charge', '20.00')}',
@@ -226,7 +226,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             _tile(Icons.receipt_long, 'Invoice Footer', _getSetting('invoice_footer', 'Thank you for your business'),
                 onTap: () => _editSetting('invoice_footer', 'Invoice Footer', 'Thank you for your business')),
           ]),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           _section('Invoice Settings', [
             _tile(Icons.image, 'Company Logo', _getSetting('company_logo', '').isNotEmpty ? 'Logo uploaded' : 'Tap to upload',
                 onTap: _uploadLogo),
@@ -265,7 +265,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 color: SpiceColors.danger),
           ]).animate(delay: 400.ms).fadeIn(),
 
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
 
           _section('Danger Zone', [
             _tile(Icons.delete_forever, 'Reset All Data',
@@ -274,8 +274,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 color: SpiceColors.danger),
           ]),
 
-          const SizedBox(height: 32),
-          const Center(
+          SizedBox(height: 32),
+          Center(
             child: Column(
               children: [
                 Text('SpiceDesk v1.0.0',
@@ -286,7 +286,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 32),
+          SizedBox(height: 32),
         ],
       ),
     );
@@ -301,12 +301,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(color: SpiceColors.border),
         ),
-        title: const Text('Coming Soon'),
-        content: const Text('Members management will be available soon.'),
+        title: Text('Coming Soon'),
+        content: Text('Members management will be available soon.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('OK'),
+            child: Text('OK'),
           ),
         ],
       ),
@@ -322,12 +322,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(color: SpiceColors.border),
         ),
-        title: const Text('Invite Code'),
+        title: Text('Invite Code'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Share this code with team members:'),
-            const SizedBox(height: 12),
+            Text('Share this code with team members:'),
+            SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               decoration: BoxDecoration(
@@ -337,7 +337,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               child: Text(
                 workspaceId ?? 'No workspace selected',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: SpiceColors.primary,
@@ -349,7 +349,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Close'),
+            child: Text('Close'),
           ),
         ],
       ),
@@ -365,15 +365,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(color: SpiceColors.border),
         ),
-        title: const Text('Profile'),
+        title: Text('Profile'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Signed in as:'),
-            const SizedBox(height: 8),
+            Text('Signed in as:'),
+            SizedBox(height: 8),
             Text(
               email ?? 'Not signed in',
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w600,
                 color: SpiceColors.textPrimary,
               ),
@@ -383,7 +383,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Close'),
+            child: Text('Close'),
           ),
         ],
       ),
@@ -403,30 +403,30 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(color: SpiceColors.danger),
           ),
-          title: const Text('Reset All Data', style: TextStyle(color: SpiceColors.danger)),
+          title: Text('Reset All Data', style: TextStyle(color: SpiceColors.danger)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'This will permanently delete all sales, products, inventory, and customers for this workspace. This cannot be undone.',
                 style: TextStyle(color: SpiceColors.textSecondary),
               ),
               if (progress != null) ...[
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 LinearProgressIndicator(
                   backgroundColor: SpiceColors.border,
                   color: SpiceColors.danger,
                 ),
-                const SizedBox(height: 8),
-                Text(progress!, style: const TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
+                SizedBox(height: 8),
+                Text(progress!, style: TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
               ],
             ],
           ),
           actions: [
             TextButton(
               onPressed: deleting ? null : () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
+              child: Text('Cancel'),
             ),
             ElevatedButton(
               onPressed: deleting
@@ -482,7 +482,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                         if (ctx.mounted) Navigator.pop(ctx);
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                             content: Text('All data has been reset for this workspace'),
                             backgroundColor: SpiceColors.accent,
                           ));
@@ -499,8 +499,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     },
               style: ElevatedButton.styleFrom(backgroundColor: SpiceColors.danger),
               child: deleting
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Text('Delete Everything'),
+                  ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : Text('Delete Everything'),
             ),
           ],
         ),
@@ -545,7 +545,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           actions: [
             TextButton(
               onPressed: saving ? null : () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
+              child: Text('Cancel'),
             ),
             ElevatedButton(
               onPressed: saving
@@ -558,12 +558,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       if (ctx.mounted) Navigator.pop(ctx);
                     },
               child: saving
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Save'),
+                  : Text('Save'),
             ),
           ],
         ),
@@ -578,7 +578,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 10),
           child: Text(title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
                 color: SpiceColors.primary,
@@ -597,7 +597,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               return Column(
                 children: [
                   entry.value,
-                  if (!isLast) const Divider(height: 1, indent: 52, color: SpiceColors.border),
+                  if (!isLast) Divider(height: 1, indent: 52, color: SpiceColors.border),
                 ],
               );
             }).toList(),
@@ -621,12 +621,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         child: Icon(theme.icon, color: theme.primaryColor, size: 18),
       ),
       title: Text(theme.label,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: SpiceColors.textPrimary)),
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: SpiceColors.textPrimary)),
       subtitle: Text(isSelected ? 'Selected' : 'Tap to apply',
-          style: const TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
+          style: TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
       trailing: isSelected
-          ? const Icon(Icons.check_circle, size: 20, color: SpiceColors.accent)
-          : const Icon(Icons.chevron_right, size: 18, color: SpiceColors.textSecondary),
+          ? Icon(Icons.check_circle, size: 20, color: SpiceColors.accent)
+          : Icon(Icons.chevron_right, size: 18, color: SpiceColors.textSecondary),
       onTap: () => ref.read(themeModeProvider.notifier).setTheme(theme),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -645,8 +645,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ),
       title: Text(title,
           style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: color ?? SpiceColors.textPrimary)),
-      subtitle: Text(subtitle, style: const TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
-      trailing: const Icon(Icons.chevron_right, size: 18, color: SpiceColors.textSecondary),
+      subtitle: Text(subtitle, style: TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
+      trailing: Icon(Icons.chevron_right, size: 18, color: SpiceColors.textSecondary),
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

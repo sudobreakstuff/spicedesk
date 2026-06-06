@@ -16,7 +16,7 @@ import '../../../customers/data/customers_provider.dart';
 import '../../../settings/data/settings_provider.dart';
 
 class PosScreen extends ConsumerStatefulWidget {
-  const PosScreen({super.key});
+  PosScreen({super.key});
 
   @override
   ConsumerState<PosScreen> createState() => _PosScreenState();
@@ -62,7 +62,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('Insufficient stock: only $stock available for ${product.name}'),
         backgroundColor: SpiceColors.warning,
-        duration: const Duration(seconds: 2),
+        duration: Duration(seconds: 2),
       ));
       return;
     }
@@ -220,8 +220,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         title: Row(
           children: [
             Icon(Icons.description, color: SpiceColors.primary, size: 24),
-            const SizedBox(width: 10),
-            const Text('Quote Created',
+            SizedBox(width: 10),
+            Text('Quote Created',
                 style: TextStyle(color: SpiceColors.textPrimary)),
           ],
         ),
@@ -240,36 +240,36 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _receiptRow('Quote', result.quoteNumber),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     _receiptRow('Valid until', validStr),
                     _receiptRow('Date', dateStr),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               ...items.map((item) => Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Row(
                   children: [
                     Expanded(child: Text(item.product.name,
-                        style: const TextStyle(fontSize: 13, color: SpiceColors.textPrimary))),
+                        style: TextStyle(fontSize: 13, color: SpiceColors.textPrimary))),
                     Text('x${item.quantity}',
-                        style: const TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
-                    const SizedBox(width: 12),
+                        style: TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
+                    SizedBox(width: 12),
                     Text('R ${(item.unitPrice * item.quantity).toStringAsFixed(2)}',
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
                   ],
                 ),
               )),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Divider(color: SpiceColors.border),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Total', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
+                  Text('Total', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
                   Text('R ${result.total.toStringAsFixed(2)}',
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: SpiceColors.accent)),
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: SpiceColors.accent)),
                 ],
               ),
             ],
@@ -280,12 +280,12 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             onPressed: () async {
               await _generateQuotePdf(storeName, result, items, dateStr);
             },
-            icon: const Icon(Icons.share, size: 18),
-            label: const Text('Share PDF'),
+            icon: Icon(Icons.share, size: 18),
+            label: Text('Share PDF'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Done'),
+            child: Text('Done'),
           ),
         ],
       ),
@@ -313,8 +313,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         title: Row(
           children: [
             Icon(Icons.check_circle, color: SpiceColors.accent, size: 24),
-            const SizedBox(width: 10),
-            const Text('Sale Complete',
+            SizedBox(width: 10),
+            Text('Sale Complete',
                 style: TextStyle(color: SpiceColors.textPrimary)),
           ],
         ),
@@ -333,38 +333,38 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _receiptRow('Txn', result.transactionNumber),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     _receiptRow('Invoice', result.invoiceNumber),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     _receiptRow('Paid', paymentMethod),
                     _receiptRow('Date', dateStr),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               ...items.map((item) => Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Row(
                   children: [
                     Expanded(child: Text(item.product.name,
-                        style: const TextStyle(fontSize: 13, color: SpiceColors.textPrimary))),
+                        style: TextStyle(fontSize: 13, color: SpiceColors.textPrimary))),
                     Text('x${item.quantity}',
-                        style: const TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
-                    const SizedBox(width: 12),
+                        style: TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
+                    SizedBox(width: 12),
                     Text('R ${(item.unitPrice * item.quantity).toStringAsFixed(2)}',
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
                   ],
                 ),
               )),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Divider(color: SpiceColors.border),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Total', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
+                  Text('Total', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
                   Text('R ${result.total.toStringAsFixed(2)}',
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: SpiceColors.accent)),
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: SpiceColors.accent)),
                 ],
               ),
             ],
@@ -375,12 +375,12 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             onPressed: () async {
               await _generatePdfInvoice(storeName, result, items, dateStr, paymentMethod);
             },
-            icon: const Icon(Icons.share, size: 18),
-            label: const Text('Share PDF'),
+            icon: Icon(Icons.share, size: 18),
+            label: Text('Share PDF'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Done'),
+            child: Text('Done'),
           ),
         ],
       ),
@@ -570,10 +570,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       children: [
         SizedBox(
           width: 60,
-          child: Text(label, style: const TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
+          child: Text(label, style: TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
         ),
         Expanded(
-          child: Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: SpiceColors.textPrimary)),
+          child: Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: SpiceColors.textPrimary)),
         ),
       ],
     );
@@ -583,7 +583,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: SpiceColors.surfaceAlt,
-      shape: const RoundedRectangleBorder(
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
         side: BorderSide(color: SpiceColors.border),
       ),
@@ -601,22 +601,22 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   product.name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: SpiceColors.textPrimary,
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               ListTile(
-                leading: const Icon(Icons.edit, color: SpiceColors.primary),
-                title: const Text('Edit Product'),
+                leading: Icon(Icons.edit, color: SpiceColors.primary),
+                title: Text('Edit Product'),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 onTap: () {
                   Navigator.pop(ctx);
@@ -624,15 +624,15 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.delete_outline, color: SpiceColors.danger),
-                title: const Text('Delete Product'),
+                leading: Icon(Icons.delete_outline, color: SpiceColors.danger),
+                title: Text('Delete Product'),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 onTap: () {
                   Navigator.pop(ctx);
                   _showDeleteProductDialog(product);
                 },
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
             ],
           ),
         ),
@@ -659,48 +659,48 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(color: SpiceColors.border),
           ),
-          title: const Text('Edit Product'),
+          title: Text('Edit Product'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: nameCtrl,
-                  decoration: const InputDecoration(labelText: 'Product Name'),
+                  decoration: InputDecoration(labelText: 'Product Name'),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 TextField(
                   controller: priceCtrl,
                   keyboardType: TextInputType.number,
                   decoration:
-                      const InputDecoration(labelText: 'Selling Price (R)'),
+                      InputDecoration(labelText: 'Selling Price (R)'),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 TextField(
                   controller: costCtrl,
                   keyboardType: TextInputType.number,
                   decoration:
-                      const InputDecoration(labelText: 'Cost Price (R)'),
+                      InputDecoration(labelText: 'Cost Price (R)'),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 TextField(
                   controller: skuCtrl,
-                  decoration: const InputDecoration(labelText: 'SKU'),
+                  decoration: InputDecoration(labelText: 'SKU'),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 TextField(
                   controller: categoryCtrl,
-                  decoration: const InputDecoration(labelText: 'Category'),
+                  decoration: InputDecoration(labelText: 'Category'),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 Row(
                   children: [
-                    const Text('Type:',
+                    Text('Type:',
                         style: TextStyle(
                             color: SpiceColors.textSecondary, fontSize: 13)),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     ChoiceChip(
-                      label: const Text('Finished'),
+                      label: Text('Finished'),
                       selected: productType == 'finished',
                       onSelected: (_) =>
                           setDialogState(() => productType = 'finished'),
@@ -711,9 +711,9 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                             : SpiceColors.textSecondary,
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     ChoiceChip(
-                      label: const Text('Raw Material'),
+                      label: Text('Raw Material'),
                       selected: productType == 'raw_material',
                       onSelected: (_) =>
                           setDialogState(() => productType = 'raw_material'),
@@ -732,14 +732,14 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
+              child: Text('Cancel'),
             ),
             ElevatedButton(
               onPressed: () async {
                 final name = nameCtrl.text.trim();
                 if (name.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
+                    SnackBar(
                         content: Text('Product name is required')),
                   );
                   return;
@@ -752,7 +752,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   final wsId = ref.read(workspaceStateProvider).selectedId;
                   if (wsId == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
+                      SnackBar(
                         content: Text('Please select or create a workspace first'),
                         backgroundColor: SpiceColors.danger,
                       ),
@@ -807,7 +807,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   }
                 }
               },
-              child: const Text('Save'),
+              child: Text('Save'),
             ),
           ],
         ),
@@ -824,15 +824,15 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(color: SpiceColors.border),
         ),
-        title: const Text('Delete Product'),
+        title: Text('Delete Product'),
         content: Text(
           'Are you sure you want to delete "${product.name}"? This will also remove its inventory tracking.',
-          style: const TextStyle(color: SpiceColors.textSecondary),
+          style: TextStyle(color: SpiceColors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -840,7 +840,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 final wsId = ref.read(workspaceStateProvider).selectedId;
                 if (wsId == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
+                    SnackBar(
                       content: Text('Please select or create a workspace first'),
                       backgroundColor: SpiceColors.danger,
                     ),
@@ -885,7 +885,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: SpiceColors.danger,
             ),
-            child: const Text('Delete'),
+            child: Text('Delete'),
           ),
         ],
       ),
@@ -908,38 +908,38 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(color: SpiceColors.border),
           ),
-          title: const Text('Add Product'),
+          title: Text('Add Product'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: nameCtrl,
-                  decoration: const InputDecoration(labelText: 'Product Name'),
+                  decoration: InputDecoration(labelText: 'Product Name'),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 TextField(
                   controller: priceCtrl,
                   keyboardType: TextInputType.number,
                   decoration:
-                      const InputDecoration(labelText: 'Selling Price (R)'),
+                      InputDecoration(labelText: 'Selling Price (R)'),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 TextField(
                   controller: costCtrl,
                   keyboardType: TextInputType.number,
                   decoration:
-                      const InputDecoration(labelText: 'Cost Price (R)'),
+                      InputDecoration(labelText: 'Cost Price (R)'),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 TextField(
                   controller: skuCtrl,
-                  decoration: const InputDecoration(labelText: 'SKU'),
+                  decoration: InputDecoration(labelText: 'SKU'),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 TextField(
                   controller: categoryCtrl,
-                  decoration: const InputDecoration(labelText: 'Category'),
+                  decoration: InputDecoration(labelText: 'Category'),
                 ),
               ],
             ),
@@ -947,14 +947,14 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
+              child: Text('Cancel'),
             ),
             ElevatedButton(
               onPressed: () async {
                 final name = nameCtrl.text.trim();
                 if (name.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
+                    SnackBar(
                         content: Text('Product name is required')),
                   );
                   return;
@@ -967,7 +967,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   final wsId = ref.read(workspaceStateProvider).selectedId;
                   if (wsId == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
+                      SnackBar(
                         content: Text('Please select or create a workspace first'),
                         backgroundColor: SpiceColors.danger,
                       ),
@@ -1033,7 +1033,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   }
                 }
               },
-              child: const Text('Save'),
+              child: Text('Save'),
             ),
           ],
         ),
@@ -1078,8 +1078,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               child: Column(
                 children: [
                   _buildHeaderRow(),
-                  const SizedBox(height: 8),
-                  const TabBar(
+                  SizedBox(height: 8),
+                  TabBar(
                     tabs: [
                       Tab(text: 'Products'),
                       Tab(text: 'Cart'),
@@ -1093,7 +1093,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       children: [
                         Column(
                           children: [
-                            const SizedBox(height: 12),
+                            SizedBox(height: 12),
                             Expanded(child: _buildProductGrid(filtered, inventoryMap, productsAsync.isLoading)),
                           ],
                         ),
@@ -1113,7 +1113,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildHeaderRow(),
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20),
                     Expanded(child: _buildProductGrid(filtered, inventoryMap, productsAsync.isLoading)),
                   ],
                 ),
@@ -1144,19 +1144,19 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(children: [
-                      const Text('Point of Sale',
+                      Text('Point of Sale',
                           style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
-                      const Spacer(),
+                      Spacer(),
                       IconButton(
-                        icon: const Icon(Icons.add_circle, color: SpiceColors.primary, size: 28),
+                        icon: Icon(Icons.add_circle, color: SpiceColors.primary, size: 28),
                         tooltip: 'Add Product',
                         onPressed: _showAddProductDialog,
                       ),
                     ]),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     TextField(
                       controller: _searchCtrl,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: 'Search products...',
                         prefixIcon: Icon(Icons.search, size: 20),
                         isDense: true,
@@ -1168,14 +1168,14 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 )
               : Row(
                   children: [
-                    const Text('Point of Sale',
+                    Text('Point of Sale',
                         style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
-                    const Spacer(),
+                    Spacer(),
                     SizedBox(
                       width: 280,
                       child: TextField(
                         controller: _searchCtrl,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           hintText: 'Search products...',
                           prefixIcon: Icon(Icons.search, size: 20),
                           isDense: true,
@@ -1184,9 +1184,9 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                         onChanged: (v) => setState(() => _searchQuery = v),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     IconButton(
-                      icon: const Icon(Icons.add_circle, color: SpiceColors.primary, size: 32),
+                      icon: Icon(Icons.add_circle, color: SpiceColors.primary, size: 32),
                       tooltip: 'Add Product',
                       onPressed: _showAddProductDialog,
                     ),
@@ -1199,10 +1199,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
   Widget _buildProductGrid(List<Product> filtered, Map<String, double> inventoryMap, bool isLoading) {
     if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(child: CircularProgressIndicator());
     }
     if (filtered.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -1215,7 +1215,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     }
     return GridView.builder(
       padding: const EdgeInsets.fromLTRB(32, 0, 32, 32),
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
         maxCrossAxisExtent: 180,
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
@@ -1247,16 +1247,16 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 children: [
                   Icon(Icons.inventory_2_rounded, size: 36,
                       color: hasCategory ? SpiceColors.primary : SpiceColors.warning),
-                  const SizedBox(height: 10),
+                  SizedBox(height: 10),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Text(p.name,
                         textAlign: TextAlign.center,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: SpiceColors.textPrimary)),
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: SpiceColors.textPrimary)),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                     decoration: BoxDecoration(
@@ -1264,9 +1264,9 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text('R ${p.unitPrice.toStringAsFixed(2)}',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.accent)),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.accent)),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     isOutOfStock ? 'Out of stock' : 'In stock: ${stockQty.toInt()}',
                     style: TextStyle(
@@ -1294,10 +1294,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           ),
           child: Row(
             children: [
-              const Icon(Icons.shopping_cart_outlined, color: SpiceColors.textPrimary, size: 20),
-              const SizedBox(width: 10),
-              const Text('Cart', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
-              const Spacer(),
+              Icon(Icons.shopping_cart_outlined, color: SpiceColors.textPrimary, size: 20),
+              SizedBox(width: 10),
+              Text('Cart', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
+              Spacer(),
               if (_cart.isNotEmpty)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -1306,14 +1306,14 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text('${_cart.length}',
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.primary)),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.primary)),
                 ),
             ],
           ),
         ),
         Expanded(
           child: _cart.isEmpty
-              ? const Center(
+              ? Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -1344,10 +1344,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(item.product.name,
-                                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: SpiceColors.textPrimary)),
-                                  const SizedBox(height: 4),
+                                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: SpiceColors.textPrimary)),
+                                  SizedBox(height: 4),
                                   Text('R ${(item.unitPrice * item.quantity).toStringAsFixed(2)}',
-                                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.accent)),
+                                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.accent)),
                                 ],
                               ),
                             ),
@@ -1363,7 +1363,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                   _qtyBtn(Icons.remove, () => _removeFromCart(index)),
                                   Padding(
                                     padding: const EdgeInsets.symmetric(horizontal: 12),
-                                    child: Text('${item.quantity}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                                    child: Text('${item.quantity}', style: TextStyle(fontWeight: FontWeight.w600)),
                                   ),
                                   _qtyBtn(Icons.add, () => _addToCart(item.product)),
                                 ],
@@ -1387,12 +1387,12 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Total', style: TextStyle(fontSize: 16, color: SpiceColors.textSecondary)),
+                  Text('Total', style: TextStyle(fontSize: 16, color: SpiceColors.textSecondary)),
                   Text('R ${_total.toStringAsFixed(2)}',
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: SpiceColors.accent)),
+                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: SpiceColors.accent)),
                 ],
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
@@ -1403,11 +1403,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                         style: OutlinedButton.styleFrom(
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
-                        child: const Text('Quote', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                        child: Text('Quote', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10),
                   Expanded(
                     child: SizedBox(
                       height: 48,
@@ -1418,7 +1418,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
-                        child: const Text('Checkout', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                        child: Text('Checkout', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                       ),
                     ),
                   ),
@@ -1452,7 +1452,7 @@ class _CheckoutDialog extends StatefulWidget {
   final bool isQuote;
   final double deliveryCharge;
 
-  const _CheckoutDialog({
+  _CheckoutDialog({
     required this.total,
     required this.customers,
     this.isQuote = false,
@@ -1483,22 +1483,22 @@ class _CheckoutDialogState extends State<_CheckoutDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text('Total: R ${widget.total.toStringAsFixed(2)}',
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w700,
                     color: SpiceColors.accent)),
             if (_serviceType == 'Delivery') ...[
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(color: SpiceColors.warning.withAlpha(20), borderRadius: BorderRadius.circular(6)),
                 child: Text('+ R${widget.deliveryCharge.toStringAsFixed(2)} delivery fee', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.warning)),
               ),
-              const SizedBox(height: 2),
+              SizedBox(height: 2),
               Text('Grand Total: R ${(widget.total + widget.deliveryCharge).toStringAsFixed(2)}',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: SpiceColors.accent)),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: SpiceColors.accent)),
             ],
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
@@ -1511,13 +1511,13 @@ class _CheckoutDialogState extends State<_CheckoutDialog> {
                   value: null,
                   hint: Text(
                     _selectedCustomerName,
-                    style: const TextStyle(
+                    style: TextStyle(
                         color: SpiceColors.textPrimary, fontSize: 14),
                   ),
-                  icon: const Icon(Icons.arrow_drop_down,
+                  icon: Icon(Icons.arrow_drop_down,
                       color: SpiceColors.textSecondary),
                   items: [
-                    const DropdownMenuItem<String>(
+                    DropdownMenuItem<String>(
                       value: 'walkin',
                       child: Text('Walk-in',
                           style: TextStyle(color: SpiceColors.textSecondary)),
@@ -1525,7 +1525,7 @@ class _CheckoutDialogState extends State<_CheckoutDialog> {
                     ...widget.customers.map((c) => DropdownMenuItem<String>(
                           value: c.id,
                           child: Text(c.name,
-                              style: const TextStyle(
+                              style: TextStyle(
                                   color: SpiceColors.textPrimary)),
                         )),
                   ],
@@ -1545,12 +1545,12 @@ class _CheckoutDialogState extends State<_CheckoutDialog> {
               ),
             ),
             if (!isQuote) ...[
-              const SizedBox(height: 20),
-              const Text('Service Type',
+              SizedBox(height: 20),
+              Text('Service Type',
                   style: TextStyle(
                       fontSize: 13,
                       color: SpiceColors.textSecondary)),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Row(
                 children: _serviceTypes.map((t) => Padding(
                   padding: const EdgeInsets.only(right: 8),
@@ -1569,12 +1569,12 @@ class _CheckoutDialogState extends State<_CheckoutDialog> {
                   ),
                 )).toList(),
               ),
-              const SizedBox(height: 20),
-              const Text('Payment Method',
+              SizedBox(height: 20),
+              Text('Payment Method',
                   style: TextStyle(
                       fontSize: 13,
                       color: SpiceColors.textSecondary)),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               ...['Cash', 'Card', 'Mobile'].map((m) => ListTile(
                     leading: Icon(
                         m == 'Cash'
@@ -1593,7 +1593,7 @@ class _CheckoutDialogState extends State<_CheckoutDialog> {
                     }),
                   )),
             ] else ...[
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
                 height: 48,
@@ -1608,7 +1608,7 @@ class _CheckoutDialogState extends State<_CheckoutDialog> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10)),
                   ),
-                  child: const Text('Create Quote',
+                  child: Text('Create Quote',
                       style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600)),
@@ -1621,7 +1621,7 @@ class _CheckoutDialogState extends State<_CheckoutDialog> {
       actions: [
         TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel')),
+            child: Text('Cancel')),
       ],
     );
   }
@@ -1631,7 +1631,7 @@ class _CartItem {
   final Product product;
   final int quantity;
 
-  const _CartItem({required this.product, required this.quantity});
+  _CartItem({required this.product, required this.quantity});
 
   double get unitPrice => product.unitPrice;
 

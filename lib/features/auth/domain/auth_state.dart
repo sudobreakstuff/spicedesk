@@ -6,9 +6,9 @@ class AuthState {
   final bool isAuthenticated;
   final User? user;
 
-  const AuthState({required this.isAuthenticated, this.user});
+  AuthState({required this.isAuthenticated, this.user});
 
-  factory AuthState.initial() => const AuthState(isAuthenticated: false);
+  factory AuthState.initial() => AuthState(isAuthenticated: false);
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {

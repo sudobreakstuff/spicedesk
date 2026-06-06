@@ -16,7 +16,7 @@ import '../../../auth/domain/auth_state.dart';
 import '../../../workspace/domain/workspace_state.dart';
 
 class HomeScreen extends ConsumerWidget {
-  const HomeScreen({super.key});
+  HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -69,7 +69,7 @@ class HomeScreen extends ConsumerWidget {
                     letterSpacing: -0.5,
                   ),
                 ).animate().fadeIn().slideY(begin: -8),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                   'Here\'s what\'s happening with your business today.',
                   style: TextStyle(
@@ -81,7 +81,7 @@ class HomeScreen extends ConsumerWidget {
             );
           }),
 
-          const SizedBox(height: 32),
+          SizedBox(height: 32),
 
           LayoutBuilder(builder: (context, constraints) {
             final colCount = constraints.maxWidth < 600
@@ -92,7 +92,7 @@ class HomeScreen extends ConsumerWidget {
             return GridView.count(
               crossAxisCount: colCount,
               shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
+              physics: NeverScrollableScrollPhysics(),
               mainAxisSpacing: 16,
               crossAxisSpacing: 16,
               childAspectRatio: 1.6,
@@ -117,7 +117,7 @@ class HomeScreen extends ConsumerWidget {
                     loading: () => null,
                     error: (_, __) => 'R 0.00',
                   ),
-                  accent: const Color(0xFF8B5CF6),
+                  accent: Color(0xFF8B5CF6),
                   isLoading: weeklySales.isLoading,
                   onTap: () => context.go('/reports'),
                 ),
@@ -144,14 +144,14 @@ class HomeScreen extends ConsumerWidget {
             );
           }),
 
-          const SizedBox(height: 36),
+          SizedBox(height: 36),
 
-          const Text('Quick Actions',
+          Text('Quick Actions',
               style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                   color: SpiceColors.textPrimary)),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           LayoutBuilder(builder: (context, constraints) {
             final isWide = constraints.maxWidth >= 700;
             final cards = [
@@ -181,7 +181,7 @@ class HomeScreen extends ConsumerWidget {
               return Row(
                 children: [
                   for (int i = 0; i < cards.length; i++) ...[
-                    if (i > 0) const SizedBox(width: 16),
+                    if (i > 0) SizedBox(width: 16),
                     Expanded(child: cards[i]),
                   ],
                 ].animate(interval: 100.ms, delay: 200.ms).fadeIn().slideY(begin: 12),
@@ -190,26 +190,26 @@ class HomeScreen extends ConsumerWidget {
             return Column(
               children: [
                 for (int i = 0; i < cards.length; i++) ...[
-                  if (i > 0) const SizedBox(height: 12),
+                  if (i > 0) SizedBox(height: 12),
                   cards[i],
                 ],
               ].animate(interval: 100.ms, delay: 200.ms).fadeIn().slideY(begin: 12),
             );
           }),
 
-          const SizedBox(height: 36),
+          SizedBox(height: 36),
 
-          const Text('Daily Summary',
+          Text('Daily Summary',
               style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                   color: SpiceColors.textPrimary)),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           LayoutBuilder(builder: (context, constraints) {
             final isWide = constraints.maxWidth >= 700;
             final spacer = isWide
-                ? const SizedBox(width: 16)
-                : const SizedBox(height: 12);
+                ? SizedBox(width: 16)
+                : SizedBox(height: 12);
             final widgets = [
               Expanded(
                 child: Container(
@@ -228,33 +228,33 @@ class HomeScreen extends ConsumerWidget {
                           color: SpiceColors.primary.withAlpha(25),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(Icons.receipt_long_rounded,
+                        child: Icon(Icons.receipt_long_rounded,
                             color: SpiceColors.primary, size: 20),
                       ),
-                      const SizedBox(width: 14),
+                      SizedBox(width: 14),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Sales',
+                          Text('Sales',
                               style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w500,
                                   color: SpiceColors.textSecondary)),
-                          const SizedBox(height: 2),
+                          SizedBox(height: 2),
                           dailySummary.when(
                             data: (d) => Text(
                               d.transactionCount.toString(),
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.w700,
                                   color: SpiceColors.textPrimary),
                             ),
-                            loading: () => const SizedBox(
+                            loading: () => SizedBox(
                               width: 18,
                               height: 18,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             ),
-                            error: (_, __) => const Text('-',
+                            error: (_, __) => Text('-',
                                 style: TextStyle(
                                     fontSize: 22,
                                     fontWeight: FontWeight.w700,
@@ -284,33 +284,33 @@ class HomeScreen extends ConsumerWidget {
                           color: SpiceColors.accent.withAlpha(25),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(Icons.payments_rounded,
+                        child: Icon(Icons.payments_rounded,
                             color: SpiceColors.accent, size: 20),
                       ),
-                      const SizedBox(width: 14),
+                      SizedBox(width: 14),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Revenue',
+                          Text('Revenue',
                               style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w500,
                                   color: SpiceColors.textSecondary)),
-                          const SizedBox(height: 2),
+                          SizedBox(height: 2),
                           todaySales.when(
                             data: (v) => Text(
                               format.format(v),
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.w700,
                                   color: SpiceColors.textPrimary),
                             ),
-                            loading: () => const SizedBox(
+                            loading: () => SizedBox(
                               width: 18,
                               height: 18,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             ),
-                            error: (_, __) => const Text('-',
+                            error: (_, __) => Text('-',
                                 style: TextStyle(
                                     fontSize: 22,
                                     fontWeight: FontWeight.w700,
@@ -340,35 +340,35 @@ class HomeScreen extends ConsumerWidget {
                           color: SpiceColors.warning.withAlpha(25),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(Icons.shopping_bag_rounded,
+                        child: Icon(Icons.shopping_bag_rounded,
                             color: SpiceColors.warning, size: 20),
                       ),
-                      const SizedBox(width: 14),
+                      SizedBox(width: 14),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Items Sold',
+                          Text('Items Sold',
                               style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w500,
                                   color: SpiceColors.textSecondary)),
-                          const SizedBox(height: 2),
+                          SizedBox(height: 2),
                           dailySummary.when(
                             data: (d) => Text(
                               d.transactionCount > 0
                                   ? d.transactionCount.toString()
                                   : '0',
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.w700,
                                   color: SpiceColors.textPrimary),
                             ),
-                            loading: () => const SizedBox(
+                            loading: () => SizedBox(
                               width: 18,
                               height: 18,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             ),
-                            error: (_, __) => const Text('-',
+                            error: (_, __) => Text('-',
                                 style: TextStyle(
                                     fontSize: 22,
                                     fontWeight: FontWeight.w700,
@@ -387,15 +387,15 @@ class HomeScreen extends ConsumerWidget {
             return Column(children: widgets);
           }),
 
-          const SizedBox(height: 36),
+          SizedBox(height: 36),
 
           Row(children: [
-            const Text('Pending Orders',
+            Text('Pending Orders',
                 style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
                     color: SpiceColors.textPrimary)),
-            const Spacer(),
+            Spacer(),
             Material(
               color: SpiceColors.accent.withAlpha(20),
               borderRadius: BorderRadius.circular(8),
@@ -409,7 +409,7 @@ class HomeScreen extends ConsumerWidget {
                     border: Border.all(color: SpiceColors.accent.withAlpha(80)),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.add_circle_outline,
@@ -426,7 +426,7 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
           ]),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           if (pendingQuotes.isLoading)
             _buildShimmerList(5)
           else if (pendingQuotes.valueOrNull?.isEmpty != false)
@@ -437,7 +437,7 @@ class HomeScreen extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: SpiceColors.border),
               ),
-              child: const Column(
+              child: Column(
                 children: [
                   Icon(Icons.check_circle_outline,
                       size: 32, color: SpiceColors.textSecondary),
@@ -478,14 +478,14 @@ class HomeScreen extends ConsumerWidget {
                           child: Icon(Icons.description_rounded,
                               size: 18, color: quote.statusColor),
                         ),
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 quote.quoteNumber,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
                                   color: SpiceColors.textPrimary,
@@ -496,13 +496,13 @@ class HomeScreen extends ConsumerWidget {
                                   if (quote.customerName != null)
                                     Text(
                                       quote.customerName!,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 11,
                                         color: SpiceColors.textSecondary,
                                       ),
                                     ),
                                   if (quote.customerName != null)
-                                    const Text(' • ',
+                                    Text(' • ',
                                         style: TextStyle(
                                           fontSize: 11,
                                           color: SpiceColors.textSecondary,
@@ -522,7 +522,7 @@ class HomeScreen extends ConsumerWidget {
                         ),
                     Text(
                       format.format(quote.total),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: SpiceColors.accent,
@@ -537,13 +537,13 @@ class HomeScreen extends ConsumerWidget {
             ).animate(delay: 400.ms).fadeIn(),
 
           if (lowStockItems.isNotEmpty) ...[
-            const SizedBox(height: 36),
-            const Text('Low Stock Alert',
+            SizedBox(height: 36),
+            Text('Low Stock Alert',
                 style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
                     color: SpiceColors.textPrimary)),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -564,17 +564,17 @@ class HomeScreen extends ConsumerWidget {
                             color: SpiceColors.danger.withAlpha(25),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(Icons.inventory_2_outlined,
+                          child: Icon(Icons.inventory_2_outlined,
                               size: 18, color: SpiceColors.danger),
                         ),
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 item.productName,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
                                   color: SpiceColors.textPrimary,
@@ -582,7 +582,7 @@ class HomeScreen extends ConsumerWidget {
                               ),
                               Text(
                                 'Reorder point: ${item.reorderPoint.toStringAsFixed(0)} | On hand: ${item.quantityOnHand.toStringAsFixed(0)}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11,
                                   color: SpiceColors.textSecondary,
                                 ),
@@ -599,7 +599,7 @@ class HomeScreen extends ConsumerWidget {
                           ),
                           child: Text(
                             '${item.quantityOnHand.toStringAsFixed(0)} left',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                               color: SpiceColors.danger,
@@ -614,13 +614,13 @@ class HomeScreen extends ConsumerWidget {
             ).animate(delay: 500.ms).fadeIn().slideY(begin: 8),
           ],
 
-          const SizedBox(height: 48),
-          const Center(
+          SizedBox(height: 48),
+          Center(
             child: Text('Made by Shahid Singh',
                 style:
                     TextStyle(fontSize: 11, color: SpiceColors.textSecondary)),
           ),
-          const SizedBox(height: 32),
+          SizedBox(height: 32),
         ],
       ),
     );
@@ -651,7 +651,7 @@ class HomeScreen extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -664,7 +664,7 @@ class HomeScreen extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(4),
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        SizedBox(height: 6),
                         Container(
                           height: 10,
                           width: 90,
@@ -715,25 +715,25 @@ void _showQuoteActionDialog(BuildContext context, WidgetRef ref, PendingQuote qu
             child: Icon(Icons.description_rounded,
                 size: 18, color: quote.statusColor),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Quote Details',
+                Text('Quote Details',
                     style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: SpiceColors.textPrimary)),
                 Text(quote.quoteNumber,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 12, color: SpiceColors.textSecondary)),
               ],
             ),
           ),
           IconButton(
             onPressed: () => Navigator.pop(ctx),
-            icon: const Icon(Icons.close,
+            icon: Icon(Icons.close,
                 size: 20, color: SpiceColors.textSecondary),
           ),
         ],
@@ -750,44 +750,44 @@ void _showQuoteActionDialog(BuildContext context, WidgetRef ref, PendingQuote qu
               children: [
                 _qInfoChip('Status', quote.displayStatus,
                     color: quote.statusColor),
-                const SizedBox(width: 16),
+                SizedBox(width: 16),
                 _qInfoChip('Total',
                     NumberFormat.currency(symbol: 'R ').format(quote.total)),
-                const SizedBox(width: 16),
+                SizedBox(width: 16),
                 if (quote.customerName != null)
                   _qInfoChip('Customer', quote.customerName!),
               ],
             ),
-            const SizedBox(height: 20),
-            const Text('Actions',
+            SizedBox(height: 20),
+            Text('Actions',
                 style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: SpiceColors.textPrimary)),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
-                _qActionButton('Draft', const Color(0xFF8B949E),
+                _qActionButton('Draft', Color(0xFF8B949E),
                     quote.status == 'draft', () async {
                   await _updateQuoteStatus(ctx, ref, quote.id, 'draft');
                 }),
-                _qActionButton('Sent', const Color(0xFF6366F1),
+                _qActionButton('Sent', Color(0xFF6366F1),
                     quote.status == 'sent', () async {
                   await _updateQuoteStatus(ctx, ref, quote.id, 'sent');
                 }),
-                _qActionButton('Accepted', const Color(0xFF238636),
+                _qActionButton('Accepted', Color(0xFF238636),
                     quote.status == 'accepted', () async {
                   await _updateQuoteStatus(ctx, ref, quote.id, 'accepted');
                 }),
-                _qActionButton('Rejected', const Color(0xFFDA3633),
+                _qActionButton('Rejected', Color(0xFFDA3633),
                     quote.status == 'rejected', () async {
                   await _updateQuoteStatus(ctx, ref, quote.id, 'rejected');
                 }),
               ],
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               child: Material(
@@ -804,20 +804,20 @@ void _showQuoteActionDialog(BuildContext context, WidgetRef ref, PendingQuote qu
                           borderRadius: BorderRadius.circular(16),
                           side: BorderSide(color: SpiceColors.border),
                         ),
-                        title: const Text('Delete Quote?',
+                        title: Text('Delete Quote?',
                             style: TextStyle(color: SpiceColors.danger)),
-                        content: const Text(
+                        content: Text(
                             'This will permanently remove this quote.'),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(c, false),
-                            child: const Text('Cancel'),
+                            child: Text('Cancel'),
                           ),
                           ElevatedButton(
                             onPressed: () => Navigator.pop(c, true),
                             style: ElevatedButton.styleFrom(
                                 backgroundColor: SpiceColors.danger),
-                            child: const Text('Delete'),
+                            child: Text('Delete'),
                           ),
                         ],
                       ),
@@ -835,7 +835,7 @@ void _showQuoteActionDialog(BuildContext context, WidgetRef ref, PendingQuote qu
                         ref.invalidate(pendingQuotesProvider);
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
+                            SnackBar(
                               content: Text('Quote deleted'),
                               backgroundColor: SpiceColors.accent,
                             ),
@@ -860,7 +860,7 @@ void _showQuoteActionDialog(BuildContext context, WidgetRef ref, PendingQuote qu
                           Border.all(color: SpiceColors.danger.withAlpha(80)),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Center(
+                    child: Center(
                       child: Text('Delete Quote',
                           style: TextStyle(
                               fontSize: 13,
@@ -907,7 +907,7 @@ Widget _qInfoChip(String label, String value, {Color? color}) {
     text: TextSpan(children: [
       TextSpan(
           text: '$label: ',
-          style: const TextStyle(
+          style: TextStyle(
               fontSize: 11, color: SpiceColors.textSecondary)),
       TextSpan(
           text: value,
@@ -937,7 +937,7 @@ Widget _qActionButton(
           mainAxisSize: MainAxisSize.min,
           children: [
             if (isActive)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.only(right: 4),
                 child: Icon(Icons.check, size: 14, color: SpiceColors.accent),
               ),
@@ -961,7 +961,7 @@ class _StatCard extends StatelessWidget {
   final VoidCallback? onTap;
   final bool isLoading;
 
-  const _StatCard({
+  _StatCard({
     required this.icon,
     required this.label,
     required this.value,
@@ -999,9 +999,9 @@ class _StatCard extends StatelessWidget {
                     ),
                     child: Icon(icon, color: accent, size: 18),
                   ),
-                  const Spacer(),
+                  Spacer(),
                   if (isLoading)
-                    const SizedBox(
+                    SizedBox(
                       width: 14,
                       height: 14,
                       child: CircularProgressIndicator(strokeWidth: 2),
@@ -1011,7 +1011,7 @@ class _StatCard extends StatelessWidget {
                         size: 14, color: SpiceColors.accent.withAlpha(100)),
                 ],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               if (isLoading)
                 Shimmer.fromColors(
                   baseColor: SpiceColors.surfaceAlt,
@@ -1027,7 +1027,7 @@ class _StatCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      SizedBox(height: 6),
                       Container(
                         height: 12,
                         width: 80,
@@ -1041,13 +1041,13 @@ class _StatCard extends StatelessWidget {
                 )
               else ...[
                 Text(value ?? '-',
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w700,
                         color: SpiceColors.textPrimary)),
-                const SizedBox(height: 2),
+                SizedBox(height: 2),
                 Text(label,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 12, color: SpiceColors.textSecondary)),
               ],
             ],
@@ -1065,7 +1065,7 @@ class _ActionCard extends StatelessWidget {
   final VoidCallback onTap;
   final Color color;
 
-  const _ActionCard({
+  _ActionCard({
     required this.icon,
     required this.label,
     required this.subtitle,
@@ -1098,25 +1098,25 @@ class _ActionCard extends StatelessWidget {
                 ),
                 child: Icon(icon, color: color, size: 20),
               ),
-              const SizedBox(width: 14),
+              SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(label,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                             color: SpiceColors.textPrimary)),
-                    const SizedBox(height: 2),
+                    SizedBox(height: 2),
                     Text(subtitle,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 11,
                             color: SpiceColors.textSecondary)),
                   ],
                 ),
               ),
-              const Icon(Icons.arrow_forward,
+              Icon(Icons.arrow_forward,
                   size: 16, color: SpiceColors.textSecondary),
             ],
           ),

@@ -8,7 +8,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../domain/auth_state.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key});
+  LoginScreen({super.key});
 
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
@@ -42,17 +42,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(color: SpiceColors.border),
         ),
-        title: const Text('Reset Password'),
+        title: Text('Reset Password'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Enter your email to receive a password reset link.',
+            Text('Enter your email to receive a password reset link.',
                 style: TextStyle(color: SpiceColors.textSecondary)),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             TextField(
               controller: emailCtrl,
               keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Email',
                 prefixIcon: Icon(Icons.email_outlined),
               ),
@@ -62,11 +62,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, emailCtrl.text.trim()),
-            child: const Text('Send Reset Link'),
+            child: Text('Send Reset Link'),
           ),
         ],
       ),
@@ -79,7 +79,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           redirectTo: 'spicedesk://reset-password');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('Check your email for a password reset link'),
             backgroundColor: SpiceColors.accent,
           ),
@@ -118,7 +118,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -133,7 +133,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 48),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 400),
+              constraints: BoxConstraints(maxWidth: 400),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -146,7 +146,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         // Animated gradient icon
                         TweenAnimationBuilder<double>(
                           tween: Tween(begin: 0.0, end: 1.0),
-                          duration: const Duration(seconds: 2),
+                          duration: Duration(seconds: 2),
                           builder: (_, value, child) {
                             return Container(
                               width: 80,
@@ -155,8 +155,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 gradient: LinearGradient(
                                   colors: [
                                     SpiceColors.primary,
-                                    const Color(0xFFA78BFA),
-                                    const Color(0xFF6366F1),
+                                    Color(0xFFA78BFA),
+                                    Color(0xFF6366F1),
                                   ],
                                   stops: [0.0, value, 1.0],
                                 ),
@@ -165,11 +165,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   BoxShadow(
                                     color: SpiceColors.primary.withAlpha(60),
                                     blurRadius: 24,
-                                    offset: const Offset(0, 8),
+                                    offset: Offset(0, 8),
                                   ),
                                 ],
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.store_rounded,
                                 color: Colors.white,
                                 size: 40,
@@ -177,7 +177,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             );
                           },
                         ),
-                        const SizedBox(height: 20),
+                        SizedBox(height: 20),
                         Text(
                           'SpiceDesk',
                           style: Theme.of(context)
@@ -188,7 +188,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 letterSpacing: -1,
                               ),
                         ),
-                        const SizedBox(height: 6),
+                        SizedBox(height: 6),
                         Text(
                           'Business Suite',
                           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -196,7 +196,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 letterSpacing: 0.5,
                               ),
                         ),
-                        const SizedBox(height: 12),
+                        SizedBox(height: 12),
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 6),
@@ -207,7 +207,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               color: SpiceColors.primary.withAlpha(40),
                             ),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(Icons.favorite_rounded,
@@ -228,7 +228,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ).animate().fadeIn(duration: 500.ms).slideY(
                         begin: 0.05, curve: Curves.easeOut),
 
-                    const SizedBox(height: 40),
+                    SizedBox(height: 40),
 
                     // Login form card
                     Container(
@@ -245,16 +245,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             'Welcome back',
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
-                          const SizedBox(height: 4),
+                          SizedBox(height: 4),
                           Text(
                             'Sign in to your workspace',
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
-                          const SizedBox(height: 24),
+                          SizedBox(height: 24),
                           TextFormField(
                             controller: _emailCtrl,
                             focusNode: _emailFocus,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: 'Email',
                               prefixIcon: Icon(Icons.email_outlined),
                             ),
@@ -266,11 +266,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 ? 'Enter your email'
                                 : null,
                           ),
-                          const SizedBox(height: 16),
+                          SizedBox(height: 16),
                           TextFormField(
                             controller: _passwordCtrl,
                             focusNode: _passwordFocus,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: 'Password',
                               prefixIcon: Icon(Icons.lock_outlined),
                             ),
@@ -282,7 +282,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 : null,
                           ),
                           if (_error != null) ...[
-                            const SizedBox(height: 12),
+                            SizedBox(height: 12),
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
@@ -295,14 +295,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.error_outline,
+                                  Icon(Icons.error_outline,
                                       color: SpiceColors.danger,
                                       size: 18),
-                                  const SizedBox(width: 8),
+                                  SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       _error!,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         color: SpiceColors.danger,
                                         fontSize: 13,
                                       ),
@@ -312,7 +312,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                             ),
                           ],
-                          const SizedBox(height: 24),
+                          SizedBox(height: 24),
                           SizedBox(
                             height: 52,
                             child: ElevatedButton(
@@ -326,7 +326,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 elevation: 0,
                               ),
                               child: _loading
-                                  ? const SizedBox(
+                                  ? SizedBox(
                                       width: 22,
                                       height: 22,
                                       child: CircularProgressIndicator(
@@ -334,7 +334,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                         color: Colors.white,
                                       ),
                                     )
-                                  : const Text(
+                                  : Text(
                                       'Sign In',
                                       style: TextStyle(
                                         fontSize: 16,
@@ -343,12 +343,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     ),
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: 8),
                           Align(
                             alignment: Alignment.center,
                             child: TextButton(
                               onPressed: _forgotPassword,
-                              child: const Text(
+                              child: Text(
                                 'Forgot password?',
                                 style: TextStyle(
                                   fontSize: 13,
@@ -363,7 +363,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         duration: 500.ms).slideY(
                         begin: 0.08, curve: Curves.easeOut),
 
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20),
 
                     // Register link
                     Row(
@@ -378,7 +378,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           style: TextButton.styleFrom(
                             foregroundColor: SpiceColors.primary,
                           ),
-                          child: const Text(
+                          child: Text(
                             'Register',
                             style: TextStyle(fontWeight: FontWeight.w600),
                           ),
@@ -386,7 +386,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ],
                     ).animate(delay: 500.ms).fadeIn(),
 
-                    const SizedBox(height: 32),
+                    SizedBox(height: 32),
                     Center(
                       child: Text(
                         'Made by Shahid Singh',

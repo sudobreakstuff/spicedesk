@@ -7,7 +7,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../domain/auth_state.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
-  const RegisterScreen({super.key});
+  RegisterScreen({super.key});
 
   @override
   ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
@@ -49,7 +49,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('Account created! Check your email to confirm.'),
             backgroundColor: SpiceColors.accent,
           ),
@@ -67,7 +67,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -82,7 +82,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 48),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 400),
+              constraints: BoxConstraints(maxWidth: 400),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -93,7 +93,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       children: [
                         TweenAnimationBuilder<double>(
                           tween: Tween(begin: 0.0, end: 1.0),
-                          duration: const Duration(seconds: 2),
+                          duration: Duration(seconds: 2),
                           builder: (_, value, child) {
                             return Container(
                               width: 80,
@@ -102,8 +102,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 gradient: LinearGradient(
                                   colors: [
                                     SpiceColors.primary,
-                                    const Color(0xFFA78BFA),
-                                    const Color(0xFF6366F1),
+                                    Color(0xFFA78BFA),
+                                    Color(0xFF6366F1),
                                   ],
                                   stops: [0.0, value, 1.0],
                                 ),
@@ -112,11 +112,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                   BoxShadow(
                                     color: SpiceColors.primary.withAlpha(60),
                                     blurRadius: 24,
-                                    offset: const Offset(0, 8),
+                                    offset: Offset(0, 8),
                                   ),
                                 ],
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.store_rounded,
                                 color: Colors.white,
                                 size: 40,
@@ -124,7 +124,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             );
                           },
                         ),
-                        const SizedBox(height: 20),
+                        SizedBox(height: 20),
                         Text(
                           'SpiceDesk',
                           style: Theme.of(context)
@@ -135,7 +135,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 letterSpacing: -1,
                               ),
                         ),
-                        const SizedBox(height: 6),
+                        SizedBox(height: 6),
                         Text(
                           'Business Suite',
                           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -143,7 +143,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 letterSpacing: 0.5,
                               ),
                         ),
-                        const SizedBox(height: 12),
+                        SizedBox(height: 12),
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 6),
@@ -154,7 +154,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                               color: SpiceColors.primary.withAlpha(40),
                             ),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(Icons.favorite_rounded,
@@ -175,7 +175,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     ).animate().fadeIn(duration: 500.ms).slideY(
                         begin: 0.05, curve: Curves.easeOut),
 
-                    const SizedBox(height: 40),
+                    SizedBox(height: 40),
 
                     Container(
                       decoration: BoxDecoration(
@@ -191,16 +191,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             'Create Account',
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
-                          const SizedBox(height: 4),
+                          SizedBox(height: 4),
                           Text(
                             'Set up your workspace',
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
-                          const SizedBox(height: 24),
+                          SizedBox(height: 24),
                           TextFormField(
                             controller: _nameCtrl,
                             focusNode: _nameFocus,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: 'Full Name',
                               prefixIcon: Icon(Icons.person_outline),
                             ),
@@ -210,11 +210,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             validator: (v) =>
                                 v?.isEmpty == true ? 'Enter your name' : null,
                           ),
-                          const SizedBox(height: 16),
+                          SizedBox(height: 16),
                           TextFormField(
                             controller: _emailCtrl,
                             focusNode: _emailFocus,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: 'Email',
                               prefixIcon: Icon(Icons.email_outlined),
                             ),
@@ -230,11 +230,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                               return null;
                             },
                           ),
-                          const SizedBox(height: 16),
+                          SizedBox(height: 16),
                           TextFormField(
                             controller: _passwordCtrl,
                             focusNode: _passwordFocus,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: 'Password',
                               prefixIcon: Icon(Icons.lock_outlined),
                             ),
@@ -252,7 +252,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             },
                           ),
                           if (_error != null) ...[
-                            const SizedBox(height: 12),
+                            SizedBox(height: 12),
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
@@ -264,13 +264,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.error_outline,
+                                  Icon(Icons.error_outline,
                                       color: SpiceColors.danger, size: 18),
-                                  const SizedBox(width: 8),
+                                  SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       _error!,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         color: SpiceColors.danger,
                                         fontSize: 13,
                                       ),
@@ -280,7 +280,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                               ),
                             ),
                           ],
-                          const SizedBox(height: 24),
+                          SizedBox(height: 24),
                           SizedBox(
                             height: 52,
                             child: ElevatedButton(
@@ -294,7 +294,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 elevation: 0,
                               ),
                               child: _loading
-                                  ? const SizedBox(
+                                  ? SizedBox(
                                       width: 22,
                                       height: 22,
                                       child: CircularProgressIndicator(
@@ -302,7 +302,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                         color: Colors.white,
                                       ),
                                     )
-                                  : const Text(
+                                  : Text(
                                       'Create Account',
                                       style: TextStyle(
                                         fontSize: 16,
@@ -317,7 +317,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         duration: 500.ms).slideY(
                         begin: 0.08, curve: Curves.easeOut),
 
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20),
 
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -331,7 +331,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           style: TextButton.styleFrom(
                             foregroundColor: SpiceColors.primary,
                           ),
-                          child: const Text(
+                          child: Text(
                             'Sign in',
                             style: TextStyle(fontWeight: FontWeight.w600),
                           ),
@@ -339,7 +339,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       ],
                     ).animate(delay: 500.ms).fadeIn(),
 
-                    const SizedBox(height: 32),
+                    SizedBox(height: 32),
                     Center(
                       child: Text(
                         'Made by Shahid Singh',

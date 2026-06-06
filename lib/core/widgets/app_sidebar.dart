@@ -7,7 +7,7 @@ import '../../features/workspace/domain/workspace_state.dart';
 import '../theme/app_theme.dart';
 
 class AppSidebar extends ConsumerWidget {
-  const AppSidebar({super.key});
+  AppSidebar({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -38,15 +38,15 @@ class AppSidebar extends ConsumerWidget {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
+                    gradient: LinearGradient(
                       colors: [SpiceColors.primary, Color(0xFF818CF8)],
                     ),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.store_rounded,
+                  child: Icon(Icons.store_rounded,
                       color: Colors.white, size: 18),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: 10),
                 Expanded(
                   child: Tooltip(
                     message: workspace.selectedId != null
@@ -56,7 +56,7 @@ class AppSidebar extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'SpiceDesk',
                   style: TextStyle(
                     fontSize: 15,
@@ -67,7 +67,7 @@ class AppSidebar extends ConsumerWidget {
                 ),
                 Text(
                   workspace.selectedName ?? 'My Store',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     color: SpiceColors.textSecondary,
                   ),
@@ -81,7 +81,7 @@ class AppSidebar extends ConsumerWidget {
             ),
           ),
 
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
 
           Expanded(
             child: ListView(
@@ -165,18 +165,18 @@ class AppSidebar extends ConsumerWidget {
                   backgroundColor: SpiceColors.primary.withAlpha(40),
                   child: Text(
                     (user?.email ?? 'U')[0].toUpperCase(),
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: SpiceColors.primary,
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     user?.email?.split('@')[0] ?? 'User',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       color: SpiceColors.textPrimary,
                       fontWeight: FontWeight.w500,
@@ -199,7 +199,7 @@ class _NavItem extends StatelessWidget {
   final String path;
   final bool active;
 
-  const _NavItem({
+  _NavItem({
     required this.icon,
     required this.label,
     required this.path,
@@ -216,7 +216,7 @@ class _NavItem extends StatelessWidget {
           onTap: () => context.go(path),
           borderRadius: BorderRadius.circular(8),
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
+            duration: Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
               color: active
@@ -238,7 +238,7 @@ class _NavItem extends StatelessWidget {
                       ? SpiceColors.primary
                       : SpiceColors.textSecondary,
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Text(
                   label,
                   style: TextStyle(

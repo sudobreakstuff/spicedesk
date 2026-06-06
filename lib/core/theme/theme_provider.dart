@@ -55,34 +55,34 @@ extension AppThemeColors on AppTheme {
   Color get primaryColor {
     switch (this) {
       case AppTheme.defaultDark:
-        return const Color(0xFF6366F1);
+        return Color(0xFF6366F1);
       case AppTheme.oceanBlue:
-        return const Color(0xFF0EA5E9);
+        return Color(0xFF0EA5E9);
       case AppTheme.forestGreen:
-        return const Color(0xFF22C55E);
+        return Color(0xFF22C55E);
       case AppTheme.sunsetOrange:
-        return const Color(0xFFF97316);
+        return Color(0xFFF97316);
       case AppTheme.midnightPurple:
-        return const Color(0xFFA855F7);
+        return Color(0xFFA855F7);
       case AppTheme.paperLight:
-        return const Color(0xFF6366F1);
+        return Color(0xFF6366F1);
     }
   }
 
   Color get accentColor {
     switch (this) {
       case AppTheme.defaultDark:
-        return const Color(0xFF238636);
+        return Color(0xFF238636);
       case AppTheme.oceanBlue:
-        return const Color(0xFF06B6D4);
+        return Color(0xFF06B6D4);
       case AppTheme.forestGreen:
-        return const Color(0xFF10B981);
+        return Color(0xFF10B981);
       case AppTheme.sunsetOrange:
-        return const Color(0xFFF59E0B);
+        return Color(0xFFF59E0B);
       case AppTheme.midnightPurple:
-        return const Color(0xFFD946EF);
+        return Color(0xFFD946EF);
       case AppTheme.paperLight:
-        return const Color(0xFF16A34A);
+        return Color(0xFF16A34A);
     }
   }
 
@@ -94,11 +94,11 @@ extension AppThemeColors on AppTheme {
       return ColorScheme.light(
         primary: pri,
         secondary: sec,
-        surface: const Color(0xFFF6F8FA),
-        error: const Color(0xFFDA3633),
+        surface: Color(0xFFF6F8FA),
+        error: Color(0xFFDA3633),
         onPrimary: Colors.white,
         onSecondary: Colors.white,
-        onSurface: const Color(0xFF1F2328),
+        onSurface: Color(0xFF1F2328),
         onError: Colors.white,
       );
     }
@@ -107,7 +107,7 @@ extension AppThemeColors on AppTheme {
       primary: pri,
       secondary: sec,
       surface: _sfAlt,
-      error: const Color(0xFFDA3633),
+      error: Color(0xFFDA3633),
       onPrimary: Colors.white,
       onSecondary: Colors.white,
       onSurface: _textPri,

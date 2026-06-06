@@ -9,7 +9,7 @@ import '../../../workspace/domain/workspace_state.dart';
 import '../../data/expenses_provider.dart';
 
 class ExpensesScreen extends ConsumerStatefulWidget {
-  const ExpensesScreen({super.key});
+  ExpensesScreen({super.key});
 
   @override
   ConsumerState<ExpensesScreen> createState() => _ExpensesScreenState();
@@ -35,7 +35,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(color: SpiceColors.border),
           ),
-          title: const Text('Add Expense',
+          title: Text('Add Expense',
               style: TextStyle(color: SpiceColors.textPrimary)),
           content: SingleChildScrollView(
             child: Column(
@@ -44,21 +44,21 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                 TextField(
                   controller: descriptionCtrl,
                   decoration:
-                      const InputDecoration(labelText: 'Description'),
+                      InputDecoration(labelText: 'Description'),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 TextField(
                   controller: amountCtrl,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Amount (R)'),
+                  decoration: InputDecoration(labelText: 'Amount (R)'),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 DropdownButtonFormField<String>(
                   initialValue: category,
                   decoration:
-                      const InputDecoration(labelText: 'Category'),
+                      InputDecoration(labelText: 'Category'),
                   dropdownColor: SpiceColors.surfaceAlt,
-                  style: const TextStyle(
+                  style: TextStyle(
                       color: SpiceColors.textPrimary, fontSize: 14),
                   items: [
                     'general',
@@ -78,7 +78,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                     }
                   },
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 InkWell(
                   onTap: () async {
                     final d = await showDatePicker(
@@ -101,20 +101,20 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                     ),
                     child: Text(
                       DateFormat('dd/MM/yyyy').format(selectedDate),
-                      style: const TextStyle(
+                      style: TextStyle(
                           color: SpiceColors.textPrimary, fontSize: 14),
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 TextField(
                   controller: notesCtrl,
-                  decoration: const InputDecoration(labelText: 'Notes'),
+                  decoration: InputDecoration(labelText: 'Notes'),
                   maxLines: 2,
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 SwitchListTile(
-                  title: const Text('Raw Material Purchase',
+                  title: Text('Raw Material Purchase',
                       style: TextStyle(
                           fontSize: 14,
                           color: SpiceColors.textPrimary)),
@@ -132,7 +132,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                   },
                 ),
                 if (isRawMaterial) ...[
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   _RawMaterialPicker(
                     onChanged: (productId, costPrice) {
                       selectedProductId = productId;
@@ -141,12 +141,12 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                       }
                     },
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   TextField(
                     controller: quantityCtrl,
                     keyboardType: TextInputType.number,
                     decoration:
-                        const InputDecoration(labelText: 'Quantity'),
+                        InputDecoration(labelText: 'Quantity'),
                   ),
                 ],
               ],
@@ -155,7 +155,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
+              child: Text('Cancel'),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -164,7 +164,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                     double.tryParse(amountCtrl.text) ?? 0;
                 if (description.isEmpty && amount <= 0) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
+                    SnackBar(
                         content: Text(
                             'Please enter a description and amount'),
                         backgroundColor: SpiceColors.warning),
@@ -234,7 +234,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                   }
                 }
               },
-              child: const Text('Save'),
+              child: Text('Save'),
             ),
           ],
         ),
@@ -260,7 +260,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(color: SpiceColors.border),
           ),
-          title: const Text('Edit Expense',
+          title: Text('Edit Expense',
               style: TextStyle(color: SpiceColors.textPrimary)),
           content: SingleChildScrollView(
             child: Column(
@@ -269,22 +269,22 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                 TextField(
                   controller: descriptionCtrl,
                   decoration:
-                      const InputDecoration(labelText: 'Description'),
+                      InputDecoration(labelText: 'Description'),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 TextField(
                   controller: amountCtrl,
                   keyboardType: TextInputType.number,
                   decoration:
-                      const InputDecoration(labelText: 'Amount (R)'),
+                      InputDecoration(labelText: 'Amount (R)'),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 DropdownButtonFormField<String>(
                   initialValue: category,
                   decoration:
-                      const InputDecoration(labelText: 'Category'),
+                      InputDecoration(labelText: 'Category'),
                   dropdownColor: SpiceColors.surfaceAlt,
-                  style: const TextStyle(
+                  style: TextStyle(
                       color: SpiceColors.textPrimary, fontSize: 14),
                   items: [
                     'general',
@@ -304,7 +304,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                     }
                   },
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 InkWell(
                   onTap: () async {
                     final d = await showDatePicker(
@@ -327,17 +327,17 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                     ),
                     child: Text(
                       DateFormat('dd/MM/yyyy').format(selectedDate),
-                      style: const TextStyle(
+                      style: TextStyle(
                           color: SpiceColors.textPrimary,
                           fontSize: 14),
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 TextField(
                   controller: notesCtrl,
                   decoration:
-                      const InputDecoration(labelText: 'Notes'),
+                      InputDecoration(labelText: 'Notes'),
                   maxLines: 2,
                 ),
               ],
@@ -346,7 +346,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
+              child: Text('Cancel'),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -389,7 +389,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                   }
                 }
               },
-              child: const Text('Save'),
+              child: Text('Save'),
             ),
           ],
         ),
@@ -404,17 +404,17 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
         backgroundColor: SpiceColors.surfaceAlt,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: SpiceColors.border),
+          side: BorderSide(color: SpiceColors.border),
         ),
-        title: const Text('Delete Expense'),
+        title: Text('Delete Expense'),
         content: Text(
           'Are you sure you want to delete "${expense.description}"?',
-          style: const TextStyle(color: SpiceColors.textSecondary),
+          style: TextStyle(color: SpiceColors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -440,7 +440,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: SpiceColors.danger,
             ),
-            child: const Text('Delete'),
+            child: Text('Delete'),
           ),
         ],
       ),
@@ -451,7 +451,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: SpiceColors.surfaceAlt,
-      shape: const RoundedRectangleBorder(
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
         side: BorderSide(color: SpiceColors.border),
       ),
@@ -469,22 +469,22 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   expense.description,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: SpiceColors.textPrimary,
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               ListTile(
-                leading: const Icon(Icons.edit, color: SpiceColors.primary),
-                title: const Text('Edit'),
+                leading: Icon(Icons.edit, color: SpiceColors.primary),
+                title: Text('Edit'),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8)),
                 onTap: () {
@@ -493,9 +493,9 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.delete_outline,
+                leading: Icon(Icons.delete_outline,
                     color: SpiceColors.danger),
-                title: const Text('Delete'),
+                title: Text('Delete'),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8)),
                 onTap: () {
@@ -503,7 +503,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                   _deleteExpense(expense);
                 },
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
             ],
           ),
         ),
@@ -514,13 +514,13 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
   Color _categoryColor(String category) {
     switch (category) {
       case 'rent':
-        return const Color(0xFFF59E0B);
+        return Color(0xFFF59E0B);
       case 'utilities':
-        return const Color(0xFF3B82F6);
+        return Color(0xFF3B82F6);
       case 'supplies':
-        return const Color(0xFF8B5CF6);
+        return Color(0xFF8B5CF6);
       case 'marketing':
-        return const Color(0xFFEC4899);
+        return Color(0xFFEC4899);
       case 'other':
         return SpiceColors.textSecondary;
       default:
@@ -543,21 +543,21 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
             padding: const EdgeInsets.fromLTRB(32, 32, 32, 0),
             child: Row(
               children: [
-                const Text('Expenses',
+                Text('Expenses',
                     style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w700,
                         color: SpiceColors.textPrimary)),
-                const Spacer(),
+                Spacer(),
                 ElevatedButton.icon(
                   onPressed: _showAddExpenseDialog,
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Add Expense'),
+                  icon: Icon(Icons.add, size: 18),
+                  label: Text('Add Expense'),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Container(
@@ -570,7 +570,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
               ),
               child: Row(
                 children: [
-                  const Column(
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Monthly Total',
@@ -580,16 +580,16 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                       SizedBox(height: 4),
                     ],
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   monthlyTotalAsync.isLoading
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 16,
                           height: 16,
                           child: CircularProgressIndicator(
                               strokeWidth: 2))
                       : Text(
                           'R ${monthlyTotal.toStringAsFixed(2)}',
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.w700,
                               color: SpiceColors.danger),
@@ -598,15 +598,15 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32),
               child: expensesAsync.isLoading
-                  ? const Center(
+                  ? Center(
                       child: CircularProgressIndicator())
                   : expenses.isEmpty
-                      ? const Center(
+                      ? Center(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -666,7 +666,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                                           size: 18,
                                         ),
                                       ),
-                                      const SizedBox(width: 14),
+                                      SizedBox(width: 14),
                                       Expanded(
                                         flex: 2,
                                         child: Column(
@@ -675,7 +675,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                                                   .start,
                                           children: [
                                             Text(e.description,
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                     fontSize: 14,
                                                     fontWeight:
                                                         FontWeight
@@ -685,7 +685,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                                                 overflow:
                                                     TextOverflow
                                                         .ellipsis),
-                                            const SizedBox(
+                                            SizedBox(
                                                 height: 2),
                                             if ((e.notes ?? '')
                                                 .isNotEmpty)
@@ -694,14 +694,14 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                                                   overflow:
                                                       TextOverflow
                                                           .ellipsis,
-                                                  style: const TextStyle(
+                                                  style: TextStyle(
                                                       fontSize: 11,
                                                       color: SpiceColors
                                                           .textSecondary)),
                                           ],
                                         ),
                                       ),
-                                      const SizedBox(width: 12),
+                                      SizedBox(width: 12),
                                       Container(
                                         padding:
                                             const EdgeInsets
@@ -725,12 +725,12 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                                           ),
                                         ),
                                       ),
-                                      const SizedBox(width: 16),
+                                      SizedBox(width: 16),
                                       SizedBox(
                                         width: 100,
                                         child: Text(
                                           'R ${e.amount.toStringAsFixed(2)}',
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                               fontSize: 14,
                                               fontWeight:
                                                   FontWeight.w600,
@@ -740,13 +740,13 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                                               TextAlign.right,
                                         ),
                                       ),
-                                      const SizedBox(width: 16),
+                                      SizedBox(width: 16),
                                       SizedBox(
                                         width: 100,
                                         child: Text(
                                           DateFormat('dd/MM/yy')
                                               .format(e.date),
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                               fontSize: 12,
                                               color: SpiceColors
                                                   .textSecondary),
@@ -772,7 +772,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
 class _RawMaterialPicker extends ConsumerWidget {
   final void Function(String productId, double costPrice) onChanged;
 
-  const _RawMaterialPicker({required this.onChanged});
+  _RawMaterialPicker({required this.onChanged});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -782,7 +782,7 @@ class _RawMaterialPicker extends ConsumerWidget {
         .toList();
 
     if (productsAsync.isLoading) {
-      return const SizedBox(
+      return SizedBox(
         height: 48,
         child: Center(
             child: SizedBox(
@@ -793,21 +793,21 @@ class _RawMaterialPicker extends ConsumerWidget {
     }
 
     if (products.isEmpty) {
-      return const Text('No raw material products available',
+      return Text('No raw material products available',
           style: TextStyle(
               color: SpiceColors.textSecondary, fontSize: 13));
     }
 
     return DropdownButtonFormField<String>(
-      decoration: const InputDecoration(labelText: 'Product'),
+      decoration: InputDecoration(labelText: 'Product'),
       dropdownColor: SpiceColors.surfaceAlt,
-      style: const TextStyle(
+      style: TextStyle(
           color: SpiceColors.textPrimary, fontSize: 14),
       items: products
           .map((p) => DropdownMenuItem(
                 value: p.id,
                 child:
-                    Text(p.name, style: const TextStyle(fontSize: 13)),
+                    Text(p.name, style: TextStyle(fontSize: 13)),
               ))
           .toList(),
       onChanged: (v) {

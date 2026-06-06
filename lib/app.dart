@@ -6,7 +6,7 @@ import 'core/theme/theme_provider.dart';
 import 'core/router/app_router.dart';
 
 class SpiceDeskApp extends ConsumerWidget {
-  const SpiceDeskApp({super.key});
+  SpiceDeskApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

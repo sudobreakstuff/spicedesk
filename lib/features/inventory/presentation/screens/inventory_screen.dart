@@ -9,7 +9,7 @@ import '../../../products/data/products_provider.dart';
 import '../../../workspace/domain/workspace_state.dart';
 
 class InventoryScreen extends ConsumerStatefulWidget {
-  const InventoryScreen({super.key});
+  InventoryScreen({super.key});
 
   @override
   ConsumerState<InventoryScreen> createState() => _InventoryScreenState();
@@ -51,14 +51,14 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             padding: const EdgeInsets.fromLTRB(32, 32, 32, 0),
             child: Row(
               children: [
-                const Text('Inventory',
+                Text('Inventory',
                     style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
-                const Spacer(),
+                Spacer(),
                 SizedBox(
                   width: 280,
                   child: TextField(
                     controller: _searchCtrl,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Search inventory...',
                       prefixIcon: Icon(Icons.search, size: 20),
                       isDense: true,
@@ -67,11 +67,11 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                     onChanged: (v) => setState(() => _searchQuery = v),
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 ElevatedButton.icon(
                   onPressed: _showAddStockDialog,
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Add Stock'),
+                  icon: Icon(Icons.add, size: 18),
+                  label: Text('Add Stock'),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   ),
@@ -79,7 +79,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -93,21 +93,21 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Expanded(
             child: inventoryAsync.isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? Center(child: CircularProgressIndicator())
                 : filtered.isEmpty
                     ? Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.inventory_2_outlined, size: 48, color: SpiceColors.textSecondary),
-                            const SizedBox(height: 12),
+                            Icon(Icons.inventory_2_outlined, size: 48, color: SpiceColors.textSecondary),
+                            SizedBox(height: 12),
                             Text(items.isEmpty ? 'No inventory tracked' : 'No matching items',
-                                style: const TextStyle(color: SpiceColors.textSecondary)),
-                            const SizedBox(height: 8),
-                            const Text('Add products and stock from the POS or settings',
+                                style: TextStyle(color: SpiceColors.textSecondary)),
+                            SizedBox(height: 8),
+                            Text('Add products and stock from the POS or settings',
                                 style: TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
                           ],
                         ),
@@ -142,16 +142,16 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                     ),
                                     child: Icon(statusIcon, color: statusColor, size: 20),
                                   ),
-                                  const SizedBox(width: 14),
+                                  SizedBox(width: 14),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(item.productName,
-                                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
-                                        const SizedBox(height: 2),
+                                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
+                                        SizedBox(height: 2),
                                         Text('SKU: ${item.sku}',
-                                            style: const TextStyle(fontSize: 11, color: SpiceColors.textSecondary)),
+                                            style: TextStyle(fontSize: 11, color: SpiceColors.textSecondary)),
                                       ],
                                     ),
                                   ),
@@ -159,11 +159,11 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
                                       Text('R ${item.unitPrice.toStringAsFixed(2)}',
-                                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
+                                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
                                       if (item.costPrice > 0)
                                         Text('Cost: R ${item.costPrice.toStringAsFixed(2)}',
-                                            style: const TextStyle(fontSize: 10, color: SpiceColors.textSecondary)),
-                                      const SizedBox(height: 2),
+                                            style: TextStyle(fontSize: 10, color: SpiceColors.textSecondary)),
+                                      SizedBox(height: 2),
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                         decoration: BoxDecoration(
@@ -214,7 +214,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: SpiceColors.surfaceAlt,
-      shape: const RoundedRectangleBorder(
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
         side: BorderSide(color: SpiceColors.border),
       ),
@@ -232,22 +232,22 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   item.productName,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: SpiceColors.textPrimary,
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               ListTile(
-                leading: const Icon(Icons.edit, color: SpiceColors.primary),
-                title: const Text('Edit Stock'),
+                leading: Icon(Icons.edit, color: SpiceColors.primary),
+                title: Text('Edit Stock'),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 onTap: () {
                   Navigator.pop(ctx);
@@ -255,15 +255,15 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.delete_outline, color: SpiceColors.danger),
-                title: const Text('Delete Inventory Entry'),
+                leading: Icon(Icons.delete_outline, color: SpiceColors.danger),
+                title: Text('Delete Inventory Entry'),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 onTap: () {
                   Navigator.pop(ctx);
                   _showDeleteInventoryDialog(item);
                 },
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
             ],
           ),
         ),
@@ -283,48 +283,48 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(color: SpiceColors.border),
         ),
-        title: const Text('Edit Stock'),
+        title: Text('Edit Stock'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               item.productName,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: SpiceColors.textPrimary,
               ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             Text(
               'SKU: ${item.sku}',
-              style: const TextStyle(fontSize: 11, color: SpiceColors.textSecondary),
+              style: TextStyle(fontSize: 11, color: SpiceColors.textSecondary),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             TextField(
               controller: quantityCtrl,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Quantity on Hand'),
+              decoration: InputDecoration(labelText: 'Quantity on Hand'),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             TextField(
               controller: reorderCtrl,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Reorder Point'),
+              decoration: InputDecoration(labelText: 'Reorder Point'),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () async {
               final wsId = ref.read(workspaceStateProvider).selectedId;
               if (wsId == null) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
+                  SnackBar(
                     content: Text('Please select or create a workspace first'),
                     backgroundColor: SpiceColors.danger,
                   ),
@@ -354,7 +354,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                 }
               }
             },
-            child: const Text('Save'),
+            child: Text('Save'),
           ),
         ],
       ),
@@ -370,15 +370,15 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(color: SpiceColors.border),
         ),
-        title: const Text('Delete Inventory Entry'),
+        title: Text('Delete Inventory Entry'),
         content: Text(
           'Remove "${item.productName}" from inventory tracking? The product itself will not be deleted.',
-          style: const TextStyle(color: SpiceColors.textSecondary),
+          style: TextStyle(color: SpiceColors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -400,7 +400,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: SpiceColors.danger,
             ),
-            child: const Text('Delete'),
+            child: Text('Delete'),
           ),
         ],
       ),
@@ -411,7 +411,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     final products = ref.read(productsProvider).valueOrNull ?? [];
     if (products.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No products available. Add a product first.')),
+        SnackBar(content: Text('No products available. Add a product first.')),
       );
       return;
     }
@@ -430,14 +430,14 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               borderRadius: BorderRadius.circular(16),
               side: BorderSide(color: SpiceColors.border),
             ),
-            title: const Text('Add Stock'),
+            title: Text('Add Stock'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 DropdownButtonFormField<String>(
                   initialValue: selectedProductId,
                   isExpanded: true,
-                  decoration: const InputDecoration(labelText: 'Product'),
+                  decoration: InputDecoration(labelText: 'Product'),
                   items: products
                       .map<DropdownMenuItem<String>>((p) =>
                           DropdownMenuItem(value: p.id, child: Text(p.name)))
@@ -448,31 +448,31 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                     }
                   },
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 TextField(
                   controller: quantityCtrl,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Quantity'),
+                  decoration: InputDecoration(labelText: 'Quantity'),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 TextField(
                   controller: reorderPointCtrl,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Reorder Point'),
+                  decoration: InputDecoration(labelText: 'Reorder Point'),
                 ),
               ],
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancel'),
+                child: Text('Cancel'),
               ),
               ElevatedButton(
                 onPressed: () async {
                   final wsId = ref.read(workspaceStateProvider).selectedId;
                   if (wsId == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
+                      SnackBar(
                         content: Text('Please select or create a workspace first'),
                         backgroundColor: SpiceColors.danger,
                       ),
@@ -503,7 +503,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                     }
                   }
                 },
-                child: const Text('Save'),
+                child: Text('Save'),
               ),
             ],
           ),

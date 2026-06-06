@@ -45,7 +45,7 @@ final createQuoteAction = Provider<Future<QuoteResult> Function({
       'tax_total': taxTotal,
       'total': subtotal + taxTotal,
       'status': 'draft',
-      'valid_until': DateTime.now().add(const Duration(days: 30)).toIso8601String(),
+      'valid_until': DateTime.now().add(Duration(days: 30)).toIso8601String(),
       'notes': null,
       'created_by': user?.id,
     }).select().single();
@@ -68,7 +68,7 @@ final createQuoteAction = Provider<Future<QuoteResult> Function({
     return QuoteResult(
       quoteNumber: quoteNumber,
       total: subtotal + taxTotal,
-      validUntil: DateTime.now().add(const Duration(days: 30)),
+      validUntil: DateTime.now().add(Duration(days: 30)),
     );
   };
 });
@@ -107,7 +107,7 @@ class QuoteResult {
   final double total;
   final DateTime validUntil;
 
-  const QuoteResult({
+  QuoteResult({
     required this.quoteNumber,
     required this.total,
     required this.validUntil,
@@ -122,7 +122,7 @@ class PendingQuote {
   final String? customerName;
   final DateTime createdAt;
 
-  const PendingQuote({
+  PendingQuote({
     required this.id,
     required this.quoteNumber,
     required this.total,
@@ -149,15 +149,15 @@ class PendingQuote {
   Color get statusColor {
     switch (status) {
       case 'draft':
-        return const Color(0xFF8B949E);
+        return Color(0xFF8B949E);
       case 'sent':
-        return const Color(0xFF6366F1);
+        return Color(0xFF6366F1);
       case 'accepted':
-        return const Color(0xFF238636);
+        return Color(0xFF238636);
       case 'rejected':
-        return const Color(0xFFDA3633);
+        return Color(0xFFDA3633);
       default:
-        return const Color(0xFF8B949E);
+        return Color(0xFF8B949E);
     }
   }
 }

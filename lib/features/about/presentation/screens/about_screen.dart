@@ -5,7 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_theme.dart';
 
 class AboutScreen extends StatelessWidget {
-  const AboutScreen({super.key});
+  AboutScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -14,25 +14,25 @@ class AboutScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(40),
         children: [
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           _buildHeader(context),
-          const SizedBox(height: 32),
+          SizedBox(height: 32),
           _buildDedication(),
-          const SizedBox(height: 32),
+          SizedBox(height: 32),
           _buildMission(),
-          const SizedBox(height: 36),
+          SizedBox(height: 36),
           _buildFeatures(),
-          const SizedBox(height: 36),
+          SizedBox(height: 36),
           _buildHowItWorks(),
-          const SizedBox(height: 36),
+          SizedBox(height: 36),
           _buildVersionHistory(),
-          const SizedBox(height: 36),
+          SizedBox(height: 36),
           _buildTechStack(),
-          const SizedBox(height: 36),
+          SizedBox(height: 36),
           _buildGuides(),
-          const SizedBox(height: 36),
+          SizedBox(height: 36),
           _buildCredits(context),
-          const SizedBox(height: 60),
+          SizedBox(height: 60),
         ].animate(interval: 100.ms).fadeIn().slideY(begin: 12),
       ),
     );
@@ -45,7 +45,7 @@ class AboutScreen extends StatelessWidget {
           width: 72,
           height: 72,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
+            gradient: LinearGradient(
               colors: [SpiceColors.primary, Color(0xFF818CF8)],
             ),
             borderRadius: BorderRadius.circular(20),
@@ -53,13 +53,13 @@ class AboutScreen extends StatelessWidget {
               BoxShadow(
                 color: SpiceColors.primary.withAlpha(60),
                 blurRadius: 24,
-                offset: const Offset(0, 8),
+                offset: Offset(0, 8),
               ),
             ],
           ),
-          child: const Icon(Icons.store_rounded, color: Colors.white, size: 36),
+          child: Icon(Icons.store_rounded, color: Colors.white, size: 36),
         ),
-        const SizedBox(height: 24),
+        SizedBox(height: 24),
         Text(
           'SpiceDesk',
           style: Theme.of(context).textTheme.headlineLarge?.copyWith(
@@ -67,7 +67,7 @@ class AboutScreen extends StatelessWidget {
                 letterSpacing: -1,
               ),
         ),
-        const SizedBox(height: 6),
+        SizedBox(height: 6),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
@@ -75,7 +75,7 @@ class AboutScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: SpiceColors.primary.withAlpha(60)),
           ),
-          child: const Text(
+          child: Text(
             'v2.3.4',
             style: TextStyle(
               fontSize: 12,
@@ -97,7 +97,7 @@ class AboutScreen extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [
             SpiceColors.primary.withAlpha(20),
-            const Color(0xFF8B5CF6).withAlpha(15),
+            Color(0xFF8B5CF6).withAlpha(15),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
@@ -114,10 +114,10 @@ class AboutScreen extends StatelessWidget {
               color: SpiceColors.primary.withAlpha(30),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.favorite_rounded,
+            child: Icon(Icons.favorite_rounded,
                 color: SpiceColors.primary, size: 22),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,8 +131,8 @@ class AboutScreen extends StatelessWidget {
                     letterSpacing: -0.3,
                   ),
                 ),
-                const SizedBox(height: 4),
-                const Text(
+                SizedBox(height: 4),
+                Text(
                   'Thank you for everything. This one is for you.',
                   style: TextStyle(
                     fontSize: 13,
@@ -166,15 +166,15 @@ class AboutScreen extends StatelessWidget {
               color: SpiceColors.accent.withAlpha(25),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.rocket_launch_rounded,
+            child: Icon(Icons.rocket_launch_rounded,
                 color: SpiceColors.accent, size: 20),
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Our Mission',
                   style: TextStyle(
                     fontSize: 16,
@@ -182,8 +182,8 @@ class AboutScreen extends StatelessWidget {
                     color: SpiceColors.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 8),
-                const Text(
+                SizedBox(height: 8),
+                Text(
                   'To empower small businesses with simple, powerful tools that make everyday operations effortless.',
                   style: TextStyle(
                     fontSize: 14,
@@ -214,8 +214,8 @@ class AboutScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Features', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
-        const SizedBox(height: 16),
+        Text('Features', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
+        SizedBox(height: 16),
         ...features.map((f) => _FeatureRow(icon: f.$1, title: f.$2, subtitle: f.$3)),
       ],
     );
@@ -225,8 +225,8 @@ class AboutScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('How It Works', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
-        const SizedBox(height: 20),
+        Text('How It Works', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
+        SizedBox(height: 20),
         ...['Add products & set stock levels', 'Make sales through the POS', 'Inventory updates automatically', 'View reports & analytics', 'Send invoices & manage expenses']
             .asMap()
             .entries
@@ -239,8 +239,8 @@ class AboutScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Version History', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
-        const SizedBox(height: 16),
+        Text('Version History', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
+        SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
@@ -266,8 +266,8 @@ class AboutScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Tech Stack', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
-        const SizedBox(height: 16),
+        Text('Tech Stack', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
+        SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
@@ -298,7 +298,7 @@ class AboutScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Guide',
           style: TextStyle(
             fontSize: 20,
@@ -307,7 +307,7 @@ class AboutScreen extends StatelessWidget {
             letterSpacing: -0.3,
           ),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
         _GuideCard(
           icon: Icons.flag_rounded,
           title: 'Getting Started',
@@ -334,7 +334,7 @@ class AboutScreen extends StatelessWidget {
         _GuideCard(
           icon: Icons.inventory_2_rounded,
           title: 'Inventory',
-          color: const Color(0xFF8B5CF6),
+          color: Color(0xFF8B5CF6),
           steps: [
             'View all products with stock levels',
             'Filter by low stock to see items needing restock',
@@ -370,7 +370,7 @@ class AboutScreen extends StatelessWidget {
         _GuideCard(
           icon: Icons.people_rounded,
           title: 'Customers',
-          color: const Color(0xFF06B6D4),
+          color: Color(0xFF06B6D4),
           steps: [
             'Add customer profiles with contact details',
             'Track purchase history per customer',
@@ -396,7 +396,7 @@ class AboutScreen extends StatelessWidget {
       child: Center(
         child: Column(
           children: [
-            const Text(
+            Text(
               'Made by Shahid Singh',
               style: TextStyle(
                 fontSize: 14,
@@ -404,10 +404,10 @@ class AboutScreen extends StatelessWidget {
                 color: SpiceColors.textPrimary,
               ),
             ),
-            const SizedBox(height: 6),
+            SizedBox(height: 6),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
+              children: [
                 Icon(Icons.favorite, color: SpiceColors.danger, size: 14),
                 SizedBox(width: 4),
                 Text(
@@ -419,14 +419,14 @@ class AboutScreen extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             GestureDetector(
               onTap: () => launchUrl(githubUrl, mode: LaunchMode.externalApplication),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.code, color: SpiceColors.primary.withAlpha(200), size: 16),
-                  const SizedBox(width: 6),
+                  SizedBox(width: 6),
                   Text(
                     'GitHub',
                     style: TextStyle(
@@ -439,16 +439,16 @@ class AboutScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 16),
-            const Text(
+            SizedBox(height: 16),
+            Text(
               'SpiceDesk Business Suite',
               style: TextStyle(
                 fontSize: 11,
                 color: SpiceColors.textSecondary,
               ),
             ),
-            const SizedBox(height: 2),
-            const Text(
+            SizedBox(height: 2),
+            Text(
               'Version 2.3.4 — Made in South Africa',
               style: TextStyle(fontSize: 11, color: SpiceColors.textSecondary),
             ),
@@ -465,7 +465,7 @@ class _FeatureRow extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
-  const _FeatureRow({required this.icon, required this.title, required this.subtitle});
+  _FeatureRow({required this.icon, required this.title, required this.subtitle});
 
   @override
   Widget build(BuildContext context) {
@@ -481,14 +481,14 @@ class _FeatureRow extends StatelessWidget {
             ),
             child: Icon(icon, color: SpiceColors.primary, size: 18),
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
-                const SizedBox(height: 2),
-                Text(subtitle, style: const TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
+                Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
+                SizedBox(height: 2),
+                Text(subtitle, style: TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
               ],
             ),
           ),
@@ -502,7 +502,7 @@ class _FlowStep extends StatelessWidget {
   final int index;
   final String label;
   final bool isLast;
-  const _FlowStep({required this.index, required this.label, required this.isLast});
+  _FlowStep({required this.index, required this.label, required this.isLast});
 
   @override
   Widget build(BuildContext context) {
@@ -521,7 +521,7 @@ class _FlowStep extends StatelessWidget {
                   border: Border.all(color: SpiceColors.primary.withAlpha(80)),
                 ),
                 alignment: Alignment.center,
-                child: Text('$index', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: SpiceColors.primary)),
+                child: Text('$index', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: SpiceColors.primary)),
               ),
               if (!isLast)
                 Container(
@@ -532,12 +532,12 @@ class _FlowStep extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: 12),
         Padding(
           padding: EdgeInsets.only(bottom: isLast ? 0 : 16),
           child: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: SpiceColors.textPrimary,
@@ -555,7 +555,7 @@ class _VersionRow extends StatelessWidget {
   final String date;
   final List<String> changes;
   final bool isLast;
-  const _VersionRow({required this.version, required this.date, required this.changes, this.isLast = false});
+  _VersionRow({required this.version, required this.date, required this.changes, this.isLast = false});
 
   @override
   Widget build(BuildContext context) {
@@ -572,28 +572,28 @@ class _VersionRow extends StatelessWidget {
                   color: SpiceColors.primary.withAlpha(20),
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: Text(version, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.primary)),
+                child: Text(version, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.primary)),
               ),
             ],
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(date, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: SpiceColors.textSecondary)),
-                const SizedBox(height: 4),
+                Text(date, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: SpiceColors.textSecondary)),
+                SizedBox(height: 4),
                 ...changes.map((c) => Padding(
                   padding: const EdgeInsets.only(bottom: 2),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.only(top: 7),
                         child: Icon(Icons.circle, size: 4, color: SpiceColors.primary),
                       ),
-                      const SizedBox(width: 6),
-                      Expanded(child: Text(c, style: const TextStyle(fontSize: 12, color: SpiceColors.textSecondary))),
+                      SizedBox(width: 6),
+                      Expanded(child: Text(c, style: TextStyle(fontSize: 12, color: SpiceColors.textSecondary))),
                     ],
                   ),
                 )),
@@ -609,7 +609,7 @@ class _VersionRow extends StatelessWidget {
 class _TechChip extends StatelessWidget {
   final IconData icon;
   final String label;
-  const _TechChip({required this.icon, required this.label});
+  _TechChip({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -624,8 +624,8 @@ class _TechChip extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 14, color: SpiceColors.primary),
-          const SizedBox(width: 6),
-          Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: SpiceColors.textPrimary)),
+          SizedBox(width: 6),
+          Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: SpiceColors.textPrimary)),
         ],
       ),
     );
@@ -640,7 +640,7 @@ class _GuideCard extends StatefulWidget {
   final Color color;
   final List<String> steps;
 
-  const _GuideCard({
+  _GuideCard({
     required this.icon,
     required this.title,
     required this.color,
@@ -688,11 +688,11 @@ class _GuideCardState extends State<_GuideCard> {
                         ),
                         child: Icon(widget.icon, color: widget.color, size: 19),
                       ),
-                      const SizedBox(width: 14),
+                      SizedBox(width: 14),
                       Expanded(
                         child: Text(
                           widget.title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
                             color: SpiceColors.textPrimary,
@@ -701,15 +701,15 @@ class _GuideCardState extends State<_GuideCard> {
                       ),
                       AnimatedRotation(
                         turns: _expanded ? 0.5 : 0,
-                        duration: const Duration(milliseconds: 200),
-                        child: const Icon(Icons.keyboard_arrow_down_rounded,
+                        duration: Duration(milliseconds: 200),
+                        child: Icon(Icons.keyboard_arrow_down_rounded,
                             color: SpiceColors.textSecondary),
                       ),
                     ],
                   ),
                 ),
                 AnimatedCrossFade(
-                  firstChild: const SizedBox(width: double.infinity),
+                  firstChild: SizedBox(width: double.infinity),
                   secondChild: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
@@ -720,16 +720,16 @@ class _GuideCardState extends State<_GuideCard> {
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Padding(
+                              Padding(
                                 padding: EdgeInsets.only(top: 6),
                                 child: Icon(Icons.circle,
                                     size: 6, color: SpiceColors.primary),
                               ),
-                              const SizedBox(width: 10),
+                              SizedBox(width: 10),
                               Expanded(
                                 child: Text(
                                   step,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 13,
                                     color: SpiceColors.textSecondary,
                                     height: 1.4,
@@ -745,7 +745,7 @@ class _GuideCardState extends State<_GuideCard> {
                   crossFadeState: _expanded
                       ? CrossFadeState.showSecond
                       : CrossFadeState.showFirst,
-                  duration: const Duration(milliseconds: 250),
+                  duration: Duration(milliseconds: 250),
                 ),
               ],
             ),

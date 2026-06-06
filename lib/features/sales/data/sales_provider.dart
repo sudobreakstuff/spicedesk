@@ -112,7 +112,7 @@ final weeklySalesProvider = FutureProvider<WeeklySalesReport>((ref) async {
 
   final now = DateTime.now();
   final startOfRange =
-      DateTime(now.year, now.month, now.day).subtract(const Duration(days: 6));
+      DateTime(now.year, now.month, now.day).subtract(Duration(days: 6));
   final startStr = startOfRange.toIso8601String().split('T')[0];
 
   final data = await supabase
@@ -263,7 +263,7 @@ class SaleTransaction {
   final String? customerName;
   final DateTime createdAt;
 
-  const SaleTransaction({
+  SaleTransaction({
     required this.id,
     required this.transactionNumber,
     this.invoiceNumber,
@@ -315,7 +315,7 @@ class WeeklySalesReport {
   final Map<String, double> dailyBreakdown;
   final double totalCost;
 
-  const WeeklySalesReport({
+  WeeklySalesReport({
     required this.totalSales,
     required this.avgPerDay,
     required this.bestDay,
@@ -324,7 +324,7 @@ class WeeklySalesReport {
     this.totalCost = 0,
   });
 
-  factory WeeklySalesReport.empty() => const WeeklySalesReport(
+  factory WeeklySalesReport.empty() => WeeklySalesReport(
         totalSales: 0,
         avgPerDay: 0,
         bestDay: 'Mon',
@@ -346,7 +346,7 @@ class MonthlySalesReport {
   final Map<String, double> weeklyBreakdown;
   final double totalCost;
 
-  const MonthlySalesReport({
+  MonthlySalesReport({
     required this.totalSales,
     required this.avgPerWeek,
     required this.dailyAverage,
@@ -355,7 +355,7 @@ class MonthlySalesReport {
     this.totalCost = 0,
   });
 
-  factory MonthlySalesReport.empty() => const MonthlySalesReport(
+  factory MonthlySalesReport.empty() => MonthlySalesReport(
         totalSales: 0,
         avgPerWeek: 0,
         dailyAverage: 0,
@@ -412,7 +412,7 @@ class ProfitReport {
   final double profitMargin;
   final int totalItemsSold;
 
-  const ProfitReport({
+  ProfitReport({
     required this.totalRevenue,
     required this.totalCost,
     required this.totalProfit,
@@ -420,7 +420,7 @@ class ProfitReport {
     required this.totalItemsSold,
   });
 
-  factory ProfitReport.zero() => const ProfitReport(
+  factory ProfitReport.zero() => ProfitReport(
         totalRevenue: 0,
         totalCost: 0,
         totalProfit: 0,
@@ -474,7 +474,7 @@ class BestSeller {
   final double totalQuantity;
   final double totalRevenue;
 
-  const BestSeller({
+  BestSeller({
     required this.productId,
     required this.productName,
     required this.totalQuantity,

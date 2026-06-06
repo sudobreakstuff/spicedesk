@@ -16,7 +16,7 @@ class GlassCard extends StatelessWidget {
   final BoxConstraints? constraints;
   final List<BoxShadow>? shadows;
 
-  const GlassCard({
+  GlassCard({
     super.key,
     this.child,
     this.padding,
@@ -46,7 +46,7 @@ class GlassCard extends StatelessWidget {
               BoxShadow(
                 color: Colors.black.withAlpha(40),
                 blurRadius: 20,
-                offset: const Offset(0, 8),
+                offset: Offset(0, 8),
               ),
             ],
       ),
@@ -93,7 +93,7 @@ class GlassBottomBar extends StatelessWidget {
   final ValueChanged<int> onTap;
   final List<GlassBottomBarItem> items;
 
-  const GlassBottomBar({
+  GlassBottomBar({
     super.key,
     required this.currentIndex,
     required this.onTap,
@@ -138,7 +138,7 @@ class GlassBottomBar extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           AnimatedContainer(
-                            duration: const Duration(milliseconds: 250),
+                            duration: Duration(milliseconds: 250),
                             padding: EdgeInsets.symmetric(
                               horizontal: selected ? 16 : 0,
                               vertical: selected ? 6 : 0,
@@ -169,10 +169,10 @@ class GlassBottomBar extends StatelessWidget {
                                       : SpiceColors.textSecondary,
                                 ),
                                 if (selected) ...[
-                                  const SizedBox(width: 6),
+                                  SizedBox(width: 6),
                                   Text(
                                     item.label,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                       color: SpiceColors.primary,
@@ -201,7 +201,7 @@ class GlassBottomBarItem {
   final IconData activeIcon;
   final String label;
 
-  const GlassBottomBarItem({
+  GlassBottomBarItem({
     required this.icon,
     IconData? activeIcon,
     required this.label,
@@ -214,7 +214,7 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Widget? leading;
   final bool centerTitle;
 
-  const GlassAppBar({
+  GlassAppBar({
     super.key,
     this.title,
     this.actions,
@@ -237,7 +237,7 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
           backgroundColor: SpiceColors.surface.withAlpha(170),
           foregroundColor: SpiceColors.textPrimary,
           surfaceTintColor: Colors.transparent,
-          titleTextStyle: const TextStyle(
+          titleTextStyle: TextStyle(
             color: SpiceColors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.w600,
@@ -269,7 +269,7 @@ class GlassScaffold extends StatelessWidget {
   final Widget? floatingActionButton;
   final Color? backgroundColor;
 
-  const GlassScaffold({
+  GlassScaffold({
     super.key,
     this.appBar,
     this.body,
@@ -296,7 +296,7 @@ class GlassDialog extends StatelessWidget {
   final Widget? content;
   final List<Widget>? actions;
 
-  const GlassDialog({
+  GlassDialog({
     super.key,
     this.title,
     this.content,
@@ -332,7 +332,7 @@ class Glass extends StatelessWidget {
   final Widget child;
   final bool enabled;
 
-  const Glass({
+  Glass({
     super.key,
     required this.child,
     this.enabled = true,

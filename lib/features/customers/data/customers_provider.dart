@@ -43,7 +43,7 @@ class Customer {
   final int loyaltyPoints;
   final DateTime createdAt;
 
-  const Customer({
+  Customer({
     required this.id,
     required this.name,
     this.email,
@@ -61,7 +61,7 @@ class CustomerSalesData {
   final int purchaseCount;
   final List<Map<String, dynamic>> recentPurchases;
 
-  const CustomerSalesData({
+  CustomerSalesData({
     this.totalSpent = 0,
     this.lastVisit,
     this.purchaseCount = 0,
@@ -72,7 +72,7 @@ class CustomerSalesData {
 final customerSalesProvider =
     FutureProvider.family<CustomerSalesData, String>((ref, customerId) async {
   final wsId = ref.watch(workspaceStateProvider).selectedId;
-  if (wsId == null) return const CustomerSalesData();
+  if (wsId == null) return CustomerSalesData();
 
   final data = await supabase
       .from('sales_transactions')

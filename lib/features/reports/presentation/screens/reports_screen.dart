@@ -9,7 +9,7 @@ import '../../../../core/network/supabase_client.dart';
 import '../../../workspace/domain/workspace_state.dart';
 
 class ReportsScreen extends ConsumerStatefulWidget {
-  const ReportsScreen({super.key});
+  ReportsScreen({super.key});
   @override
   ConsumerState<ReportsScreen> createState() => _ReportsScreenState();
 }
@@ -147,22 +147,22 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
         child: ListView(
           padding: const EdgeInsets.all(32),
           children: [
-            const Text('Reports', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
-            const SizedBox(height: 6),
-            Text(wsId.selectedName ?? 'No workspace', style: const TextStyle(fontSize: 13, color: SpiceColors.textSecondary)),
-            const SizedBox(height: 28),
+            Text('Reports', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
+            SizedBox(height: 6),
+            Text(wsId.selectedName ?? 'No workspace', style: TextStyle(fontSize: 13, color: SpiceColors.textSecondary)),
+            SizedBox(height: 28),
             if (_loading)
-              const Center(child: Padding(padding: EdgeInsets.all(48), child: CircularProgressIndicator()))
+              Center(child: Padding(padding: EdgeInsets.all(48), child: CircularProgressIndicator()))
             else if (_error != null)
               Container(
                 padding: const EdgeInsets.all(32),
                 decoration: BoxDecoration(color: SpiceColors.surfaceAlt, borderRadius: BorderRadius.circular(12), border: Border.all(color: SpiceColors.danger)),
                 child: Column(children: [
-                  const Text('Error loading data', style: TextStyle(color: SpiceColors.danger, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 8),
-                  Text(_error!, style: const TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
-                  const SizedBox(height: 16),
-                  ElevatedButton(onPressed: _load, child: const Text('Retry')),
+                  Text('Error loading data', style: TextStyle(color: SpiceColors.danger, fontWeight: FontWeight.w600)),
+                  SizedBox(height: 8),
+                  Text(_error!, style: TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
+                  SizedBox(height: 16),
+                  ElevatedButton(onPressed: _load, child: Text('Retry')),
                 ]),
               )
             else ...[
@@ -173,52 +173,52 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                 _card('Profit', currency.format(_revenue - _costs), (_revenue - _costs) >= 0 ? SpiceColors.accent : SpiceColors.danger, Icons.account_balance),
                 _card('Transactions', '${_sales.length}', SpiceColors.primary, Icons.receipt_long),
               ]),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               Wrap(spacing: 16, runSpacing: 16, children: [
                 _card('Most Active Customer', _mostActiveCustomer, SpiceColors.primary, Icons.person),
                 _card('Avg Spend / Customer', currency.format(_averageSpendPerCustomer), SpiceColors.accent, Icons.shopping_cart),
                 _card('Best Day', _bestDay, SpiceColors.primary, Icons.calendar_today),
               ]),
-              const SizedBox(height: 36),
+              SizedBox(height: 36),
               // Top products
               if (_topProducts.isNotEmpty) ...[
-                const Text('Products Sold', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
-                const SizedBox(height: 12),
+                Text('Products Sold', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
+                SizedBox(height: 12),
                 Container(
                   decoration: BoxDecoration(color: SpiceColors.surfaceAlt, borderRadius: BorderRadius.circular(12), border: Border.all(color: SpiceColors.border)),
                   child: Column(children: [
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      child: const Row(children: [
+                      child: Row(children: [
                         Expanded(flex: 3, child: Text('Product', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: SpiceColors.textSecondary))),
-                        Expanded(flex: 1, child: Text('Sold', textAlign: TextAlign.right, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: SpiceColors.textSecondary))),
+                        Expanded(flex: 1, child: Text('Sold', textAlign: TextAlign.right, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: SpiceColors.textSecondary))),
                       ]),
                     ),
                     ..._topProducts.take(10).toList().asMap().entries.map((e) {
                       final p = e.value;
                       return Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        decoration: BoxDecoration(color: e.key % 2 == 0 ? SpiceColors.surfaceAlt.withAlpha(60) : Colors.transparent, border: const Border(top: BorderSide(color: SpiceColors.border))),
+                        decoration: BoxDecoration(color: e.key % 2 == 0 ? SpiceColors.surfaceAlt.withAlpha(60) : Colors.transparent, border: Border(top: BorderSide(color: SpiceColors.border))),
                         child: Row(children: [
-                          Expanded(flex: 3, child: Text(p['name'] ?? '', style: const TextStyle(fontSize: 13, color: SpiceColors.textPrimary))),
-                          Expanded(flex: 1, child: Text('${(p['total'] as double).toInt()}', textAlign: TextAlign.right, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: SpiceColors.primary))),
+                          Expanded(flex: 3, child: Text(p['name'] ?? '', style: TextStyle(fontSize: 13, color: SpiceColors.textPrimary))),
+                          Expanded(flex: 1, child: Text('${(p['total'] as double).toInt()}', textAlign: TextAlign.right, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: SpiceColors.primary))),
                         ]),
                       );
                     }),
                   ]),
                 ),
-                const SizedBox(height: 36),
+                SizedBox(height: 36),
               ],
               // Transaction table
-              const Text('Transactions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
-              const SizedBox(height: 4),
-              Text('${_sales.length} total', style: const TextStyle(fontSize: 13, color: SpiceColors.textSecondary)),
-              const SizedBox(height: 12),
+              Text('Transactions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
+              SizedBox(height: 4),
+              Text('${_sales.length} total', style: TextStyle(fontSize: 13, color: SpiceColors.textSecondary)),
+              SizedBox(height: 12),
               if (_sales.isEmpty)
                 Container(
                   padding: const EdgeInsets.all(32),
                   decoration: BoxDecoration(color: SpiceColors.surfaceAlt, borderRadius: BorderRadius.circular(12), border: Border.all(color: SpiceColors.border)),
-                  child: const Center(child: Text('No transactions yet. Make a sale in POS first.', style: TextStyle(color: SpiceColors.textSecondary))),
+                  child: Center(child: Text('No transactions yet. Make a sale in POS first.', style: TextStyle(color: SpiceColors.textSecondary))),
                 )
               else
                 Container(
@@ -226,8 +226,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                   child: Column(children: [
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      decoration: const BoxDecoration(color: SpiceColors.surfaceAlt, borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
-                      child: const Row(children: [
+                      decoration: BoxDecoration(color: SpiceColors.surfaceAlt, borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
+                      child: Row(children: [
                         Expanded(flex: 3, child: Text('Date', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: SpiceColors.textSecondary))),
                         Expanded(flex: 2, child: Text('Txn', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: SpiceColors.textSecondary))),
                         Expanded(flex: 2, child: Text('Customer', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: SpiceColors.textSecondary))),
@@ -250,14 +250,14 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                            onTap: () => _toggleExpand(txnId),
                            child: Container(
                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                             decoration: BoxDecoration(color: e.key % 2 == 0 ? SpiceColors.surfaceAlt.withAlpha(60) : Colors.transparent, border: const Border(top: BorderSide(color: SpiceColors.border))),
+                             decoration: BoxDecoration(color: e.key % 2 == 0 ? SpiceColors.surfaceAlt.withAlpha(60) : Colors.transparent, border: Border(top: BorderSide(color: SpiceColors.border))),
                              child: Row(children: [
-                               Expanded(flex: 3, child: Text(DateFormat('dd/MM/yy HH:mm').format(dt), style: const TextStyle(fontSize: 12, color: SpiceColors.textSecondary))),
-                               Expanded(flex: 2, child: Text(s['transaction_number'] ?? '', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: SpiceColors.primary))),
-                               Expanded(flex: 2, child: Text(cust?['name'] ?? 'Walk-in', style: const TextStyle(fontSize: 12, color: SpiceColors.textSecondary))),
+                               Expanded(flex: 3, child: Text(DateFormat('dd/MM/yy HH:mm').format(dt), style: TextStyle(fontSize: 12, color: SpiceColors.textSecondary))),
+                               Expanded(flex: 2, child: Text(s['transaction_number'] ?? '', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: SpiceColors.primary))),
+                               Expanded(flex: 2, child: Text(cust?['name'] ?? 'Walk-in', style: TextStyle(fontSize: 12, color: SpiceColors.textSecondary))),
                                Expanded(flex: 1, child: Text((s['payment_method']??'').toString().substring(0,4), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: SpiceColors.accent))),
-                               Expanded(flex: 1, child: Text(currency.format(total), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.accent))),
-                               const SizedBox(width: 4),
+                               Expanded(flex: 1, child: Text(currency.format(total), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.accent))),
+                               SizedBox(width: 4),
                                Icon(isExpanded ? Icons.expand_less : Icons.expand_more, size: 16, color: SpiceColors.textSecondary),
                              ]),
                            ),
@@ -265,34 +265,34 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                          if (isExpanded)
                            Container(
                              padding: const EdgeInsets.fromLTRB(40, 4, 16, 10),
-                             decoration: BoxDecoration(color: SpiceColors.surfaceAlt.withAlpha(40), border: const Border(top: BorderSide(color: SpiceColors.border))),
+                             decoration: BoxDecoration(color: SpiceColors.surfaceAlt.withAlpha(40), border: Border(top: BorderSide(color: SpiceColors.border))),
                               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                 if (invoiceNum != null && invoiceNum.isNotEmpty)
                                   Padding(
                                     padding: const EdgeInsets.only(bottom: 6),
                                     child: Row(children: [
-                                      const Text('Invoice: ', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.textSecondary)),
-                                      Text(invoiceNum, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.primary)),
-                                      const Spacer(),
+                                      Text('Invoice: ', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.textSecondary)),
+                                      Text(invoiceNum, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.primary)),
+                                      Spacer(),
                                       Material(
                                         color: SpiceColors.primary.withAlpha(20),
                                         borderRadius: BorderRadius.circular(4),
                                         child: InkWell(
                                           onTap: () => _viewInvoice(invoices![0] as Map<String, dynamic>, s, cust, dt, total),
                                           borderRadius: BorderRadius.circular(4),
-                                          child: const Padding(padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3), child: Text('View', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: SpiceColors.primary))),
+                                          child: Padding(padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3), child: Text('View', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: SpiceColors.primary))),
                                         ),
                                       ),
                                     ]),
                                   ),
                                 if (items.isEmpty)
-                                 const Padding(padding: EdgeInsets.all(12), child: SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)))
+                                 Padding(padding: EdgeInsets.all(12), child: SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)))
                                else
                                  ...items.map((item) => Padding(
                                    padding: const EdgeInsets.only(bottom: 4),
                                    child: Row(children: [
-                                     Expanded(child: Text('${(item['quantity'] as num?)?.toInt() ?? 0}x ${item['product_name'] ?? ''}', style: const TextStyle(fontSize: 12, color: SpiceColors.textPrimary))),
-                                     Text(currency.format((item['line_total'] as num?)?.toDouble() ?? 0), style: const TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
+                                     Expanded(child: Text('${(item['quantity'] as num?)?.toInt() ?? 0}x ${item['product_name'] ?? ''}', style: TextStyle(fontSize: 12, color: SpiceColors.textPrimary))),
+                                     Text(currency.format((item['line_total'] as num?)?.toDouble() ?? 0), style: TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
                                    ]),
                                  )),
                              ]),
@@ -302,9 +302,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                   ]),
                 ),
             ],
-            const SizedBox(height: 48),
-            const Center(child: Text('Made by Shahid Singh', style: TextStyle(fontSize: 11, color: SpiceColors.textSecondary))),
-            const SizedBox(height: 32),
+            SizedBox(height: 48),
+            Center(child: Text('Made by Shahid Singh', style: TextStyle(fontSize: 11, color: SpiceColors.textSecondary))),
+            SizedBox(height: 32),
           ],
         ),
       ),
@@ -326,37 +326,37 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
         builder: (ctx) => AlertDialog(
           backgroundColor: SpiceColors.surfaceAlt,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: SpiceColors.border)),
-          title: Text('Invoice ${invoice['invoice_number'] ?? ''}', style: const TextStyle(color: SpiceColors.textPrimary)),
+          title: Text('Invoice ${invoice['invoice_number'] ?? ''}', style: TextStyle(color: SpiceColors.textPrimary)),
           content: SingleChildScrollView(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
               _invRow('Date', DateFormat('dd MMM yyyy HH:mm').format(dt)),
               _invRow('Customer', cust?['name'] ?? 'Walk-in'),
               _invRow('Payment', sale['payment_method'] ?? ''),
               _invRow('Status', invoice['status'] ?? 'paid'),
-              const SizedBox(height: 12),
-              const Divider(color: SpiceColors.border),
+              SizedBox(height: 12),
+              Divider(color: SpiceColors.border),
               ...items.map((i) => Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Row(children: [
-                  Expanded(child: Text('${(i['quantity'] as num?)?.toInt() ?? 0}x ${i['product_name'] ?? ''}', style: const TextStyle(fontSize: 13, color: SpiceColors.textPrimary))),
-                  Text(currency.format((i['line_total'] as num?)?.toDouble() ?? 0), style: const TextStyle(fontSize: 13, color: SpiceColors.textSecondary)),
+                  Expanded(child: Text('${(i['quantity'] as num?)?.toInt() ?? 0}x ${i['product_name'] ?? ''}', style: TextStyle(fontSize: 13, color: SpiceColors.textPrimary))),
+                  Text(currency.format((i['line_total'] as num?)?.toDouble() ?? 0), style: TextStyle(fontSize: 13, color: SpiceColors.textSecondary)),
                 ]),
               )),
-              const Divider(color: SpiceColors.border),
-              const SizedBox(height: 8),
+              Divider(color: SpiceColors.border),
+              SizedBox(height: 8),
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                const Text('Total', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
-                Text(currency.format(total), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: SpiceColors.accent)),
+                Text('Total', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
+                Text(currency.format(total), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: SpiceColors.accent)),
               ]),
             ]),
           ),
           actions: [
             TextButton.icon(
-              icon: const Icon(Icons.print, size: 16),
+              icon: Icon(Icons.print, size: 16),
               onPressed: () => _printInvoice(invoice, sale, cust, dt, total, items),
-              label: const Text('Print'),
+              label: Text('Print'),
             ),
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Close')),
           ],
         ),
       );
@@ -455,8 +455,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(children: [
-        SizedBox(width: 80, child: Text(label, style: const TextStyle(fontSize: 12, color: SpiceColors.textSecondary))),
-        Expanded(child: Text(value, style: const TextStyle(fontSize: 13, color: SpiceColors.textPrimary))),
+        SizedBox(width: 80, child: Text(label, style: TextStyle(fontSize: 12, color: SpiceColors.textSecondary))),
+        Expanded(child: Text(value, style: TextStyle(fontSize: 13, color: SpiceColors.textPrimary))),
       ]),
     );
   }
@@ -469,10 +469,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
         decoration: BoxDecoration(color: SpiceColors.surfaceAlt, borderRadius: BorderRadius.circular(12), border: Border.all(color: SpiceColors.border)),
         child: Row(children: [
           Container(width: 40, height: 40, decoration: BoxDecoration(color: accent.withAlpha(25), borderRadius: BorderRadius.circular(10)), child: Icon(icon, color: accent, size: 20)),
-          const SizedBox(width: 14),
+          SizedBox(width: 14),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(label, style: const TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
-            const SizedBox(height: 4),
+            Text(label, style: TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
+            SizedBox(height: 4),
             Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: accent)),
           ])),
         ]),

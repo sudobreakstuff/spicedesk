@@ -9,7 +9,7 @@ import '../../../customers/data/customers_provider.dart';
 import '../../../workspace/domain/workspace_state.dart';
 
 class CustomersScreen extends ConsumerStatefulWidget {
-  const CustomersScreen({super.key});
+  CustomersScreen({super.key});
 
   @override
   ConsumerState<CustomersScreen> createState() => _CustomersScreenState();
@@ -60,7 +60,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
             padding: const EdgeInsets.fromLTRB(32, 32, 32, 0),
             child: Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -88,7 +88,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                   width: 280,
                   child: TextField(
                     controller: _searchCtrl,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Search customers...',
                       prefixIcon: Icon(Icons.search, size: 20),
                       isDense: true,
@@ -97,20 +97,20 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                     onChanged: (v) => setState(() => _searchQuery = v),
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 IconButton(
-                  icon: const Icon(Icons.refresh, size: 20),
+                  icon: Icon(Icons.refresh, size: 20),
                   tooltip: 'Refresh',
                   onPressed: () {
                     ref.invalidate(customersProvider);
                     ref.invalidate(allCustomerSalesProvider);
                   },
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 ElevatedButton.icon(
                   onPressed: _showAddCustomerDialog,
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Add Customer'),
+                  icon: Icon(Icons.add, size: 18),
+                  label: Text('Add Customer'),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 14),
@@ -119,46 +119,46 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           Expanded(
             child: customersAsync.isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? Center(child: CircularProgressIndicator())
                 : filtered.isEmpty
                     ? Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.people_outline,
                               size: 48,
                               color: SpiceColors.textSecondary,
                             ),
-                            const SizedBox(height: 12),
+                            SizedBox(height: 12),
                             Text(
                               customers.isEmpty
                                   ? 'No customers yet'
                                   : 'No matching customers',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: SpiceColors.textSecondary,
                                 fontSize: 15,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            SizedBox(height: 4),
                             Text(
                               customers.isEmpty
                                   ? 'Add your first customer to get started.'
                                   : 'Try a different search query.',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 color: SpiceColors.textSecondary,
                               ),
                             ),
                             if (customers.isEmpty) ...[
-                              const SizedBox(height: 16),
+                              SizedBox(height: 16),
                               ElevatedButton.icon(
                                 onPressed: _showAddCustomerDialog,
-                                icon: const Icon(Icons.add, size: 18),
-                                label: const Text('Add Customer'),
+                                icon: Icon(Icons.add, size: 18),
+                                label: Text('Add Customer'),
                               ),
                             ],
                           ],
@@ -211,7 +211,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                                           child: Center(
                                             child: Text(
                                               initials,
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.w600,
                                                 color: SpiceColors.primary,
@@ -219,7 +219,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                                             ),
                                           ),
                                         ),
-                                        const SizedBox(width: 14),
+                                        SizedBox(width: 14),
                                         Expanded(
                                           child: Column(
                                             crossAxisAlignment:
@@ -227,21 +227,21 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                                             children: [
                                               Text(
                                                 customer.name,
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontSize: 14,
                                                   fontWeight: FontWeight.w600,
                                                   color:
                                                       SpiceColors.textPrimary,
                                                 ),
                                               ),
-                                              const SizedBox(height: 2),
+                                              SizedBox(height: 2),
                                               if (customer.email != null ||
                                                   customer.phone != null)
                                                 Text(
                                                   customer.email ??
                                                       customer.phone ??
                                                       '',
-                                                  style: const TextStyle(
+                                                  style: TextStyle(
                                                     fontSize: 11,
                                                     color: SpiceColors
                                                         .textSecondary,
@@ -267,15 +267,15 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                                             child: Row(
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
-                                                const Icon(
+                                                Icon(
                                                   Icons.military_tech_rounded,
                                                   size: 14,
                                                   color: SpiceColors.warning,
                                                 ),
-                                                const SizedBox(width: 4),
+                                                SizedBox(width: 4),
                                                 Text(
                                                   '${customer.loyaltyPoints}',
-                                                  style: const TextStyle(
+                                                  style: TextStyle(
                                                     fontSize: 12,
                                                     fontWeight: FontWeight.w600,
                                                     color: SpiceColors.warning,
@@ -287,29 +287,29 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                                         if (salesData != null) ...[
                                           Text(
                                             'R ${NumberFormat.compact().format(salesData.totalSpent)}',
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 13,
                                               fontWeight: FontWeight.w600,
                                               color: SpiceColors.accent,
                                             ),
                                           ),
-                                          const SizedBox(width: 4),
+                                          SizedBox(width: 4),
                                           Text(
                                             '${salesData.purchaseCount} purchases',
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 11,
                                               color:
                                                   SpiceColors.textSecondary,
                                             ),
                                           ),
                                         ] else if (allSalesAsync.isLoading)
-                                          const SizedBox(
+                                          SizedBox(
                                             width: 14,
                                             height: 14,
                                             child: CircularProgressIndicator(
                                                 strokeWidth: 2),
                                           ),
-                                        const SizedBox(width: 8),
+                                        SizedBox(width: 8),
                                         Icon(
                                           isExpanded
                                               ? Icons.expand_less
@@ -343,7 +343,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: SpiceColors.surfaceAlt,
-      shape: const RoundedRectangleBorder(
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
         side: BorderSide(color: SpiceColors.border),
       ),
@@ -361,22 +361,22 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   customer.name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: SpiceColors.textPrimary,
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               ListTile(
-                leading: const Icon(Icons.edit, color: SpiceColors.primary),
-                title: const Text('Edit Customer'),
+                leading: Icon(Icons.edit, color: SpiceColors.primary),
+                title: Text('Edit Customer'),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8)),
                 onTap: () {
@@ -385,9 +385,9 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.delete_outline,
+                leading: Icon(Icons.delete_outline,
                     color: SpiceColors.danger),
-                title: const Text('Delete Customer'),
+                title: Text('Delete Customer'),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8)),
                 onTap: () {
@@ -395,7 +395,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                   _showDeleteCustomerDialog(customer);
                 },
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
             ],
           ),
         ),
@@ -418,37 +418,37 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(color: SpiceColors.border),
         ),
-        title: const Text('Edit Customer'),
+        title: Text('Edit Customer'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: nameCtrl,
-                decoration: const InputDecoration(labelText: 'Name'),
+                decoration: InputDecoration(labelText: 'Name'),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               TextField(
                 controller: emailCtrl,
                 keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(labelText: 'Email'),
+                decoration: InputDecoration(labelText: 'Email'),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               TextField(
                 controller: phoneCtrl,
                 keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(labelText: 'Phone'),
+                decoration: InputDecoration(labelText: 'Phone'),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               TextField(
                 controller: addressCtrl,
-                decoration: const InputDecoration(labelText: 'Address'),
+                decoration: InputDecoration(labelText: 'Address'),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               TextField(
                 controller: notesCtrl,
                 maxLines: 2,
-                decoration: const InputDecoration(labelText: 'Notes'),
+                decoration: InputDecoration(labelText: 'Notes'),
               ),
             ],
           ),
@@ -456,14 +456,14 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () async {
               final name = nameCtrl.text.trim();
               if (name.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Name is required')),
+                  SnackBar(content: Text('Name is required')),
                 );
                 return;
               }
@@ -471,7 +471,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                 final wsId = ref.read(workspaceStateProvider).selectedId;
                 if (wsId == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
+                    SnackBar(
                       content:
                           Text('Please select or create a workspace first'),
                       backgroundColor: SpiceColors.danger,
@@ -511,7 +511,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                 }
               }
             },
-            child: const Text('Save'),
+            child: Text('Save'),
           ),
         ],
       ),
@@ -527,15 +527,15 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(color: SpiceColors.border),
         ),
-        title: const Text('Delete Customer'),
+        title: Text('Delete Customer'),
         content: Text(
           'Are you sure you want to delete "${customer.name}"? This cannot be undone.',
-          style: const TextStyle(color: SpiceColors.textSecondary),
+          style: TextStyle(color: SpiceColors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -565,7 +565,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: SpiceColors.danger,
             ),
-            child: const Text('Delete'),
+            child: Text('Delete'),
           ),
         ],
       ),
@@ -587,37 +587,37 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(color: SpiceColors.border),
         ),
-        title: const Text('Add Customer'),
+        title: Text('Add Customer'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: nameCtrl,
-                decoration: const InputDecoration(labelText: 'Name'),
+                decoration: InputDecoration(labelText: 'Name'),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               TextField(
                 controller: emailCtrl,
                 keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(labelText: 'Email'),
+                decoration: InputDecoration(labelText: 'Email'),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               TextField(
                 controller: phoneCtrl,
                 keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(labelText: 'Phone'),
+                decoration: InputDecoration(labelText: 'Phone'),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               TextField(
                 controller: addressCtrl,
-                decoration: const InputDecoration(labelText: 'Address'),
+                decoration: InputDecoration(labelText: 'Address'),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               TextField(
                 controller: notesCtrl,
                 maxLines: 2,
-                decoration: const InputDecoration(labelText: 'Notes'),
+                decoration: InputDecoration(labelText: 'Notes'),
               ),
             ],
           ),
@@ -625,14 +625,14 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () async {
               final name = nameCtrl.text.trim();
               if (name.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Name is required')),
+                  SnackBar(content: Text('Name is required')),
                 );
                 return;
               }
@@ -640,7 +640,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                 final wsId = ref.read(workspaceStateProvider).selectedId;
                 if (wsId == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
+                    SnackBar(
                       content:
                           Text('Please select or create a workspace first'),
                       backgroundColor: SpiceColors.danger,
@@ -679,7 +679,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                 }
               }
             },
-            child: const Text('Save'),
+            child: Text('Save'),
           ),
         ],
       ),
@@ -692,7 +692,7 @@ class _ExpandedPanel extends ConsumerWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
-  const _ExpandedPanel({
+  _ExpandedPanel({
     required this.customer,
     required this.onEdit,
     required this.onDelete,
@@ -713,7 +713,7 @@ class _ExpandedPanel extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           if (customer.email != null)
             _InfoRow(Icons.email_outlined, customer.email!),
           if (customer.phone != null)
@@ -725,7 +725,7 @@ class _ExpandedPanel extends ConsumerWidget {
           if (customer.email != null ||
               customer.phone != null ||
               customer.address != null)
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
           Row(
             children: [
               _DetailChip(
@@ -735,7 +735,7 @@ class _ExpandedPanel extends ConsumerWidget {
                     : 'Spent: R ${(salesData?.totalSpent ?? 0).toStringAsFixed(2)}',
                 color: SpiceColors.accent,
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               _DetailChip(
                 icon: Icons.shopping_cart_outlined,
                 label: isLoading
@@ -743,7 +743,7 @@ class _ExpandedPanel extends ConsumerWidget {
                     : '${salesData?.purchaseCount ?? 0} purchases',
                 color: SpiceColors.primary,
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               _DetailChip(
                 icon: Icons.access_time,
                 label: isLoading
@@ -755,9 +755,9 @@ class _ExpandedPanel extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           if (isLoading)
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 16),
               child: Center(
                 child: SizedBox(
@@ -769,7 +769,7 @@ class _ExpandedPanel extends ConsumerWidget {
             )
           else if (salesData != null &&
               salesData.recentPurchases.isNotEmpty) ...[
-            const Text(
+            Text(
               'Purchase History',
               style: TextStyle(
                 fontSize: 13,
@@ -777,7 +777,7 @@ class _ExpandedPanel extends ConsumerWidget {
                 color: SpiceColors.textSecondary,
               ),
             ),
-            const SizedBox(height: 6),
+            SizedBox(height: 6),
             ...salesData.recentPurchases.map((p) {
               final date = p['created_at'] as String?;
               final parsedDate = date != null && date.isNotEmpty
@@ -801,14 +801,14 @@ class _ExpandedPanel extends ConsumerWidget {
                         color: SpiceColors.primary.withAlpha(20),
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: const Icon(Icons.receipt,
+                      child: Icon(Icons.receipt,
                           size: 14, color: SpiceColors.primary),
                     ),
-                    const SizedBox(width: 10),
+                    SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         txnNum,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                           color: SpiceColors.textPrimary,
@@ -817,15 +817,15 @@ class _ExpandedPanel extends ConsumerWidget {
                     ),
                     Text(
                       displayDate,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         color: SpiceColors.textSecondary,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Text(
                       'R ${total.toStringAsFixed(2)}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: SpiceColors.accent,
@@ -836,7 +836,7 @@ class _ExpandedPanel extends ConsumerWidget {
               );
             }),
           ] else if (!isLoading && salesData != null)
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
               child: Text(
                 'No purchases yet',
@@ -847,29 +847,29 @@ class _ExpandedPanel extends ConsumerWidget {
                 ),
               ),
             ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Row(
             children: [
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: onEdit,
-                  icon: const Icon(Icons.edit, size: 16),
-                  label: const Text('Edit'),
+                  icon: Icon(Icons.edit, size: 16),
+                  label: Text('Edit'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: SpiceColors.primary,
-                    side: const BorderSide(color: SpiceColors.border),
+                    side: BorderSide(color: SpiceColors.border),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: onDelete,
-                  icon: const Icon(Icons.delete_outline, size: 16),
-                  label: const Text('Delete'),
+                  icon: Icon(Icons.delete_outline, size: 16),
+                  label: Text('Delete'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: SpiceColors.danger,
-                    side: const BorderSide(color: SpiceColors.border),
+                    side: BorderSide(color: SpiceColors.border),
                   ),
                 ),
               ),
@@ -886,7 +886,7 @@ class _DetailChip extends StatelessWidget {
   final String label;
   final Color color;
 
-  const _DetailChip({
+  _DetailChip({
     required this.icon,
     required this.label,
     required this.color,
@@ -906,7 +906,7 @@ class _DetailChip extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 14, color: color),
-            const SizedBox(width: 6),
+            SizedBox(width: 6),
             Flexible(
               child: Text(
                 label,
@@ -929,7 +929,7 @@ class _InfoRow extends StatelessWidget {
   final IconData icon;
   final String text;
 
-  const _InfoRow(this.icon, this.text);
+  _InfoRow(this.icon, this.text);
 
   @override
   Widget build(BuildContext context) {
@@ -938,11 +938,11 @@ class _InfoRow extends StatelessWidget {
       child: Row(
         children: [
           Icon(icon, size: 16, color: SpiceColors.textSecondary),
-          const SizedBox(width: 10),
+          SizedBox(width: 10),
           Flexible(
             child: Text(
               text,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 color: SpiceColors.textSecondary,
               ),

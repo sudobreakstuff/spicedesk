@@ -27,11 +27,13 @@ final appTheme = buildAppTheme(
 
 ThemeData buildAppTheme(ColorScheme colorScheme) {
   final isLight = colorScheme.brightness == Brightness.light;
-  final surfaceColor = isLight ? const Color(0xFFF6F8FA) : _surface;
+  final surfaceColor = isLight ? Color(0xFFF6F8FA) : _surface;
   final surfaceAltColor = isLight ? Colors.white : _surfaceAlt;
-  final borderColor = isLight ? const Color(0xFFD0D7DE) : _border;
-  final textPri = isLight ? const Color(0xFF1F2328) : _textPrimary;
-  final textSec = isLight ? const Color(0xFF656D76) : _textSecondary;
+  final borderColor = isLight ? Color(0xFFD0D7DE) : _border;
+  final textPri = isLight ? Color(0xFF1F2328) : _textPrimary;
+  final textSec = isLight ? Color(0xFF656D76) : _textSecondary;
+
+  SpiceColors.applyTheme(colorScheme, isLight);
 
   return ThemeData(
     useMaterial3: true,
@@ -102,7 +104,7 @@ ThemeData buildAppTheme(ColorScheme colorScheme) {
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: _danger),
+        borderSide: BorderSide(color: _danger),
       ),
       hintStyle: TextStyle(color: textSec),
       labelStyle: TextStyle(color: textSec),
@@ -115,7 +117,7 @@ ThemeData buildAppTheme(ColorScheme colorScheme) {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
-        textStyle: const TextStyle(
+        textStyle: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
         ),
@@ -154,17 +156,29 @@ ThemeData buildAppTheme(ColorScheme colorScheme) {
   );
 }
 
-// SpiceDesk brand colors (default dark theme)
+// SpiceDesk brand colors — dynamically updated by buildAppTheme
 class SpiceColors {
-  static const primary = _primary;
-  static const surface = _surface;
-  static const surfaceAlt = _surfaceAlt;
-  static const border = _border;
-  static const textPrimary = _textPrimary;
-  static const textSecondary = _textSecondary;
-  static const accent = _accent;
-  static const danger = _danger;
-  static const warning = _warning;
+  static Color primary = _primary;
+  static Color surface = _surface;
+  static Color surfaceAlt = _surfaceAlt;
+  static Color border = _border;
+  static Color textPrimary = _textPrimary;
+  static Color textSecondary = _textSecondary;
+  static Color accent = _accent;
+  static Color danger = _danger;
+  static Color warning = _warning;
+
+  static void applyTheme(ColorScheme scheme, bool isLight) {
+    primary = scheme.primary;
+    surface = isLight ? const Color(0xFFF6F8FA) : _surface;
+    surfaceAlt = isLight ? Colors.white : _surfaceAlt;
+    border = isLight ? const Color(0xFFD0D7DE) : _border;
+    textPrimary = isLight ? const Color(0xFF1F2328) : _textPrimary;
+    textSecondary = isLight ? const Color(0xFF656D76) : _textSecondary;
+    accent = scheme.secondary;
+    danger = scheme.error;
+    warning = _warning;
+  }
 
   static Color glassSurface = _surfaceAlt.withAlpha(180);
   static Color glassBorder = _border.withAlpha(100);

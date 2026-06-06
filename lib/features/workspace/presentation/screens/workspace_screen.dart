@@ -11,7 +11,7 @@ import '../../../sales/data/sales_provider.dart';
 import '../../domain/workspace_state.dart';
 
 class WorkspaceScreen extends ConsumerStatefulWidget {
-  const WorkspaceScreen({super.key});
+  WorkspaceScreen({super.key});
 
   @override
   ConsumerState<WorkspaceScreen> createState() => _WorkspaceScreenState();
@@ -87,9 +87,9 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Workspaces'),
+        title: Text('Workspaces'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: Icon(Icons.arrow_back),
           onPressed: () => context.go('/dashboard'),
           tooltip: 'Back to Dashboard',
         ),
@@ -98,7 +98,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(32),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 500),
+            constraints: BoxConstraints(maxWidth: 500),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -107,13 +107,13 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                   style: Theme.of(context).textTheme.headlineLarge,
                 ).animate().fadeIn(),
 
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Text(
                   'Create or join a workspace to get started',
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
 
-                const SizedBox(height: 32),
+                SizedBox(height: 32),
 
                 workspaces.when(
                   data: (list) {
@@ -129,11 +129,11 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                           children: [
                             Icon(Icons.business_outlined,
                                 size: 48, color: SpiceColors.textSecondary),
-                            const SizedBox(height: 12),
+                            SizedBox(height: 12),
                             Text('No workspaces yet',
                                 style:
                                     Theme.of(context).textTheme.titleMedium),
-                            const SizedBox(height: 4),
+                            SizedBox(height: 4),
                             Text('Create your first workspace below',
                                 style: Theme.of(context).textTheme.bodyMedium),
                           ],
@@ -142,9 +142,9 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                     }
                     return ListView.separated(
                       shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
+                      physics: NeverScrollableScrollPhysics(),
                       itemCount: list.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      separatorBuilder: (_, __) => SizedBox(height: 8),
                       itemBuilder: (context, index) {
                         final ws = list[index];
                         return Material(
@@ -164,7 +164,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                                   width: 44,
                                   height: 44,
                                   decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
+                                    gradient: LinearGradient(
                                       colors: [
                                         SpiceColors.primary,
                                         Color(0xFF818CF8)
@@ -172,7 +172,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                                     ),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: const Icon(Icons.store,
+                                  child: Icon(Icons.store,
                                       color: Colors.white, size: 22),
                                 ),
                                 title: Text(
@@ -187,7 +187,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                                       .textTheme
                                       .labelMedium,
                                 ),
-                                trailing: const Icon(Icons.arrow_forward_ios,
+                                trailing: Icon(Icons.arrow_forward_ios,
                                     size: 16),
                               ),
                             ),
@@ -196,7 +196,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                       },
                     );
                   },
-                  loading: () => const Center(
+                  loading: () => Center(
                     child: Padding(
                       padding: EdgeInsets.all(48),
                       child: CircularProgressIndicator(),
@@ -211,12 +211,12 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                     padding: const EdgeInsets.all(24),
                     child: Row(
                       children: [
-                        const Icon(Icons.error_outline,
+                        Icon(Icons.error_outline,
                             color: SpiceColors.danger),
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12),
                         Expanded(
                           child: Text('Failed to load workspaces: $e',
-                              style: const TextStyle(
+                              style: TextStyle(
                                   color: SpiceColors.danger)),
                         ),
                       ],
@@ -224,7 +224,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 32),
+                SizedBox(height: 32),
 
                 Container(
                   decoration: BoxDecoration(
@@ -238,10 +238,10 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                     children: [
                       Text('Create a Workspace',
                           style: Theme.of(context).textTheme.titleLarge),
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16),
                       TextField(
                         controller: _nameCtrl,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Business Name',
                           hintText: 'e.g. My Coffee Shop',
                           prefixIcon: Icon(Icons.business),
@@ -250,12 +250,12 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                         onSubmitted: (_) => _handleCreateWorkspace(),
                       ),
                       if (_error != null) ...[
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8),
                         Text(_error!,
                             style:
-                                const TextStyle(color: SpiceColors.danger)),
+                                TextStyle(color: SpiceColors.danger)),
                       ],
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16),
                       SizedBox(
                         height: 48,
                         child: ElevatedButton.icon(
@@ -263,14 +263,14 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                               ? null
                               : _handleCreateWorkspace,
                           icon: _creating
-                              ? const SizedBox(
+                              ? SizedBox(
                                   width: 16,
                                   height: 16,
                                   child: CircularProgressIndicator(
                                       strokeWidth: 2,
                                       color: Colors.white),
                                 )
-                              : const Icon(Icons.add, size: 20),
+                              : Icon(Icons.add, size: 20),
                           label:
                               Text(_creating ? 'Creating...' : 'Create'),
                         ),
@@ -279,10 +279,10 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                   ),
                 ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.05),
 
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 TextButton(
                   onPressed: () => context.go('/dashboard'),
-                  child: const Text('Skip for now'),
+                  child: Text('Skip for now'),
                 ),
               ],
             ),

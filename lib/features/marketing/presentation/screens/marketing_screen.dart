@@ -22,7 +22,7 @@ class Campaign {
 }
 
 class MarketingScreen extends StatefulWidget {
-  const MarketingScreen({super.key});
+  MarketingScreen({super.key});
 
   @override
   State<MarketingScreen> createState() => _MarketingScreenState();
@@ -69,19 +69,19 @@ class _MarketingScreenState extends State<MarketingScreen> {
               children: [
                 TextField(
                   controller: titleCtrl,
-                  decoration: const InputDecoration(labelText: 'Title'),
+                  decoration: InputDecoration(labelText: 'Title'),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 TextField(
                   controller: descCtrl,
                   maxLines: 3,
-                  decoration: const InputDecoration(labelText: 'Description'),
+                  decoration: InputDecoration(labelText: 'Description'),
                 ),
-                const SizedBox(height: 16),
-                const Text('Platform',
+                SizedBox(height: 16),
+                Text('Platform',
                     style: TextStyle(
                         fontSize: 13, color: SpiceColors.textSecondary)),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
                   children: platforms.map((p) => ChoiceChip(
@@ -98,11 +98,11 @@ class _MarketingScreenState extends State<MarketingScreen> {
                     ),
                   )).toList(),
                 ),
-                const SizedBox(height: 16),
-                const Text('Status',
+                SizedBox(height: 16),
+                Text('Status',
                     style: TextStyle(
                         fontSize: 13, color: SpiceColors.textSecondary)),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
                   children: statuses.map((s) => ChoiceChip(
@@ -119,14 +119,14 @@ class _MarketingScreenState extends State<MarketingScreen> {
                     ),
                   )).toList(),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 ListTile(
-                  leading: const Icon(Icons.calendar_today,
+                  leading: Icon(Icons.calendar_today,
                       color: SpiceColors.textSecondary),
                   title: Text(_dateFormat.format(date),
-                      style: const TextStyle(
+                      style: TextStyle(
                           color: SpiceColors.textPrimary, fontSize: 14)),
-                  trailing: const Icon(Icons.edit_calendar,
+                  trailing: Icon(Icons.edit_calendar,
                       color: SpiceColors.primary, size: 20),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8)),
@@ -148,7 +148,7 @@ class _MarketingScreenState extends State<MarketingScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
+              child: Text('Cancel'),
             ),
             if (existing != null)
               TextButton(
@@ -158,7 +158,7 @@ class _MarketingScreenState extends State<MarketingScreen> {
                   });
                   Navigator.pop(ctx);
                 },
-                child: const Text('Delete',
+                child: Text('Delete',
                     style: TextStyle(color: SpiceColors.danger)),
               ),
             ElevatedButton(
@@ -185,7 +185,7 @@ class _MarketingScreenState extends State<MarketingScreen> {
                 });
                 Navigator.pop(ctx);
               },
-              child: const Text('Save'),
+              child: Text('Save'),
             ),
           ],
         ),
@@ -207,12 +207,12 @@ class _MarketingScreenState extends State<MarketingScreen> {
           children: [
             Row(
               children: [
-                const Text('Marketing',
+                Text('Marketing',
                     style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w700,
                         color: SpiceColors.textPrimary)),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -221,24 +221,24 @@ class _MarketingScreenState extends State<MarketingScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text('${_campaigns.length} campaigns',
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: SpiceColors.primary)),
                 ),
-                const Spacer(),
+                Spacer(),
                 ElevatedButton.icon(
                   onPressed: () => _showCampaignDialog(),
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('New Campaign'),
+                  icon: Icon(Icons.add, size: 18),
+                  label: Text('New Campaign'),
                 ),
               ],
             ),
-            const SizedBox(height: 4),
-            const Text('Content planner & campaign manager',
+            SizedBox(height: 4),
+            Text('Content planner & campaign manager',
                 style: TextStyle(
                     fontSize: 14, color: SpiceColors.textSecondary)),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             Expanded(
               child: _campaigns.isEmpty
                   ? Container(
@@ -247,7 +247,7 @@ class _MarketingScreenState extends State<MarketingScreen> {
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: SpiceColors.border),
                       ),
-                      child: const Center(
+                      child: Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -315,23 +315,23 @@ class _MarketingScreenState extends State<MarketingScreen> {
                                         size: 22,
                                       ),
                                     ),
-                                    const SizedBox(width: 14),
+                                    SizedBox(width: 14),
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(c.title,
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                   fontSize: 15,
                                                   fontWeight:
                                                       FontWeight.w600,
                                                   color: SpiceColors
                                                       .textPrimary)),
-                                          const SizedBox(height: 3),
+                                          SizedBox(height: 3),
                                           Text(
                                             '${c.platform}  ·  ${_dateFormat.format(c.scheduledDate)}',
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                                 fontSize: 12,
                                                 color: SpiceColors
                                                     .textSecondary),
@@ -346,7 +346,7 @@ class _MarketingScreenState extends State<MarketingScreen> {
                                                 maxLines: 2,
                                                 overflow:
                                                     TextOverflow.ellipsis,
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                     fontSize: 12,
                                                     color: SpiceColors
                                                         .textSecondary),
@@ -355,7 +355,7 @@ class _MarketingScreenState extends State<MarketingScreen> {
                                         ],
                                       ),
                                     ),
-                                    const SizedBox(width: 12),
+                                    SizedBox(width: 12),
                                     Container(
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 10, vertical: 4),
@@ -375,7 +375,7 @@ class _MarketingScreenState extends State<MarketingScreen> {
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
+                                    SizedBox(width: 8),
                                     Icon(Icons.chevron_right,
                                         color: SpiceColors.border,
                                         size: 20),

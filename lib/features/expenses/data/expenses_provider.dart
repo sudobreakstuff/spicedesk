@@ -21,4 +21,4 @@ final monthlyExpensesProvider = FutureProvider<double>((ref) async {
   return sum;
 });
 
-class ExpenseItem { final String id,description,category; final double amount; final DateTime date; final String? notes; const ExpenseItem({required this.id,required this.description,this.category='general',required this.amount,required this.date,this.notes});}
+class ExpenseItem { final String id,description,category; final double amount; final DateTime date; final String? notes; ExpenseItem({required this.id,required this.description,this.category='general',required this.amount,required this.date,this.notes});}

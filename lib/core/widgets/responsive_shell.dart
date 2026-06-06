@@ -7,7 +7,7 @@ import '../../core/widgets/app_sidebar.dart';
 
 class ResponsiveShell extends ConsumerWidget {
   final Widget child;
-  const ResponsiveShell({super.key, required this.child});
+  ResponsiveShell({super.key, required this.child});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -15,7 +15,7 @@ class ResponsiveShell extends ConsumerWidget {
     final isWide = width > 850;
 
     if (isWide) {
-      return Row(children: [const AppSidebar(), Expanded(child: child)]);
+      return Row(children: [AppSidebar(), Expanded(child: child)]);
     }
 
     // Narrow: use bottom nav
@@ -31,7 +31,7 @@ class ResponsiveShell extends ConsumerWidget {
     return Scaffold(
       backgroundColor: SpiceColors.surface,
       appBar: AppBar(
-        title: const Text('SpiceDesk'),
+        title: Text('SpiceDesk'),
         surfaceTintColor: Colors.transparent,
       ),
       body: child,
@@ -39,11 +39,11 @@ class ResponsiveShell extends ConsumerWidget {
         backgroundColor: SpiceColors.surfaceAlt,
         child: SafeArea(
           child: Column(children: [
-            const Padding(
+            Padding(
               padding: EdgeInsets.all(20),
               child: Text('SpiceDesk', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
             ),
-            const Divider(color: SpiceColors.border),
+            Divider(color: SpiceColors.border),
             _drawerItem(context, Icons.point_of_sale, 'POS', '/pos', location),
             _drawerItem(context, Icons.inventory_2, 'Inventory', '/inventory', location),
             _drawerItem(context, Icons.people, 'Customers', '/customers', location),
@@ -51,17 +51,17 @@ class ResponsiveShell extends ConsumerWidget {
             _drawerItem(context, Icons.description_outlined, 'Pending', '/pending', location),
             _drawerItem(context, Icons.money_off, 'Expenses', '/expenses', location),
             _drawerItem(context, Icons.campaign, 'Marketing', '/marketing', location),
-            const Spacer(),
+            Spacer(),
             _drawerItem(context, Icons.settings, 'Settings', '/settings', location),
             _drawerItem(context, Icons.info_outline, 'About', '/about', location),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
           ]),
         ),
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: SpiceColors.surfaceAlt,
-          border: const Border(top: BorderSide(color: SpiceColors.border, width: 0.5)),
+          border: Border(top: BorderSide(color: SpiceColors.border, width: 0.5)),
         ),
         child: SafeArea(
           child: SizedBox(
@@ -90,7 +90,7 @@ class ResponsiveShell extends ConsumerWidget {
         width: 64,
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
           Icon(icon, size: 22, color: active ? SpiceColors.primary : SpiceColors.textSecondary),
-          const SizedBox(height: 2),
+          SizedBox(height: 2),
           Text(label, style: TextStyle(fontSize: 10, fontWeight: active ? FontWeight.w600 : FontWeight.w400, color: active ? SpiceColors.primary : SpiceColors.textSecondary)),
         ]),
       ),

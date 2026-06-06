@@ -62,7 +62,7 @@ class SaleResult {
   final String invoiceNumber;
   final double total;
 
-  const SaleResult({
+  SaleResult({
     required this.transactionNumber,
     required this.invoiceNumber,
     required this.total,
@@ -83,7 +83,7 @@ class SaleItemInput {
   final int quantity;
   final double unitPrice;
 
-  const SaleItemInput({
+  SaleItemInput({
     this.productId,
     required this.productName,
     required this.quantity,

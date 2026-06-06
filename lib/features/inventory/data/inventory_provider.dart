@@ -53,7 +53,7 @@ class InventoryItem {
   final String productType;
   final String unitOfMeasure;
 
-  const InventoryItem({
+  InventoryItem({
     required this.id,
     required this.productId,
     required this.productName,

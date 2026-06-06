@@ -8,7 +8,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../workspace/domain/workspace_state.dart';
 
 class PendingOrdersScreen extends ConsumerStatefulWidget {
-  const PendingOrdersScreen({super.key});
+  PendingOrdersScreen({super.key});
 
   @override
   ConsumerState<PendingOrdersScreen> createState() =>
@@ -57,7 +57,7 @@ class _PendingOrdersScreenState extends ConsumerState<PendingOrdersScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: SpiceColors.surfaceAlt,
-      shape: const RoundedRectangleBorder(
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
         side: BorderSide(color: SpiceColors.border),
       ),
@@ -68,32 +68,32 @@ class _PendingOrdersScreenState extends ConsumerState<PendingOrdersScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(width: 40, height: 4, decoration: BoxDecoration(color: SpiceColors.border, borderRadius: BorderRadius.circular(2))),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(quote['quote_number'] ?? 'Quote', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
+                child: Text(quote['quote_number'] ?? 'Quote', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               if (quote['status'] != 'rejected')
                 ListTile(
-                  leading: const Icon(Icons.shopping_cart, color: SpiceColors.accent),
-                  title: const Text('Convert to Sale'),
+                  leading: Icon(Icons.shopping_cart, color: SpiceColors.accent),
+                  title: Text('Convert to Sale'),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   onTap: () { Navigator.pop(ctx); _convertQuoteToSale(quote); },
                 ),
               ListTile(
-                leading: const Icon(Icons.edit, color: SpiceColors.primary),
-                title: const Text('Edit Status'),
+                leading: Icon(Icons.edit, color: SpiceColors.primary),
+                title: Text('Edit Status'),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 onTap: () { Navigator.pop(ctx); _editStatusDialog(quote); },
               ),
               ListTile(
-                leading: const Icon(Icons.delete_outline, color: SpiceColors.danger),
-                title: const Text('Delete'),
+                leading: Icon(Icons.delete_outline, color: SpiceColors.danger),
+                title: Text('Delete'),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 onTap: () { Navigator.pop(ctx); _deleteQuote(quote); },
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
             ],
           ),
         ),
@@ -108,9 +108,9 @@ class _PendingOrdersScreenState extends ConsumerState<PendingOrdersScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: SpiceColors.surfaceAlt,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: SpiceColors.border)),
-        title: const Text('Change Status'),
+        title: Text('Change Status'),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           ...['draft', 'sent', 'accepted', 'rejected'].map((status) => RadioListTile<String>(
             title: Text(status[0].toUpperCase() + status.substring(1)),
             value: status,
@@ -123,7 +123,7 @@ class _PendingOrdersScreenState extends ConsumerState<PendingOrdersScreen> {
             },
           )),
         ]),
-        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel'))],
+        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel'))],
       ),
     );
   }
@@ -170,7 +170,7 @@ class _PendingOrdersScreenState extends ConsumerState<PendingOrdersScreen> {
           children: [
             Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -189,14 +189,14 @@ class _PendingOrdersScreenState extends ConsumerState<PendingOrdersScreen> {
                 ),
                 ElevatedButton.icon(
                   onPressed: () => context.go('/pos'),
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('New Quote'),
+                  icon: Icon(Icons.add, size: 18),
+                  label: Text('New Quote'),
                 ),
               ],
             ),
-            const SizedBox(height: 28),
+            SizedBox(height: 28),
             if (_loading)
-              const Center(
+              Center(
                   child: Padding(
                       padding: EdgeInsets.all(48),
                       child: CircularProgressIndicator()))
@@ -208,7 +208,7 @@ class _PendingOrdersScreenState extends ConsumerState<PendingOrdersScreen> {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: SpiceColors.border),
                 ),
-                child: const Center(
+                child: Center(
                   child: Column(
                     children: [
                       Icon(Icons.description_outlined,
@@ -266,7 +266,7 @@ class _PendingOrdersScreenState extends ConsumerState<PendingOrdersScreen> {
                               size: 18,
                             ),
                           ),
-                          const SizedBox(width: 14),
+                          SizedBox(width: 14),
                           Expanded(
                             flex: 2,
                             child: Column(
@@ -275,16 +275,16 @@ class _PendingOrdersScreenState extends ConsumerState<PendingOrdersScreen> {
                               children: [
                                 Text(
                                   quote['quote_number'] ?? '',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w500,
                                       color:
                                           SpiceColors.textPrimary),
                                 ),
-                                const SizedBox(height: 2),
+                                SizedBox(height: 2),
                                 Text(
                                   cust?['name'] ?? 'Walk-in',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 12,
                                       color: SpiceColors
                                           .textSecondary),
@@ -292,7 +292,7 @@ class _PendingOrdersScreenState extends ConsumerState<PendingOrdersScreen> {
                               ],
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          SizedBox(width: 12),
                           Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 4),
@@ -310,24 +310,24 @@ class _PendingOrdersScreenState extends ConsumerState<PendingOrdersScreen> {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          SizedBox(width: 16),
                           SizedBox(
                             width: 100,
                             child: Text(
                               'R ${total.toStringAsFixed(2)}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   color: SpiceColors.accent),
                               textAlign: TextAlign.right,
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          SizedBox(width: 16),
                           SizedBox(
                             width: 100,
                             child: Text(
                               DateFormat('dd/MM/yy').format(date),
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 12,
                                   color:
                                       SpiceColors.textSecondary),
@@ -340,7 +340,7 @@ class _PendingOrdersScreenState extends ConsumerState<PendingOrdersScreen> {
                   ),
                 );
               }),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
           ],
         ),
       ),
@@ -370,7 +370,7 @@ class _PendingOrdersScreenState extends ConsumerState<PendingOrdersScreen> {
       if (items.isEmpty) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Quote has no items')),
+            SnackBar(content: Text('Quote has no items')),
           );
         }
         return;
@@ -400,7 +400,7 @@ class _PendingOrdersScreenState extends ConsumerState<PendingOrdersScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('Quote converted to sale successfully'),
             backgroundColor: SpiceColors.accent,
           ),

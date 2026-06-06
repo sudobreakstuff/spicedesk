@@ -45,7 +45,7 @@ class Product {
   final String unitOfMeasure;
   final String category;
 
-  const Product({
+  Product({
     required this.id,
     required this.name,
     this.sku,
