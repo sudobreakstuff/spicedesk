@@ -38,7 +38,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
 
     try {
       final results = await Future.wait([
-        supabase.from('sales_transactions').select('id,transaction_number,grand_total,payment_method,created_at,customers(name),invoices(invoice_number)').eq('workspace_id',wsId).order('created_at',ascending:false).limit(500),
+        supabase.from('sales_transactions').select('id,transaction_number,grand_total,payment_method,created_at,customers(name),invoices(invoice_number,status)').eq('workspace_id',wsId).order('created_at',ascending:false).limit(500),
         supabase.from('expenses').select('id,description,category,amount,expense_date').eq('workspace_id',wsId).order('created_at',ascending:false).limit(200),
         supabase.from('sale_items').select('product_name,quantity').eq('workspace_id',wsId).limit(500),
       ]);
@@ -208,7 +208,17 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                     padding: const EdgeInsets.only(bottom: 6),
                                     child: Row(children: [
                                       const Text('Invoice: ', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.textSecondary)),
-                                      Text(invoiceNum!, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.primary)),
+                                      Text(invoiceNum, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.primary)),
+                                      const Spacer(),
+                                      Material(
+                                        color: SpiceColors.primary.withAlpha(20),
+                                        borderRadius: BorderRadius.circular(4),
+                                        child: InkWell(
+                                          onTap: () => _viewInvoice(invoices![0] as Map<String, dynamic>, s, cust, dt, total),
+                                          borderRadius: BorderRadius.circular(4),
+                                          child: const Padding(padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3), child: Text('View', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: SpiceColors.primary))),
+                                        ),
+                                      ),
                                     ]),
                                   ),
                                 if (items.isEmpty)
@@ -234,6 +244,63 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  void _viewInvoice(Map<String, dynamic> invoice, Map<String, dynamic> sale, Map<String, dynamic>? cust, DateTime dt, double total) async {
+    // Load invoice items from sale_items
+    final wsId = ref.read(workspaceStateProvider).selectedId;
+    List<Map<String, dynamic>> items = _txnItems[sale['id']] ?? [];
+    if (items.isEmpty && wsId != null) {
+      final data = await supabase.from('sale_items').select('product_name,quantity,unit_price,line_total').eq('transaction_id', sale['id']).eq('workspace_id', wsId);
+      items = data.cast<Map<String, dynamic>>();
+    }
+
+    if (mounted) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: SpiceColors.surfaceAlt,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: SpiceColors.border)),
+          title: Text('Invoice ${invoice['invoice_number'] ?? ''}', style: const TextStyle(color: SpiceColors.textPrimary)),
+          content: SingleChildScrollView(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+              _invRow('Date', DateFormat('dd MMM yyyy HH:mm').format(dt)),
+              _invRow('Customer', cust?['name'] ?? 'Walk-in'),
+              _invRow('Payment', sale['payment_method'] ?? ''),
+              _invRow('Status', invoice['status'] ?? 'paid'),
+              const SizedBox(height: 12),
+              const Divider(color: SpiceColors.border),
+              ...items.map((i) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(children: [
+                  Expanded(child: Text('${(i['quantity'] as num?)?.toInt() ?? 0}x ${i['product_name'] ?? ''}', style: const TextStyle(fontSize: 13, color: SpiceColors.textPrimary))),
+                  Text(currency.format((i['line_total'] as num?)?.toDouble() ?? 0), style: const TextStyle(fontSize: 13, color: SpiceColors.textSecondary)),
+                ]),
+              )),
+              const Divider(color: SpiceColors.border),
+              const SizedBox(height: 8),
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                const Text('Total', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
+                Text(currency.format(total), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: SpiceColors.accent)),
+              ]),
+            ]),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
+          ],
+        ),
+      );
+    }
+  }
+
+  Widget _invRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(children: [
+        SizedBox(width: 80, child: Text(label, style: const TextStyle(fontSize: 12, color: SpiceColors.textSecondary))),
+        Expanded(child: Text(value, style: const TextStyle(fontSize: 13, color: SpiceColors.textPrimary))),
+      ]),
     );
   }
 
