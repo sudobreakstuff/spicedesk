@@ -1,72 +1,124 @@
-# SpiceDesk
-
-**Open-source business suite with POS, inventory, CRM, reports, and expenses.**
-
-Dedicated to Mum and Dad.
+<p align="center">
+  <img src="assets/icons/app_icon.png" alt="SpiceDesk" width="120">
+</p>
 
 <p align="center">
-  <img src="assets/icons/app_icon.png" width="120" alt="SpiceDesk Logo">
+  <strong>The open-source business suite — POS, inventory, CRM, reports, and expenses.</strong>
 </p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/version-2.5.1-blue" alt="Version">
+  <img src="https://img.shields.io/badge/platform-Linux%20%7C%20Windows%20%7C%20Android-lightgrey" alt="Platform">
+  <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
+  <img src="https://img.shields.io/badge/backend-Supabase-brightgreen" alt="Supabase">
+  <img src="https://img.shields.io/badge/updates-weekly-purple" alt="Weekly Updates">
+</p>
+
+---
+
+> *"Your data stays yours. We never access or share your business information."*
+
+---
+
+## Our Mission
+
+**Every small business deserves powerful tools without the price tag.**
+
+Most POS and business management software is expensive, locked behind subscriptions, and stores your data on servers you don't control. SpiceDesk is different.
+
+We built SpiceDesk so businesses like your mum's store can have a professional POS, inventory tracking, customer management, and reporting — completely open source, with your data in your own Supabase database that only you control.
+
+Built with Flutter + Supabase. MIT licensed. Free forever.
 
 ---
 
 ## Features
 
-| Module | Description |
-|---|---|
-| Point of Sale | Product grid, cart, checkout with invoice generation |
-| Inventory | Stock tracking, low-stock alerts, adjustments |
-| Customers | CRM with purchase history, loyalty tracking |
-| Reports | Transaction history with analytics and profit tracking |
-| Expenses | Cost tracking with categories |
-| Pending Orders | Quote management (draft/sent/accepted/rejected) |
-| Marketing | Content planner for adverts and campaigns |
+### Point of Sale
+Product grid, cart, checkout with invoice generation, delivery charges, multiple payment methods (cash/card/mobile), customer selection, pickup/delivery/dine-in options
 
-**Cross-platform:** Linux, Windows, Android
+### Inventory
+Stock tracking, low-stock alerts, adjustments, raw materials vs finished goods, cost price tracking, reorder points
 
-## Privacy
+### Customers (CRM)
+Purchase history, loyalty tracking, edit/delete, total spent, last visit, email and phone
 
-Your data stays yours. SpiceDesk connects directly to your Supabase database. We never access or share your business information.
+### Reports
+Transaction history with date filtering, revenue/profit/expense tracking, best selling products, invoice lookup
 
-## Tech Stack
+### Expenses
+Cost tracking with categories (rent, utilities, supplies, marketing, raw materials)
 
-| Layer | Technology |
-|---|---|
-| Frontend | Flutter (Dart) + Riverpod |
-| Backend | Supabase (PostgreSQL + Auth + Realtime) |
-| Navigation | GoRouter |
-| PDF | pdf + printing packages |
-| Charts | fl_chart |
+### Quotes
+Create and manage quotes, convert to sales, WhatsApp sharing, PDF generation
 
-## Getting Started
+### Security
+Biometric/PIN app lock, strong password requirements, RLS data isolation
 
-### Prerequisites
-- Flutter SDK 3.44+
-- A Supabase project
+### Themes
+6 color themes — Dark, Ocean Blue, Forest Green, Sunset Orange, Midnight Purple, Paper Light
 
-### Setup
+### Cross-platform
+Linux, Windows, Android — single codebase
+
+---
+
+## What Makes SpiceDesk Different
+
+| Feature | SpiceDesk | Other POS Software |
+|---|---|---|
+| **Open source** | Yes — MIT licensed | Rarely |
+| **Your data** | In your database, not ours | Usually on their servers |
+| **Price** | Free forever | Subscription-based |
+| **Offline capable** | Coming soon | Sometimes |
+| **PDF invoices** | Built-in | Often extra |
+| **Multi-platform** | Linux, Windows, Android | Usually just one |
+| **Themes** | 6 color themes | Rarely |
+| **App lock** | Biometric/PIN | Rarely in POS apps |
+
+---
+
+## Quick Install
+
+### Linux
+```bash
+# Download from Releases
+curl -L -o spicedesk.tar.gz https://github.com/sudobreakstuff/spicedesk/releases/latest/download/spicedesk-linux-x64.tar.gz
+tar xzf spicedesk.tar.gz
+./bundle/spicedesk
+```
+
+### Android
+Download the APK from [Releases](https://github.com/sudobreakstuff/spicedesk/releases/latest) and install.
+
+### Windows
+Download the Windows build from [Releases](https://github.com/sudobreakstuff/spicedesk/releases/latest).
+
+---
+
+## Build from Source
+
 ```bash
 git clone https://github.com/sudobreakstuff/spicedesk.git
 cd spicedesk
 flutter pub get
+
+# Setup Supabase
+# 1. Create a project at https://supabase.com
+# 2. Run the SQL migrations in supabase/migrations/
+# 3. Update lib/bootstrap.dart with your URL and anon key
+
+flutter run
 ```
 
-1. Create a [Supabase](https://supabase.com) project
-2. Run the SQL migrations in `supabase/migrations/`
-3. Update `lib/bootstrap.dart` with your Supabase URL and anon key
-4. Run: `flutter run`
-
-### Build
+### Build standalone
 ```bash
-# Linux
-flutter build linux --release
-
-# Android
-flutter build apk --release
-
-# Windows
-flutter build windows --release
+flutter build linux --release    # Linux
+flutter build apk --release      # Android
+flutter build windows --release  # Windows
 ```
+
+---
 
 ## Architecture
 
@@ -78,43 +130,38 @@ lib/
 │   ├── network/     — Supabase client
 │   └── widgets/     — Shared widgets
 ├── features/
-│   ├── auth/         — Login, register, password reset
-│   ├── workspace/    — Workspace management
-│   ├── dashboard/    — Home screen
-│   ├── pos/          — Point of sale
-│   ├── inventory/    — Stock management
-│   ├── customers/    — CRM
-│   ├── reports/      — Analytics
-│   ├── expenses/     — Cost tracking
-│   ├── pending/      — Quote management
-│   ├── marketing/    — Content planner
-│   ├── about/        — About page
-│   └── settings/     — App settings
+│   ├── auth/        — Login, register
+│   ├── pos/         — Point of sale
+│   ├── inventory/   — Stock management
+│   ├── customers/   — CRM
+│   ├── reports/     — Analytics
+│   ├── expenses/    — Cost tracking
+│   ├── pending/     — Quote management
+│   ├── settings/    — App settings
+│   └── about/       — About page
 └── supabase/
-    └── migrations/   — Database schema
+    └── migrations/  — Database schema
 ```
 
-## Database
+## Tech Stack
 
-All SQL migrations are in `supabase/migrations/`. Run them in order:
+| Layer | Technology |
+|---|---|
+| Frontend | Flutter (Dart) + Riverpod |
+| Backend | Supabase (PostgreSQL + Auth) |
+| Navigation | GoRouter |
+| PDF | pdf + printing |
+| Charts | fl_chart |
+| Auth | Supabase Auth + biometric lock |
 
-```
-000001_initial_schema.sql
-000002_fix_auth_trigger.sql
-000003_raw_materials_cost_price.sql
-000004_fix_create_sale.sql
-000005_auto_invoice.sql
-000006_fix_payment_checkout.sql
-000007_loyalty.sql
-000008_fix_workspace_rls.sql
-000009_fix_workspace_again.sql
-000010_add_order_type_to_sale.sql
-```
+---
 
 ## License
 
-MIT — see [LICENSE](LICENSE)
+MIT © Shahid Singh
 
-## Author
+---
 
-Made by Shahid Singh — 2026
+<p align="center">
+  <sub>Dedicated to Mum and Dad. Free forever.</sub>
+</p>
