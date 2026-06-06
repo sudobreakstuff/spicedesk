@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:convert';
 
 import '../../../../core/network/supabase_client.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -28,6 +30,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   String _getSetting(String key, String fallback) {
     final val = _settings[key];
     return val?.toString() ?? fallback;
+  }
+
+  Future<void> _uploadLogo() async {
+    final picker = ImagePicker();
+    final image = await picker.pickImage(source: ImageSource.gallery, maxWidth: 300);
+    if (image == null) return;
+
+    final bytes = await image.readAsBytes();
+    final base64 = 'data:image/png;base64,${base64Encode(bytes)}';
+    await _saveSetting('company_logo', base64);
+    setState(() => _settings['company_logo'] = base64);
   }
 
   Future<void> _editSetting(String key, String title, String current) async {
@@ -207,8 +220,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ]),
           const SizedBox(height: 20),
           _section('Invoice Settings', [
+            _tile(Icons.image, 'Company Logo', _getSetting('company_logo', '').isNotEmpty ? 'Logo uploaded' : 'Tap to upload',
+                onTap: _uploadLogo),
             _tile(Icons.business, 'Company Name', _getSetting('company_name', 'SpiceDesk'),
                 onTap: () => _editSetting('company_name', 'Company Name', 'SpiceDesk')),
+            _tile(Icons.credit_card, 'VAT / Tax Number', _getSetting('tax_number', ''),
+                onTap: () => _editSetting('tax_number', 'VAT / Tax Number', '')),
+            _tile(Icons.account_balance, 'Bank Name', _getSetting('bank_name', ''),
+                onTap: () => _editSetting('bank_name', 'Bank Name', '')),
+            _tile(Icons.person, 'Account Holder', _getSetting('account_holder', ''),
+                onTap: () => _editSetting('account_holder', 'Account Holder', '')),
+            _tile(Icons.numbers, 'Account Number', _getSetting('account_number', ''),
+                onTap: () => _editSetting('account_number', 'Account Number', '')),
             _tile(Icons.location_on, 'Address', _getSetting('company_address', ''),
                 onTap: () => _editSetting('company_address', 'Company Address', '')),
             _tile(Icons.phone, 'Phone', _getSetting('company_phone', ''),
