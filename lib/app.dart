@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/theme/app_theme.dart';
+import 'core/theme/theme_provider.dart';
 import 'core/router/app_router.dart';
 
 class SpiceDeskApp extends ConsumerWidget {
@@ -10,11 +11,13 @@ class SpiceDeskApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
+    final theme = ref.watch(appThemeProvider);
+    final mode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
-      theme: appTheme,
+      theme: theme,
       darkTheme: appTheme,
-      themeMode: ThemeMode.dark,
+      themeMode: mode == AppTheme.paperLight ? ThemeMode.light : ThemeMode.dark,
       debugShowCheckedModeBanner: false,
       routerConfig: router,
       title: 'SpiceDesk',

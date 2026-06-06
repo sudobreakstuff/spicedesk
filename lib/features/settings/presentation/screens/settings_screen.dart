@@ -7,6 +7,7 @@ import 'dart:convert';
 
 import '../../../../core/network/supabase_client.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/theme_provider.dart';
 import '../../../auth/domain/auth_state.dart';
 import '../../../customers/data/customers_provider.dart';
 import '../../../inventory/data/inventory_provider.dart';
@@ -197,6 +198,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     },
                   );
                 }),
+          ]),
+
+          const SizedBox(height: 24),
+
+          _section('App Theme', [
+            for (final t in AppTheme.values)
+              _themeTile(t),
           ]),
 
           const SizedBox(height: 24),
@@ -596,6 +604,32 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _themeTile(AppTheme theme) {
+    final currentTheme = ref.watch(themeModeProvider);
+    final isSelected = currentTheme == theme;
+
+    return ListTile(
+      leading: Container(
+        width: 36, height: 36,
+        decoration: BoxDecoration(
+          color: theme.primaryColor.withAlpha(30),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(theme.icon, color: theme.primaryColor, size: 18),
+      ),
+      title: Text(theme.label,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: SpiceColors.textPrimary)),
+      subtitle: Text(isSelected ? 'Selected' : 'Tap to apply',
+          style: const TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
+      trailing: isSelected
+          ? const Icon(Icons.check_circle, size: 20, color: SpiceColors.accent)
+          : const Icon(Icons.chevron_right, size: 18, color: SpiceColors.textSecondary),
+      onTap: () => ref.read(themeModeProvider.notifier).setTheme(theme),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     );
   }
 

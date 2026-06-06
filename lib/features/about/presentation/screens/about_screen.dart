@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/app_theme.dart';
 
@@ -19,6 +20,14 @@ class AboutScreen extends StatelessWidget {
           _buildDedication(),
           const SizedBox(height: 32),
           _buildMission(),
+          const SizedBox(height: 36),
+          _buildFeatures(),
+          const SizedBox(height: 36),
+          _buildHowItWorks(),
+          const SizedBox(height: 36),
+          _buildVersionHistory(),
+          const SizedBox(height: 36),
+          _buildTechStack(),
           const SizedBox(height: 36),
           _buildGuides(),
           const SizedBox(height: 36),
@@ -67,7 +76,7 @@ class AboutScreen extends StatelessWidget {
             border: Border.all(color: SpiceColors.primary.withAlpha(60)),
           ),
           child: const Text(
-            'v1.2',
+            'v2.3.4',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -190,6 +199,101 @@ class AboutScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildFeatures() {
+    final features = [
+      (Icons.point_of_sale_rounded, 'Point of Sale', 'Fast checkout with barcode scanning and receipt printing'),
+      (Icons.inventory_2_rounded, 'Inventory Management', 'Real-time stock tracking with low-stock alerts'),
+      (Icons.analytics_rounded, 'Sales Analytics', 'Daily, weekly, and monthly revenue reports with charts'),
+      (Icons.receipt_long_rounded, 'Invoicing', 'Professional PDF invoices with company branding'),
+      (Icons.people_rounded, 'Customer CRM', 'Customer profiles with purchase history tracking'),
+      (Icons.money_rounded, 'Expense Tracking', 'Log and categorize business expenses'),
+      (Icons.description_rounded, 'Quotations', 'Create and send quotes, convert to sales'),
+      (Icons.workspaces_rounded, 'Multi-workspace', 'Manage multiple business locations'),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Features', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
+        const SizedBox(height: 16),
+        ...features.map((f) => _FeatureRow(icon: f.$1, title: f.$2, subtitle: f.$3)),
+      ],
+    );
+  }
+
+  Widget _buildHowItWorks() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('How It Works', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
+        const SizedBox(height: 20),
+        ...['Add products & set stock levels', 'Make sales through the POS', 'Inventory updates automatically', 'View reports & analytics', 'Send invoices & manage expenses']
+            .asMap()
+            .entries
+            .map((e) => _FlowStep(index: e.key + 1, label: e.value, isLast: e.key == 4)),
+      ],
+    );
+  }
+
+  Widget _buildVersionHistory() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Version History', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: SpiceColors.surfaceAlt,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: SpiceColors.border),
+          ),
+          child: Column(
+            children: [
+              _VersionRow(version: 'v2.3.4', date: 'June 2026', changes: ['Theme system with 6 color themes', 'Enhanced About screen', 'Performance improvements']),
+              _VersionRow(version: 'v2.2.7', date: 'April 2026', changes: ['PDF invoice generation', 'Company branding settings', 'Banking details on invoices']),
+              _VersionRow(version: 'v1.8.2', date: 'Jan 2026', changes: ['Expense tracking module', 'Customer CRM', 'Multi-workspace support']),
+              _VersionRow(version: 'v1.3.1', date: 'Oct 2025', changes: ['Barcode scanning', 'Quotation system', 'Sales analytics dashboard']),
+              _VersionRow(version: 'v1.0.0', date: 'July 2025', changes: ['Initial release', 'POS with inventory', 'Basic reporting'], isLast: true),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTechStack() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Tech Stack', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: SpiceColors.surfaceAlt,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: SpiceColors.border),
+          ),
+          child: Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _TechChip(icon: Icons.flutter_dash, label: 'Flutter'),
+              _TechChip(icon: Icons.language, label: 'Dart'),
+              _TechChip(icon: Icons.cloud, label: 'Supabase'),
+              _TechChip(icon: Icons.storage, label: 'PostgreSQL'),
+              _TechChip(icon: Icons.bar_chart, label: 'fl_chart'),
+              _TechChip(icon: Icons.picture_as_pdf, label: 'PDF'),
+              _TechChip(icon: Icons.router, label: 'GoRouter'),
+              _TechChip(icon: Icons.architecture, label: 'Riverpod'),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildGuides() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -280,6 +384,8 @@ class AboutScreen extends StatelessWidget {
   }
 
   Widget _buildCredits(BuildContext context) {
+    final githubUrl = Uri.parse('https://github.com/anomalyco/spicedesk');
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -313,6 +419,26 @@ class AboutScreen extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: () => launchUrl(githubUrl, mode: LaunchMode.externalApplication),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.code, color: SpiceColors.primary.withAlpha(200), size: 16),
+                  const SizedBox(width: 6),
+                  Text(
+                    'GitHub',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: SpiceColors.primary.withAlpha(220),
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 16),
             const Text(
               'SpiceDesk Business Suite',
@@ -323,7 +449,7 @@ class AboutScreen extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             const Text(
-              'Version 1.2 — Made in South Africa',
+              'Version 2.3.4 — Made in South Africa',
               style: TextStyle(fontSize: 11, color: SpiceColors.textSecondary),
             ),
           ],
@@ -331,8 +457,182 @@ class AboutScreen extends StatelessWidget {
       ),
     );
   }
-
 }
+
+// ── Sub-widgets ──
+
+class _FeatureRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  const _FeatureRow({required this.icon, required this.title, required this.subtitle});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Row(
+        children: [
+          Container(
+            width: 36, height: 36,
+            decoration: BoxDecoration(
+              color: SpiceColors.primary.withAlpha(20),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: SpiceColors.primary, size: 18),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
+                const SizedBox(height: 2),
+                Text(subtitle, style: const TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FlowStep extends StatelessWidget {
+  final int index;
+  final String label;
+  final bool isLast;
+  const _FlowStep({required this.index, required this.label, required this.isLast});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 32,
+          child: Column(
+            children: [
+              Container(
+                width: 28, height: 28,
+                decoration: BoxDecoration(
+                  color: SpiceColors.primary.withAlpha(25),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: SpiceColors.primary.withAlpha(80)),
+                ),
+                alignment: Alignment.center,
+                child: Text('$index', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: SpiceColors.primary)),
+              ),
+              if (!isLast)
+                Container(
+                  width: 2,
+                  height: 28,
+                  color: SpiceColors.border,
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        Padding(
+          padding: EdgeInsets.only(bottom: isLast ? 0 : 16),
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: SpiceColors.textPrimary,
+              height: 1.5,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _VersionRow extends StatelessWidget {
+  final String version;
+  final String date;
+  final List<String> changes;
+  final bool isLast;
+  const _VersionRow({required this.version, required this.date, required this.changes, this.isLast = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: SpiceColors.primary.withAlpha(20),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(version, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.primary)),
+              ),
+            ],
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(date, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: SpiceColors.textSecondary)),
+                const SizedBox(height: 4),
+                ...changes.map((c) => Padding(
+                  padding: const EdgeInsets.only(bottom: 2),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(top: 7),
+                        child: Icon(Icons.circle, size: 4, color: SpiceColors.primary),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(child: Text(c, style: const TextStyle(fontSize: 12, color: SpiceColors.textSecondary))),
+                    ],
+                  ),
+                )),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TechChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  const _TechChip({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: SpiceColors.primary.withAlpha(15),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: SpiceColors.primary.withAlpha(40)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: SpiceColors.primary),
+          const SizedBox(width: 6),
+          Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: SpiceColors.textPrimary)),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Guide carousel ──
 
 class _GuideCard extends StatefulWidget {
   final IconData icon;

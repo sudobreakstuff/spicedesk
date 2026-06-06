@@ -55,5 +55,5 @@ Thumbs.db
 supabase/.temp/
 supabase/.branches/
 *.apk
-spicedesk-linux-*.tar.gz
+*.tar.gz
 spicedesk-linux-x64/

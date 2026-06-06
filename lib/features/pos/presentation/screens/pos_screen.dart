@@ -1135,36 +1135,64 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
   Widget _buildHeaderRow() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(32, 32, 32, 0),
-      child: Row(
-        children: [
-          const Text('Point of Sale',
-              style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                  color: SpiceColors.textPrimary)),
-          const Spacer(),
-          SizedBox(
-            width: 280,
-            child: TextField(
-              controller: _searchCtrl,
-              decoration: const InputDecoration(
-                hintText: 'Search products...',
-                prefixIcon: Icon(Icons.search, size: 20),
-                isDense: true,
-                contentPadding: EdgeInsets.symmetric(vertical: 10),
-              ),
-              onChanged: (v) => setState(() => _searchQuery = v),
-            ),
-          ),
-          const SizedBox(width: 12),
-          IconButton(
-            icon: const Icon(Icons.add_circle,
-                color: SpiceColors.primary, size: 32),
-            tooltip: 'Add Product',
-            onPressed: _showAddProductDialog,
-          ),
-        ],
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isNarrow = constraints.maxWidth < 500;
+          return isNarrow
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      const Text('Point of Sale',
+                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
+                      const Spacer(),
+                      IconButton(
+                        icon: const Icon(Icons.add_circle, color: SpiceColors.primary, size: 28),
+                        tooltip: 'Add Product',
+                        onPressed: _showAddProductDialog,
+                      ),
+                    ]),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _searchCtrl,
+                      decoration: const InputDecoration(
+                        hintText: 'Search products...',
+                        prefixIcon: Icon(Icons.search, size: 20),
+                        isDense: true,
+                        contentPadding: EdgeInsets.symmetric(vertical: 10),
+                      ),
+                      onChanged: (v) => setState(() => _searchQuery = v),
+                    ),
+                  ],
+                )
+              : Row(
+                  children: [
+                    const Text('Point of Sale',
+                        style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: SpiceColors.textPrimary)),
+                    const Spacer(),
+                    SizedBox(
+                      width: 280,
+                      child: TextField(
+                        controller: _searchCtrl,
+                        decoration: const InputDecoration(
+                          hintText: 'Search products...',
+                          prefixIcon: Icon(Icons.search, size: 20),
+                          isDense: true,
+                          contentPadding: EdgeInsets.symmetric(vertical: 10),
+                        ),
+                        onChanged: (v) => setState(() => _searchQuery = v),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    IconButton(
+                      icon: const Icon(Icons.add_circle, color: SpiceColors.primary, size: 32),
+                      tooltip: 'Add Product',
+                      onPressed: _showAddProductDialog,
+                    ),
+                  ],
+                );
+        },
       ),
     );
   }
