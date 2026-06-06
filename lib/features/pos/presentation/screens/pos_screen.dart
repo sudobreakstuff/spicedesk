@@ -14,6 +14,7 @@ import '../../../pos/data/pos_service.dart';
 import '../../../pos/data/quote_service.dart';
 import '../../../workspace/domain/workspace_state.dart';
 import '../../../customers/data/customers_provider.dart';
+import '../../../settings/data/settings_provider.dart';
 
 class PosScreen extends ConsumerStatefulWidget {
   const PosScreen({super.key});
@@ -26,6 +27,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   final _searchCtrl = TextEditingController();
   final List<_CartItem> _cart = [];
   String _searchQuery = '';
+
+  Future<double> get _getDeliveryCharge async {
+    final settings = await ref.read(workspaceSettingsProvider.future);
+    return (settings['delivery_charge'] as num?)?.toDouble() ?? 20.0;
+  }
 
   double get _total => _cart.fold(0.0, (sum, i) => sum + (i.unitPrice * i.quantity));
 
@@ -80,11 +86,13 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     final customersAsync = ref.read(customersProvider);
     final customers = customersAsync.valueOrNull ?? [];
 
+    final deliveryCharge = await _getDeliveryCharge;
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (ctx) => _CheckoutDialog(
         total: _total,
         customers: customers,
+        deliveryCharge: deliveryCharge,
       ),
     );
 
@@ -105,12 +113,14 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               ))
           .toList();
 
-      // Add delivery fee if applicable
+      // Add delivery fee if applicable, read from settings
       if (orderType == 'Delivery') {
-        saleItems.add(const SaleItemInput(
+        final settings = await ref.read(workspaceSettingsProvider.future);
+        final deliveryCharge = (settings['delivery_charge'] as num?)?.toDouble() ?? 20.0;
+        saleItems.add(SaleItemInput(
           productName: 'Delivery Fee',
           quantity: 1,
-          unitPrice: 20.0,
+          unitPrice: deliveryCharge,
         ));
       }
 
@@ -1445,11 +1455,13 @@ class _CheckoutDialog extends StatefulWidget {
   final double total;
   final List<Customer> customers;
   final bool isQuote;
+  final double deliveryCharge;
 
   const _CheckoutDialog({
     required this.total,
     required this.customers,
     this.isQuote = false,
+    this.deliveryCharge = 20.0,
   });
 
   @override
@@ -1485,10 +1497,10 @@ class _CheckoutDialogState extends State<_CheckoutDialog> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(color: SpiceColors.warning.withAlpha(20), borderRadius: BorderRadius.circular(6)),
-                child: const Text('+ R20.00 delivery fee', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.warning)),
+                child: Text('+ R${widget.deliveryCharge.toStringAsFixed(2)} delivery fee', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.warning)),
               ),
               const SizedBox(height: 2),
-              Text('Grand Total: R ${(widget.total + 20).toStringAsFixed(2)}',
+              Text('Grand Total: R ${(widget.total + widget.deliveryCharge).toStringAsFixed(2)}',
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: SpiceColors.accent)),
             ],
             const SizedBox(height: 20),
