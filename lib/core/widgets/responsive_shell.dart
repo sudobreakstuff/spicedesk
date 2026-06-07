@@ -164,7 +164,6 @@ class ResponsiveShell extends ConsumerWidget {
             _drawerItem(context, Icons.analytics, 'Reports', '/reports', location),
             _drawerItem(context, Icons.description_outlined, 'Pending', '/pending', location),
             _drawerItem(context, Icons.money_off, 'Expenses', '/expenses', location),
-            _drawerItem(context, Icons.campaign, 'Marketing', '/marketing', location),
             Spacer(),
             _drawerItem(context, Icons.settings, 'Settings', '/settings', location),
             _drawerItem(context, Icons.info_outline, 'About', '/about', location),

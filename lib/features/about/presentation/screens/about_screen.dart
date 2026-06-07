@@ -209,6 +209,7 @@ class AboutScreen extends StatelessWidget {
       (Icons.money_rounded, 'Expense Tracking', 'Log and categorize business expenses'),
       (Icons.description_rounded, 'Quotations', 'Create and send quotes, convert to sales'),
       (Icons.workspaces_rounded, 'Multi-workspace', 'Manage multiple business locations'),
+      (Icons.campaign_rounded, 'Marketing', 'WhatsApp broadcasts & campaign planning — Coming soon'),
     ];
 
     return Column(
@@ -375,7 +376,6 @@ class AboutScreen extends StatelessWidget {
             'Add customer profiles with contact details',
             'Track purchase history per customer',
             'Build loyalty through repeat service',
-            'Use customer data for targeted marketing',
             'Export customer lists for outreach',
           ],
         ),

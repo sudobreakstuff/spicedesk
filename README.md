@@ -50,13 +50,16 @@ Purchase history, loyalty tracking, edit/delete, total spent, last visit, email 
 Transaction history with date filtering, revenue/profit/expense tracking, best selling products, invoice lookup
 
 ### Expenses
-Cost tracking with categories (rent, utilities, supplies, marketing, raw materials)
+Cost tracking with categories (rent, utilities, supplies, raw materials)
 
 ### Quotes
 Create and manage quotes, convert to sales, WhatsApp sharing, PDF generation
 
+### Marketing
+WhatsApp broadcasts, campaign planning, and customer segments — *coming in a future release*
+
 ### Security
-Biometric/PIN app lock, strong password requirements, RLS data isolation
+Strong password requirements, RLS data isolation
 
 ### Themes
 6 color themes — Dark, Ocean Blue, Forest Green, Sunset Orange, Midnight Purple, Paper Light
@@ -75,9 +78,9 @@ Linux, Windows, Android — single codebase
 | **Price** | Free forever | Subscription-based |
 | **Offline capable** | Coming soon | Sometimes |
 | **PDF invoices** | Built-in | Often extra |
+| **Marketing** | Coming in a future release | Usually available |
 | **Multi-platform** | Linux, Windows, Android | Usually just one |
 | **Themes** | 6 color themes | Rarely |
-| **App lock** | Biometric/PIN | Rarely in POS apps |
 
 ---
 

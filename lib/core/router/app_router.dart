@@ -13,7 +13,6 @@ import '../../features/pending/presentation/screens/pending_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/customers/presentation/screens/customers_screen.dart';
 import '../../features/expenses/presentation/screens/expenses_screen.dart';
-import '../../features/marketing/presentation/screens/marketing_screen.dart';
 import '../../features/about/presentation/screens/about_screen.dart';
 import '../../core/widgets/responsive_shell.dart';
 import '../../features/workspace/presentation/screens/workspace_screen.dart';
@@ -66,9 +65,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
               path: '/expenses',
               builder: (_, __) => ExpensesScreen()),
-          GoRoute(
-              path: '/marketing',
-              builder: (_, __) => MarketingScreen()),
           GoRoute(
               path: '/about',
               builder: (_, __) => AboutScreen()),
