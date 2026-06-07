@@ -774,20 +774,13 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       .eq('id', product.id);
 
                   if (category.isNotEmpty) {
-                    final catResult = await supabase
-                        .from('categories')
-                        .insert({
-                          'workspace_id': wsId,
-                          'name': category,
-                        })
-                        .select('id')
-                        .single();
-                    await supabase
-                        .from('products')
-                        .update({
-                          'category_id': catResult['id'],
-                        })
-                        .eq('id', product.id);
+                    final catId = await _resolveCategory(wsId, category);
+                    if (catId != null) {
+                      await supabase
+                          .from('products')
+                          .update({'category_id': catId})
+                          .eq('id', product.id);
+                    }
                   }
 
                   ref.invalidate(productsProvider);
@@ -1000,20 +993,13 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   });
 
                   if (category.isNotEmpty) {
-                    final catResult = await supabase
-                        .from('categories')
-                        .insert({
-                          'workspace_id': wsId,
-                          'name': category,
-                        })
-                        .select('id')
-                        .single();
-                    await supabase
-                        .from('products')
-                        .update({
-                          'category_id': catResult['id'],
-                        })
-                        .eq('id', productId);
+                    final catId = await _resolveCategory(wsId!, category);
+                    if (catId != null) {
+                      await supabase
+                          .from('products')
+                          .update({'category_id': catId})
+                          .eq('id', productId);
+                    }
                   }
 
                   ref.invalidate(productsProvider);
@@ -1039,6 +1025,27 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         ),
       ),
     );
+  }
+
+  Future<String?> _resolveCategory(String workspaceId, String categoryName) async {
+    final trimmed = categoryName.trim();
+    if (trimmed.isEmpty) return null;
+
+    final existing = await supabase
+        .from('categories')
+        .select('id')
+        .eq('workspace_id', workspaceId)
+        .eq('name', trimmed)
+        .maybeSingle();
+
+    if (existing != null) return existing['id'] as String;
+
+    final newCat = await supabase
+        .from('categories')
+        .insert({'workspace_id': workspaceId, 'name': trimmed})
+        .select('id')
+        .single();
+    return newCat['id'] as String;
   }
 
   @override
@@ -1213,74 +1220,110 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         ),
       );
     }
-    return GridView.builder(
+
+    final grouped = <String, List<Product>>{};
+    for (final p in filtered) {
+      final cat = p.category.isNotEmpty ? p.category : 'Uncategorized';
+      grouped.putIfAbsent(cat, () => []).add(p);
+    }
+    final sortedKeys = grouped.keys.toList()..sort((a, b) {
+      if (a == 'Uncategorized') return 1;
+      if (b == 'Uncategorized') return -1;
+      return a.compareTo(b);
+    });
+
+    return ListView(
       padding: const EdgeInsets.fromLTRB(32, 0, 32, 32),
-      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 180,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 0.85,
-      ),
-      itemCount: filtered.length,
-      itemBuilder: (context, index) {
-        final p = filtered[index];
-        final hasCategory = p.category.isNotEmpty;
-        final stockQty = inventoryMap[p.id] ?? 0;
-        final isOutOfStock = stockQty <= 0;
-        return Opacity(
-          opacity: isOutOfStock ? 0.4 : 1.0,
-          child: GestureDetector(
-            onTap: isOutOfStock ? null : () => _addToCart(p),
-            onLongPress: () => _showProductActions(p),
-            child: Container(
-              decoration: BoxDecoration(
-                color: SpiceColors.surfaceAlt,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: hasCategory
-                      ? SpiceColors.primary.withAlpha(50)
-                      : SpiceColors.warning.withAlpha(50),
+      children: [
+        for (final cat in sortedKeys) ...[
+          Padding(
+            padding: const EdgeInsets.only(top: 16, bottom: 8),
+            child: Row(children: [
+              Container(
+                width: 4, height: 16,
+                decoration: BoxDecoration(
+                  color: cat == 'Uncategorized' ? SpiceColors.warning : SpiceColors.primary,
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.inventory_2_rounded, size: 36,
-                      color: hasCategory ? SpiceColors.primary : SpiceColors.warning),
-                  SizedBox(height: 10),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Text(p.name,
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: SpiceColors.textPrimary)),
-                  ),
-                  SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: SpiceColors.accent.withAlpha(20),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text('R ${p.unitPrice.toStringAsFixed(2)}',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.accent)),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    isOutOfStock ? 'Out of stock' : 'In stock: ${stockQty.toInt()}',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: isOutOfStock ? SpiceColors.danger : SpiceColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
+              SizedBox(width: 8),
+              Text(cat, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: SpiceColors.textSecondary)),
+              SizedBox(width: 8),
+              Text('${grouped[cat]!.length}', style: TextStyle(fontSize: 11, color: SpiceColors.textSecondary.withAlpha(150))),
+            ]),
+          ),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 180,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 0.85,
             ),
-          ).animate().fadeIn(delay: (index * 40).ms),
-        );
-      },
+            itemCount: grouped[cat]!.length,
+            itemBuilder: (context, index) {
+              final p = grouped[cat]![index];
+              final hasCategory = p.category.isNotEmpty;
+              final stockQty = inventoryMap[p.id] ?? 0;
+              final isOutOfStock = stockQty <= 0;
+              return Opacity(
+                opacity: isOutOfStock ? 0.4 : 1.0,
+                child: GestureDetector(
+                  onTap: isOutOfStock ? null : () => _addToCart(p),
+                  onLongPress: () => _showProductActions(p),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: SpiceColors.surfaceAlt,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: hasCategory
+                            ? SpiceColors.primary.withAlpha(50)
+                            : SpiceColors.warning.withAlpha(50),
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.inventory_2_rounded, size: 36,
+                            color: hasCategory ? SpiceColors.primary : SpiceColors.warning),
+                        SizedBox(height: 10),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Text(p.name,
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: SpiceColors.textPrimary)),
+                        ),
+                        SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: SpiceColors.accent.withAlpha(20),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text('R ${p.unitPrice.toStringAsFixed(2)}',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: SpiceColors.accent)),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          isOutOfStock ? 'Out of stock' : 'In stock: ${stockQty.toInt()}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: isOutOfStock ? SpiceColors.danger : SpiceColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ],
     );
   }
 

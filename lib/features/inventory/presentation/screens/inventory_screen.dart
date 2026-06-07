@@ -98,115 +98,152 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             child: inventoryAsync.isLoading
                 ? Center(child: CircularProgressIndicator())
                 : filtered.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.inventory_2_outlined, size: 48, color: SpiceColors.textSecondary),
-                            SizedBox(height: 12),
-                            Text(items.isEmpty ? 'No inventory tracked' : 'No matching items',
-                                style: TextStyle(color: SpiceColors.textSecondary)),
-                            SizedBox(height: 8),
-                            Text('Add products and stock from the POS or settings',
-                                style: TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(32, 0, 32, 32),
-                        itemCount: filtered.length,
-                        itemBuilder: (context, index) {
-                          final item = filtered[index];
-                          final isLow = item.quantityOnHand <= item.reorderPoint && item.quantityOnHand > 0;
-                          final isOut = item.quantityOnHand == 0;
-                          final statusColor = isOut ? SpiceColors.danger : isLow ? SpiceColors.warning : SpiceColors.accent;
-                          final statusIcon = isOut ? Icons.error_outline : isLow ? Icons.warning_amber_rounded : Icons.check_circle_outline;
-
-                          return GestureDetector(
-                            onLongPress: () => _showInventoryActions(item),
-                            child: Container(
-                              margin: const EdgeInsets.only(bottom: 8),
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              decoration: BoxDecoration(
-                                color: SpiceColors.surfaceAlt,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: SpiceColors.border),
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 40, height: 40,
-                                    decoration: BoxDecoration(
-                                      color: statusColor.withAlpha(25),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Icon(statusIcon, color: statusColor, size: 20),
-                                  ),
-                                  SizedBox(width: 14),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(item.productName,
-                                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
-                                        SizedBox(height: 2),
-                                        Text('SKU: ${item.sku}',
-                                            style: TextStyle(fontSize: 11, color: SpiceColors.textSecondary)),
-                                      ],
-                                    ),
-                                  ),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Text('R ${item.unitPrice.toStringAsFixed(2)}',
-                                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
-                                      if (item.costPrice > 0)
-                                        Text('Cost: R ${item.costPrice.toStringAsFixed(2)}',
-                                            style: TextStyle(fontSize: 10, color: SpiceColors.textSecondary)),
-                                      SizedBox(height: 2),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                        decoration: BoxDecoration(
-                                          color: statusColor.withAlpha(20),
-                                          borderRadius: BorderRadius.circular(6),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                                              margin: const EdgeInsets.only(right: 4),
-                                              decoration: BoxDecoration(
-                                                color: (item.productType == 'raw_material' ? SpiceColors.warning : SpiceColors.primary).withAlpha(30),
-                                                borderRadius: BorderRadius.circular(3),
-                                              ),
-                                              child: Text(
-                                                item.productType == 'raw_material' ? 'RAW' : 'FIN',
-                                                style: TextStyle(
-                                                  fontSize: 8,
-                                                  fontWeight: FontWeight.w700,
-                                                  color: item.productType == 'raw_material' ? SpiceColors.warning : SpiceColors.primary,
-                                                ),
-                                              ),
-                                            ),
-                                            Text(
-                                              '${item.quantityOnHand.toInt()} ${item.unitOfMeasure}',
-                                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: statusColor),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ).animate().fadeIn(delay: (index * 40).ms),
-                          );
-                        },
-                      ),
+                    ? _buildEmptyState(items.isEmpty)
+                    : _buildGroupedInventoryList(filtered),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildEmptyState(bool noItems) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.inventory_2_outlined, size: 48, color: SpiceColors.textSecondary),
+          SizedBox(height: 12),
+          Text(noItems ? 'No inventory tracked' : 'No matching items',
+              style: TextStyle(color: SpiceColors.textSecondary)),
+          SizedBox(height: 8),
+          Text('Add products and stock from the POS or settings',
+              style: TextStyle(fontSize: 12, color: SpiceColors.textSecondary)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGroupedInventoryList(List<InventoryItem> filtered) {
+    final grouped = <String, List<InventoryItem>>{};
+    for (final item in filtered) {
+      final cat = item.category.isNotEmpty ? item.category : 'Uncategorized';
+      grouped.putIfAbsent(cat, () => []).add(item);
+    }
+    final sortedKeys = grouped.keys.toList()..sort((a, b) {
+      if (a == 'Uncategorized') return 1;
+      if (b == 'Uncategorized') return -1;
+      return a.compareTo(b);
+    });
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(32, 0, 32, 32),
+      children: [
+        for (final cat in sortedKeys) ...[
+          Padding(
+            padding: const EdgeInsets.only(top: 16, bottom: 8),
+            child: Row(children: [
+              Container(
+                width: 4, height: 16,
+                decoration: BoxDecoration(
+                  color: cat == 'Uncategorized' ? SpiceColors.warning : SpiceColors.primary,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              SizedBox(width: 8),
+              Text(cat, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: SpiceColors.textSecondary)),
+              SizedBox(width: 8),
+              Text('${grouped[cat]!.length}', style: TextStyle(fontSize: 11, color: SpiceColors.textSecondary.withAlpha(150))),
+            ]),
+          ),
+          ...grouped[cat]!.map((item) {
+            final isLow = item.quantityOnHand <= item.reorderPoint && item.quantityOnHand > 0;
+            final isOut = item.quantityOnHand == 0;
+            final statusColor = isOut ? SpiceColors.danger : isLow ? SpiceColors.warning : SpiceColors.accent;
+            final statusIcon = isOut ? Icons.error_outline : isLow ? Icons.warning_amber_rounded : Icons.check_circle_outline;
+
+            return GestureDetector(
+              onLongPress: () => _showInventoryActions(item),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: SpiceColors.surfaceAlt,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: SpiceColors.border),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40, height: 40,
+                      decoration: BoxDecoration(
+                        color: statusColor.withAlpha(25),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(statusIcon, color: statusColor, size: 20),
+                    ),
+                    SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(item.productName,
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
+                          SizedBox(height: 2),
+                          Text('SKU: ${item.sku}',
+                              style: TextStyle(fontSize: 11, color: SpiceColors.textSecondary)),
+                        ],
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text('R ${item.unitPrice.toStringAsFixed(2)}',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: SpiceColors.textPrimary)),
+                        if (item.costPrice > 0)
+                          Text('Cost: R ${item.costPrice.toStringAsFixed(2)}',
+                              style: TextStyle(fontSize: 10, color: SpiceColors.textSecondary)),
+                        SizedBox(height: 2),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: statusColor.withAlpha(20),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                margin: const EdgeInsets.only(right: 4),
+                                decoration: BoxDecoration(
+                                  color: (item.productType == 'raw_material' ? SpiceColors.warning : SpiceColors.primary).withAlpha(30),
+                                  borderRadius: BorderRadius.circular(3),
+                                ),
+                                child: Text(
+                                  item.productType == 'raw_material' ? 'RAW' : 'FIN',
+                                  style: TextStyle(
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.w700,
+                                    color: item.productType == 'raw_material' ? SpiceColors.warning : SpiceColors.primary,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                '${item.quantityOnHand.toInt()} ${item.unitOfMeasure}',
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: statusColor),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ],
+      ],
     );
   }
 

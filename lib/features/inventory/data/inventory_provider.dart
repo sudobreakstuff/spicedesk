@@ -9,12 +9,13 @@ final inventoryProvider = FutureProvider<List<InventoryItem>>((ref) async {
 
   final data = await supabase
       .from('inventory')
-      .select('id, product_id, quantity_on_hand, reorder_point, unit_of_measure, products(name, sku, unit_price, cost_price, product_type)')
+      .select('id, product_id, quantity_on_hand, reorder_point, unit_of_measure, products(name, sku, unit_price, cost_price, product_type, category_id, categories(name))')
       .eq('workspace_id', wsId)
       .order('quantity_on_hand');
 
   return data.map<InventoryItem>((row) {
     final product = row['products'] as Map<String, dynamic>? ?? {};
+    final cats = product['categories'] as Map<String, dynamic>?;
     return InventoryItem(
       id: row['id'],
       productId: row['product_id'],
@@ -26,6 +27,7 @@ final inventoryProvider = FutureProvider<List<InventoryItem>>((ref) async {
       costPrice: (product['cost_price'] as num?)?.toDouble() ?? 0,
       productType: product['product_type'] ?? 'finished',
       unitOfMeasure: row['unit_of_measure'] ?? 'unit',
+      category: cats?['name'] as String? ?? '',
     );
   }).toList();
 });
@@ -52,6 +54,7 @@ class InventoryItem {
   final double costPrice;
   final String productType;
   final String unitOfMeasure;
+  final String category;
 
   InventoryItem({
     required this.id,
@@ -64,6 +67,7 @@ class InventoryItem {
     this.costPrice = 0,
     this.productType = 'finished',
     this.unitOfMeasure = 'unit',
+    this.category = '',
   });
 
   InventoryItem copyWith({double? quantityOnHand}) {
@@ -78,6 +82,7 @@ class InventoryItem {
       costPrice: costPrice,
       productType: productType,
       unitOfMeasure: unitOfMeasure,
+      category: category,
     );
   }
 }
